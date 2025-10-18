@@ -1,0 +1,2 @@
+SERVER_NAME = "Unity MCP Server"
+SERVER_VERSION = "0.2.0"
