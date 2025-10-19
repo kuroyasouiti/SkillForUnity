@@ -493,11 +493,7 @@ namespace MCP.Editor
             _pendingCommandContinuation = continuation;
             AppendLog($"> {command}");
 
-            var workingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            if (string.IsNullOrEmpty(workingDirectory) || !Directory.Exists(workingDirectory))
-            {
-                workingDirectory = Directory.GetCurrentDirectory();
-            }
+            var workingDirectory = ResolveProjectDirectory();
 
             ProcessHelper.RunShellCommandAsync(command, workingDirectory, result => HandleCommandResult(result, description));
         }
@@ -568,6 +564,39 @@ namespace MCP.Editor
             });
         }
 
+        private static string ResolveProjectDirectory()
+        {
+            try
+            {
+                var assetsPath = Application.dataPath;
+                if (!string.IsNullOrEmpty(assetsPath))
+                {
+                    var projectPath = Path.GetDirectoryName(assetsPath);
+                    if (!string.IsNullOrEmpty(projectPath) && Directory.Exists(projectPath))
+                    {
+                        return projectPath;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // fall through to other strategies
+            }
+
+            var current = Directory.GetCurrentDirectory();
+            if (!string.IsNullOrEmpty(current) && Directory.Exists(current))
+            {
+                return current;
+            }
+
+            var profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (!string.IsNullOrEmpty(profile) && Directory.Exists(profile))
+            {
+                return profile;
+            }
+
+            return string.Empty;
+        }
 
         private void HandleRegistrationResult(string clientName, bool success, string message)
         {

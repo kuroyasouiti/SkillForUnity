@@ -13,6 +13,15 @@ namespace MCP.Editor
     internal static class McpContextCollector
     {
         private const int MaxAssets = 200;
+        private static readonly string[] AssetTypeFilters =
+        {
+            "Script",
+            "Prefab",
+            "Material",
+            "Scene",
+            "ScriptableObject",
+            "Shader",
+        };
 
         public static Dictionary<string, object> BuildContextPayload()
         {
@@ -136,10 +145,34 @@ namespace MCP.Editor
 
         private static List<object> BuildAssetIndex()
         {
-            var guids = AssetDatabase.FindAssets("t:Script t:Prefab t:Material t:Scene t:ScriptableObject t:Shader");
-            var results = new List<object>(Mathf.Min(MaxAssets, guids.Length));
+            var guids = new List<string>(MaxAssets);
+            var seen = new HashSet<string>();
 
-            foreach (var guid in guids.Take(MaxAssets))
+            foreach (var type in AssetTypeFilters)
+            {
+                foreach (var guid in AssetDatabase.FindAssets($"t:{type}"))
+                {
+                    if (!seen.Add(guid))
+                    {
+                        continue;
+                    }
+
+                    guids.Add(guid);
+
+                    if (guids.Count >= MaxAssets)
+                    {
+                        break;
+                    }
+                }
+
+                if (guids.Count >= MaxAssets)
+                {
+                    break;
+                }
+            }
+
+            var results = new List<object>(guids.Count);
+            foreach (var guid in guids)
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var type = AssetDatabase.GetMainAssetTypeAtPath(path);
