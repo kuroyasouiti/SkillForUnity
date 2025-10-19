@@ -77,7 +77,7 @@ class ServerEnv:
 
 
 env = ServerEnv(
-    port=_parse_int(os.environ.get("MCP_SERVER_PORT"), default=6006, minimum=1),
+    port=_parse_int(os.environ.get("MCP_SERVER_PORT"), default=6007, minimum=1),
     host=os.environ.get("MCP_SERVER_HOST", "127.0.0.1"),
     log_level=_parse_log_level(os.environ.get("MCP_SERVER_LOG_LEVEL")),
     unity_project_root=_resolve_path(
