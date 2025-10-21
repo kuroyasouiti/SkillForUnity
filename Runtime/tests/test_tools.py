@@ -23,10 +23,10 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
             names,
             [
                 "unity.ping",
-                "unity.scene.crud",
-                "unity_gameobject_crud",
-                "unity.component.crud",
-                "unity.asset.crud",
+                "unity.scene.manage",
+                "unity_gameobject_manage",
+                "unity.component.manage",
+                "unity.asset.manage",
                 "unity.ugui.rectAdjust",
                 "unity.script.outline",
             ],
@@ -57,14 +57,14 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_call_tool_routes_commands_through_bridge(self) -> None:
         tool_cases = [
-            ("unity.scene.crud", "sceneCrud", {"operation": "create"}),
+            ("unity.scene.manage", "sceneCrud", {"operation": "create"}),
             (
-                "unity_gameobject_crud",
+                "unity_gameobject_manage",
                 "gameObjectCrud",
                 {"operation": "create", "gameObjectPath": "Root"},
             ),
             (
-                "unity.component.crud",
+                "unity.component.manage",
                 "componentCrud",
                 {
                     "operation": "add",
@@ -73,7 +73,7 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
                 },
             ),
             (
-                "unity.asset.crud",
+                "unity.asset.manage",
                 "assetCrud",
                 {"operation": "create", "assetPath": "Assets/Example.prefab"},
             ),
@@ -113,7 +113,7 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
     async def test_call_tool_returns_error_when_bridge_disconnected(self) -> None:
         request = mcp_types.CallToolRequest(
             params=mcp_types.CallToolRequestParams(
-                name="unity.scene.crud", arguments={"operation": "create"}
+                name="unity.scene.manage", arguments={"operation": "create"}
             )
         )
         with patch.object(

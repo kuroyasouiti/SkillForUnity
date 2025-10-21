@@ -47,9 +47,9 @@ uvicorn mcp_server.main:app --host %MCP_SERVER_HOST% --port %MCP_SERVER_PORT%
 ## Available Tools
 
 - `unity.ping`
-- `unity.scene.crud`
-- `unity_gameobject_crud`
-- `unity.component.crud`
-- `unity.asset.crud`
+- `unity.scene.manage`
+- `unity_gameobject_manage`
+- `unity.component.manage`
+- `unity.asset.manage`
 - `unity.ugui.rectAdjust`
 - `unity.script.outline`

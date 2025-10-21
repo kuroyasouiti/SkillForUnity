@@ -48,9 +48,9 @@ unity-mcp-server
 ## Available Tools
 
 - `unity.ping`
-- `unity.scene.crud`
-- `unity.hierarchy.crud`
-- `unity.component.crud`
-- `unity.asset.crud`
+- `unity.scene.manage`
+- `unity.hierarchy.manage`
+- `unity.component.manage`
+- `unity.asset.manage`
 - `unity.ugui.rectAdjust`
 - `unity.script.outline`

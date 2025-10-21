@@ -41,7 +41,7 @@ def register_tools(server: Server) -> None:
         "additionalProperties": False,
     }
 
-    scene_crud_schema = _schema_with_required(
+    scene_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
@@ -62,7 +62,7 @@ def register_tools(server: Server) -> None:
         ["operation"],
     )
 
-    game_object_crud_schema = _schema_with_required(
+    game_object_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
@@ -96,14 +96,14 @@ def register_tools(server: Server) -> None:
         ["operation", "gameObjectPath"],
     )
 
-    component_crud_schema = _schema_with_required(
+    component_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["add", "remove", "update"],
-                    "description": "Operation to perform.",
+                    "enum": ["add", "remove", "update", "inspect"],
+                    "description": "Operation to perform. Use 'inspect' to read component state.",
                 },
                 "gameObjectPath": {"type": "string"},
                 "componentType": {
@@ -121,14 +121,14 @@ def register_tools(server: Server) -> None:
         ["operation", "gameObjectPath", "componentType"],
     )
 
-    asset_crud_schema = _schema_with_required(
+    asset_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "update", "delete", "rename", "duplicate"],
-                    "description": "Operation to perform.",
+                    "enum": ["create", "update", "delete", "rename", "duplicate", "inspect"],
+                    "description": "Operation to perform. Use 'inspect' to read asset details.",
                 },
                 "assetPath": {
                     "type": "string",
@@ -197,24 +197,24 @@ def register_tools(server: Server) -> None:
             inputSchema=ping_schema,
         ),
         types.Tool(
-            name="unity.scene.crud",
+            name="unity.scene.manage",
             description="Create, load, save, delete, or duplicate Unity scenes.",
-            inputSchema=scene_crud_schema,
+            inputSchema=scene_manage_schema,
         ),
         types.Tool(
-            name="unity_gameobject_crud",
+            name="unity_gameobject_manage",
             description="Modify the active scene hierarchy (create, delete, move, rename, duplicate).",
-            inputSchema=game_object_crud_schema,
+            inputSchema=game_object_manage_schema,
         ),
         types.Tool(
-            name="unity.component.crud",
-            description="Add, remove, or update components on a GameObject.",
-            inputSchema=component_crud_schema,
+            name="unity.component.manage",
+            description="Add, remove, update, or inspect components on a GameObject.",
+            inputSchema=component_manage_schema,
         ),
         types.Tool(
-            name="unity.asset.crud",
-            description="Create, update, rename, duplicate, or delete Assets/ files.",
-            inputSchema=asset_crud_schema,
+            name="unity.asset.manage",
+            description="Create, update, rename, duplicate, delete, or inspect Assets/ files.",
+            inputSchema=asset_manage_schema,
         ),
         types.Tool(
             name="unity.ugui.rectAdjust",
@@ -252,17 +252,17 @@ def register_tools(server: Server) -> None:
             }
             return [types.TextContent(type="text", text=as_pretty_json(payload))]
 
-        if name == "unity.scene.crud":
-            return await _call_bridge_tool("sceneCrud", args)
+        if name == "unity.scene.manage":
+            return await _call_bridge_tool("sceneManage", args)
 
-        if name == "unity_gameobject_crud":
-            return await _call_bridge_tool("gameObjectCrud", args)
+        if name == "unity_gameobject_manage":
+            return await _call_bridge_tool("gameObjectManage", args)
 
-        if name == "unity.component.crud":
-            return await _call_bridge_tool("componentCrud", args)
+        if name == "unity.component.manage":
+            return await _call_bridge_tool("componentManage", args)
 
-        if name == "unity.asset.crud":
-            return await _call_bridge_tool("assetCrud", args)
+        if name == "unity.asset.manage":
+            return await _call_bridge_tool("assetManage", args)
 
         if name == "unity.ugui.rectAdjust":
             return await _call_bridge_tool("uguiRectAdjust", args)

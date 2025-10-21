@@ -15,7 +15,7 @@ namespace MCP.Editor
 {
     /// <summary>
     /// Processes MCP tool commands and executes corresponding Unity Editor operations.
-    /// Supports CRUD operations for scenes, GameObjects, components, and assets.
+    /// Supports management operations for scenes, GameObjects, components, and assets.
     /// </summary>
     internal static class McpCommandProcessor
     {
@@ -30,12 +30,10 @@ namespace MCP.Editor
             return command.ToolName switch
             {
                 "pingUnityEditor" => HandlePing(),
-                "sceneCrud" => HandleSceneCrud(command.Payload),
-                "gameObjectCrud" => HandleGameObjectCrud(command.Payload),
-                "componentCrud" => HandleComponentCrud(command.Payload),
-                "componentGet" => HandleComponentGet(command.Payload),
-                "assetCrud" => HandleAssetCrud(command.Payload),
-                "assetGet" => HandleAssetGet(command.Payload),
+                "sceneManage" => HandleSceneManage(command.Payload),
+                "gameObjectManage" => HandleGameObjectManage(command.Payload),
+                "componentManage" => HandleComponentManage(command.Payload),
+                "assetManage" => HandleAssetManage(command.Payload),
                 "uguiRectAdjust" => HandleUguiRectAdjust(command.Payload),
                 "scriptOutline" => HandleScriptOutline(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
@@ -57,12 +55,12 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Handles scene CRUD operations (create, load, save, delete, duplicate).
+        /// Handles scene management operations (create, load, save, delete, duplicate).
         /// </summary>
         /// <param name="payload">Operation parameters including 'operation' type and scene path.</param>
         /// <returns>Result dictionary with operation-specific data.</returns>
         /// <exception cref="InvalidOperationException">Thrown when operation is invalid or missing.</exception>
-        private static object HandleSceneCrud(Dictionary<string, object> payload)
+        private static object HandleSceneManage(Dictionary<string, object> payload)
         {
             var operation = GetString(payload, "operation");
             if (string.IsNullOrEmpty(operation))
@@ -83,7 +81,7 @@ namespace MCP.Editor
                 case "duplicate":
                     return DuplicateScene(payload);
                 default:
-                    throw new InvalidOperationException($"Unknown sceneCrud operation: {operation}");
+                    throw new InvalidOperationException($"Unknown sceneManage operation: {operation}");
             }
         }
 
@@ -210,12 +208,12 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Handles GameObject CRUD operations (create, delete, move, rename, duplicate).
+        /// Handles GameObject management operations (create, delete, move, rename, duplicate).
         /// </summary>
         /// <param name="payload">Operation parameters including 'operation' type and GameObject path.</param>
         /// <returns>Result dictionary with GameObject hierarchy path and instance ID.</returns>
         /// <exception cref="InvalidOperationException">Thrown when operation or required parameters are invalid.</exception>
-        private static object HandleGameObjectCrud(Dictionary<string, object> payload)
+        private static object HandleGameObjectManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
             return operation switch
@@ -225,7 +223,7 @@ namespace MCP.Editor
                 "move" => MoveGameObject(payload),
                 "rename" => RenameGameObject(payload),
                 "duplicate" => DuplicateGameObject(payload),
-                _ => throw new InvalidOperationException($"Unknown gameObjectCrud operation: {operation}"),
+                _ => throw new InvalidOperationException($"Unknown gameObjectManage operation: {operation}"),
             };
         }
 
@@ -366,13 +364,13 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Handles component CRUD operations (add, remove, update).
+        /// Handles component management operations (add, remove, update, inspect).
         /// Uses reflection to set component properties from the payload.
         /// </summary>
         /// <param name="payload">Operation parameters including 'operation', 'gameObjectPath', 'componentType', and optional 'propertyChanges'.</param>
         /// <returns>Result dictionary with component type and GameObject path.</returns>
         /// <exception cref="InvalidOperationException">Thrown when GameObject or component type is not found.</exception>
-        private static object HandleComponentCrud(Dictionary<string, object> payload)
+        private static object HandleComponentManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
             return operation switch
@@ -380,7 +378,8 @@ namespace MCP.Editor
                 "add" => AddComponent(payload),
                 "remove" => RemoveComponent(payload),
                 "update" => UpdateComponent(payload),
-                _ => throw new InvalidOperationException($"Unknown componentCrud operation: {operation}"),
+                "inspect" => InspectComponent(payload),
+                _ => throw new InvalidOperationException($"Unknown componentManage operation: {operation}"),
             };
         }
 
@@ -442,7 +441,7 @@ namespace MCP.Editor
             return DescribeComponent(component);
         }
 
-        private static object HandleComponentGet(Dictionary<string, object> payload)
+        private static object InspectComponent(Dictionary<string, object> payload)
         {
             var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
             var type = ResolveType(EnsureValue(GetString(payload, "componentType"), "componentType"));
@@ -498,7 +497,12 @@ namespace MCP.Editor
             };
         }
 
-        private static object HandleAssetCrud(Dictionary<string, object> payload)
+        /// <summary>
+        /// Handles asset management operations (create, update, delete, rename, duplicate, inspect).
+        /// </summary>
+        /// <param name="payload">Operation parameters including 'operation' and asset-specific settings.</param>
+        /// <returns>Result dictionary with asset information.</returns>
+        private static object HandleAssetManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
             return operation switch
@@ -508,7 +512,8 @@ namespace MCP.Editor
                 "delete" => DeleteAsset(payload),
                 "rename" => RenameAsset(payload),
                 "duplicate" => DuplicateAsset(payload),
-                _ => throw new InvalidOperationException($"Unknown assetCrud operation: {operation}"),
+                "inspect" => InspectAsset(payload),
+                _ => throw new InvalidOperationException($"Unknown assetManage operation: {operation}"),
             };
         }
 
@@ -582,7 +587,7 @@ namespace MCP.Editor
             return DescribeAsset(destination);
         }
 
-        private static object HandleAssetGet(Dictionary<string, object> payload)
+        private static object InspectAsset(Dictionary<string, object> payload)
         {
             var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
             if (!File.Exists(path) && !Directory.Exists(path))
