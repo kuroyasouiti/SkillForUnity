@@ -173,6 +173,64 @@ def register_tools(server: Server) -> None:
         ["gameObjectPath"],
     )
 
+    ugui_anchor_manage_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "gameObjectPath": {
+                    "type": "string",
+                    "description": "Target GameObject path containing the RectTransform.",
+                },
+                "operation": {
+                    "type": "string",
+                    "enum": ["setAnchor", "setAnchorPreset", "convertToAnchored", "convertToAbsolute"],
+                    "description": "Operation type: setAnchor (custom values), setAnchorPreset (common presets), convertToAnchored (absolute to anchored), convertToAbsolute (anchored to absolute).",
+                },
+                "anchorMinX": {
+                    "type": "number",
+                    "description": "Anchor min X (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMinY": {
+                    "type": "number",
+                    "description": "Anchor min Y (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMaxX": {
+                    "type": "number",
+                    "description": "Anchor max X (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMaxY": {
+                    "type": "number",
+                    "description": "Anchor max Y (0-1 range). Used with setAnchor operation.",
+                },
+                "preset": {
+                    "type": "string",
+                    "enum": [
+                        "top-left", "top-center", "top-right",
+                        "middle-left", "middle-center", "middle-right", "center",
+                        "bottom-left", "bottom-center", "bottom-right",
+                        "stretch-horizontal", "stretch-vertical", "stretch-all", "stretch",
+                        "stretch-top", "stretch-middle", "stretch-bottom",
+                        "stretch-left", "stretch-center-vertical", "stretch-right"
+                    ],
+                    "description": "Anchor preset name. Used with setAnchorPreset operation.",
+                },
+                "preservePosition": {
+                    "type": "boolean",
+                    "description": "Whether to preserve visual position when changing anchors. Default is true.",
+                },
+                "absoluteX": {
+                    "type": "number",
+                    "description": "Absolute X position in parent space. Used with convertToAnchored operation.",
+                },
+                "absoluteY": {
+                    "type": "number",
+                    "description": "Absolute Y position in parent space. Used with convertToAnchored operation.",
+                },
+            },
+        },
+        ["gameObjectPath", "operation"],
+    )
+
     script_outline_schema = {
         "type": "object",
         "properties": {
@@ -222,6 +280,11 @@ def register_tools(server: Server) -> None:
             inputSchema=ugui_rect_adjust_schema,
         ),
         types.Tool(
+            name="unity.ugui.anchorManage",
+            description="Manage RectTransform anchors: set custom values, apply presets (top-left, center, stretch, etc.), or convert between anchor-based and absolute positioning.",
+            inputSchema=ugui_anchor_manage_schema,
+        ),
+        types.Tool(
             name="unity.script.outline",
             description="Produce a summary of a C# script, optionally including member signatures.",
             inputSchema=script_outline_schema,
@@ -266,6 +329,9 @@ def register_tools(server: Server) -> None:
 
         if name == "unity.ugui.rectAdjust":
             return await _call_bridge_tool("uguiRectAdjust", args)
+
+        if name == "unity.ugui.anchorManage":
+            return await _call_bridge_tool("uguiAnchorManage", args)
 
         if name == "unity.script.outline":
             return await _call_bridge_tool("scriptOutline", args)
