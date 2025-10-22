@@ -85,10 +85,10 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
                 },
             ),
             (
-                "unity.component.manage",
-                "componentManage",
+                "unity_gameobject_manage",
+                "gameObjectManage",
                 {
-                    "operation": "list",
+                    "operation": "inspect",
                     "gameObjectPath": "Root/Button",
                 },
             ),

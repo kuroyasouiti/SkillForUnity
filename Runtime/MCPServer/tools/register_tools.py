@@ -68,8 +68,8 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "delete", "move", "rename", "duplicate"],
-                    "description": "Operation to perform.",
+                    "enum": ["create", "delete", "move", "rename", "duplicate", "inspect"],
+                    "description": "Operation to perform. Use 'inspect' to read GameObject details including all attached components.",
                 },
                 "gameObjectPath": {
                     "type": "string",
@@ -102,13 +102,13 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["add", "remove", "update", "inspect", "list"],
-                    "description": "Operation to perform. Use 'inspect' to read a specific component state, or 'list' to read all attached components.",
+                    "enum": ["add", "remove", "update", "inspect"],
+                    "description": "Operation to perform. Use 'inspect' to read component state.",
                 },
                 "gameObjectPath": {"type": "string"},
                 "componentType": {
                     "type": "string",
-                    "description": "Fully qualified component type (e.g. UnityEngine.UI.Text). Required for add, remove, update, and inspect operations. Not needed for list operation.",
+                    "description": "Fully qualified component type (e.g. UnityEngine.UI.Text).",
                 },
                 "propertyChanges": {
                     "type": "object",
@@ -118,7 +118,7 @@ def register_tools(server: Server) -> None:
                 "applyDefaults": {"type": "boolean"},
             },
         },
-        ["operation", "gameObjectPath"],
+        ["operation", "gameObjectPath", "componentType"],
     )
 
     asset_manage_schema = _schema_with_required(
@@ -261,12 +261,12 @@ def register_tools(server: Server) -> None:
         ),
         types.Tool(
             name="unity.gameobject.crud",
-            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate).",
+            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties.",
             inputSchema=game_object_manage_schema,
         ),
         types.Tool(
             name="unity.component.crud",
-            description="Add, remove, update, inspect, or list all components on a GameObject. Use 'list' operation to read all attached components with their properties.",
+            description="Add, remove, update, or inspect components on a GameObject.",
             inputSchema=component_manage_schema,
         ),
         types.Tool(
