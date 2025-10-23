@@ -37,11 +37,6 @@ namespace MCP.Editor
         private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(30);
         private const string WasConnectedBeforeCompileKey = "McpBridge_WasConnectedBeforeCompile";
 
-        // Auto-reconnection settings
-        private const int MaxReconnectAttempts = 5;
-        private const int InitialReconnectDelayMs = 1000;
-        private const int MaxReconnectDelayMs = 30000;
-
         private static readonly ConcurrentQueue<string> IncomingMessages = new();
         private static readonly Queue<Action> MainThreadActions = new();
         private static readonly object SendLock = new();
@@ -58,11 +53,6 @@ namespace MCP.Editor
         private static string _sessionId = Guid.NewGuid().ToString();
         private static McpConnectionState _state = McpConnectionState.Disconnected;
         private static bool _isCompilingOrReloading = false;
-
-        // Auto-reconnection state
-        private static int _reconnectAttempts = 0;
-        private static DateTime _lastReconnectAttempt = DateTime.MinValue;
-        private static bool _autoReconnectEnabled = false;
 
         public static event Action<McpConnectionState> StateChanged;
 
@@ -673,9 +663,7 @@ namespace MCP.Editor
             _receiveCts = new CancellationTokenSource();
             _ = Task.Run(() => ReceiveLoopAsync(socket, _receiveCts.Token));
 
-            // Reset reconnection state on successful connection
-            _autoReconnectEnabled = false;
-            _reconnectAttempts = 0;
+            // Reset heartbeat tracking on successful connection
             _lastHeartbeatReceived = DateTime.UtcNow;
 
             lock (MainThreadActions)
@@ -792,12 +780,10 @@ namespace MCP.Editor
                     _state = _listener != null ? McpConnectionState.Connecting : McpConnectionState.Disconnected;
                     StateChanged?.Invoke(_state);
 
-                    // Enable auto-reconnect if listener is still active
+                    // Log disconnection if listener is still active
                     if (_listener != null && !_isCompilingOrReloading)
                     {
-                        _autoReconnectEnabled = true;
-                        _reconnectAttempts = 0;
-                        Debug.Log("MCP Bridge: Client disconnected. Auto-reconnect enabled.");
+                        Debug.Log("MCP Bridge: Client disconnected. Ready for reconnection.");
                     }
                 });
             }
