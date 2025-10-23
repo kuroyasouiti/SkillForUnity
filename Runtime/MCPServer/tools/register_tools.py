@@ -409,6 +409,121 @@ def register_tools(server: Server) -> None:
         ["operations"],
     )
 
+    ugui_manage_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "gameObjectPath": {
+                    "type": "string",
+                    "description": "Target GameObject path containing the RectTransform.",
+                },
+                "operation": {
+                    "type": "string",
+                    "enum": ["rectAdjust", "setAnchor", "setAnchorPreset", "convertToAnchored", "convertToAbsolute", "inspect", "updateRect"],
+                    "description": "Operation type: 'rectAdjust' adjusts RectTransform size based on world corners, 'setAnchor' sets custom anchor values, 'setAnchorPreset' applies anchor presets, 'convertToAnchored' converts absolute to anchored position, 'convertToAbsolute' converts anchored to absolute position, 'inspect' retrieves RectTransform state, 'updateRect' updates RectTransform properties.",
+                },
+                # rectAdjust parameters (legacy support)
+                "referenceResolution": {
+                    "type": "array",
+                    "items": {"type": "number"},
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "description": "CanvasScaler reference resolution (width, height). Used with rectAdjust operation.",
+                },
+                "matchMode": {
+                    "type": "string",
+                    "enum": ["widthOrHeight", "expand", "shrink"],
+                    "description": "Match mode for rectAdjust operation.",
+                },
+                # setAnchor parameters
+                "anchorMinX": {
+                    "type": "number",
+                    "description": "Anchor min X (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMinY": {
+                    "type": "number",
+                    "description": "Anchor min Y (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMaxX": {
+                    "type": "number",
+                    "description": "Anchor max X (0-1 range). Used with setAnchor operation.",
+                },
+                "anchorMaxY": {
+                    "type": "number",
+                    "description": "Anchor max Y (0-1 range). Used with setAnchor operation.",
+                },
+                # setAnchorPreset parameters
+                "preset": {
+                    "type": "string",
+                    "enum": [
+                        "top-left", "top-center", "top-right",
+                        "middle-left", "middle-center", "middle-right", "center",
+                        "bottom-left", "bottom-center", "bottom-right",
+                        "stretch-horizontal", "stretch-vertical", "stretch-all", "stretch",
+                        "stretch-top", "stretch-middle", "stretch-bottom",
+                        "stretch-left", "stretch-center-vertical", "stretch-right"
+                    ],
+                    "description": "Anchor preset name. Used with setAnchorPreset operation.",
+                },
+                "preservePosition": {
+                    "type": "boolean",
+                    "description": "Whether to preserve visual position when changing anchors. Default is true.",
+                },
+                # convertToAnchored parameters
+                "absoluteX": {
+                    "type": "number",
+                    "description": "Absolute X position in parent space. Used with convertToAnchored operation.",
+                },
+                "absoluteY": {
+                    "type": "number",
+                    "description": "Absolute Y position in parent space. Used with convertToAnchored operation.",
+                },
+                # updateRect parameters
+                "anchoredPositionX": {
+                    "type": "number",
+                    "description": "Anchored position X. Used with updateRect operation.",
+                },
+                "anchoredPositionY": {
+                    "type": "number",
+                    "description": "Anchored position Y. Used with updateRect operation.",
+                },
+                "sizeDeltaX": {
+                    "type": "number",
+                    "description": "Size delta X. Used with updateRect operation.",
+                },
+                "sizeDeltaY": {
+                    "type": "number",
+                    "description": "Size delta Y. Used with updateRect operation.",
+                },
+                "pivotX": {
+                    "type": "number",
+                    "description": "Pivot X (0-1 range). Used with updateRect operation.",
+                },
+                "pivotY": {
+                    "type": "number",
+                    "description": "Pivot Y (0-1 range). Used with updateRect operation.",
+                },
+                "offsetMinX": {
+                    "type": "number",
+                    "description": "Offset min X. Used with updateRect operation.",
+                },
+                "offsetMinY": {
+                    "type": "number",
+                    "description": "Offset min Y. Used with updateRect operation.",
+                },
+                "offsetMaxX": {
+                    "type": "number",
+                    "description": "Offset max X. Used with updateRect operation.",
+                },
+                "offsetMaxY": {
+                    "type": "number",
+                    "description": "Offset max Y. Used with updateRect operation.",
+                },
+            },
+        },
+        ["gameObjectPath", "operation"],
+    )
+
     tool_definitions = [
         types.Tool(
             name="unity.ping",
@@ -444,6 +559,11 @@ def register_tools(server: Server) -> None:
             name="unity.ugui.anchorManage",
             description="Manage RectTransform anchors: set custom values, apply presets (top-left, center, stretch, etc.), or convert between anchor-based and absolute positioning.",
             inputSchema=ugui_anchor_manage_schema,
+        ),
+        types.Tool(
+            name="unity.ugui.manage",
+            description="Unified UGUI management tool. Consolidates all UGUI operations: adjust RectTransform size (rectAdjust), set anchors (setAnchor/setAnchorPreset), convert positioning (convertToAnchored/convertToAbsolute), inspect RectTransform state (inspect), and update properties (updateRect).",
+            inputSchema=ugui_manage_schema,
         ),
         types.Tool(
             name="unity.script.outline",
@@ -518,6 +638,9 @@ def register_tools(server: Server) -> None:
 
         if name == "unity.ugui.anchorManage":
             return await _call_bridge_tool("uguiAnchorManage", args)
+
+        if name == "unity.ugui.manage":
+            return await _call_bridge_tool("uguiManage", args)
 
         if name == "unity.script.outline":
             return await _call_bridge_tool("scriptOutline", args)

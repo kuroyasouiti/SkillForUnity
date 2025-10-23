@@ -37,6 +37,7 @@ namespace MCP.Editor
                 "assetManage" => HandleAssetManage(command.Payload),
                 "uguiRectAdjust" => HandleUguiRectAdjust(command.Payload),
                 "uguiAnchorManage" => HandleUguiAnchorManage(command.Payload),
+                "uguiManage" => HandleUguiManage(command.Payload),
                 "scriptOutline" => HandleScriptOutline(command.Payload),
                 "prefabManage" => HandlePrefabManage(command.Payload),
                 "projectSettingsManage" => HandleProjectSettingsManage(command.Payload),
@@ -1164,6 +1165,224 @@ namespace MCP.Editor
 
             // Note: The actual absolute position calculation is implicit in Unity's RectTransform system
             // We just need to ensure the state is captured correctly
+        }
+
+        /// <summary>
+        /// Unified UGUI management handler that consolidates all UGUI operations.
+        /// Supports operations: rectAdjust, setAnchor, setAnchorPreset, convertToAnchored,
+        /// convertToAbsolute, inspect, updateRect.
+        /// </summary>
+        /// <param name="payload">Operation parameters including 'operation' type and target GameObject.</param>
+        /// <returns>Result dictionary with operation-specific data.</returns>
+        private static object HandleUguiManage(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var operation = GetString(payload, "operation");
+                if (string.IsNullOrEmpty(operation))
+                {
+                    throw new InvalidOperationException("operation is required");
+                }
+
+                var path = EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath");
+                Debug.Log($"[uguiManage] Processing operation '{operation}' on: {path}");
+
+                var target = ResolveGameObject(path);
+                var rectTransform = target.GetComponent<RectTransform>();
+                if (rectTransform == null)
+                {
+                    throw new InvalidOperationException("Target does not contain a RectTransform");
+                }
+
+                var canvas = rectTransform.GetComponentInParent<Canvas>();
+                if (canvas == null)
+                {
+                    throw new InvalidOperationException("Target is not under a Canvas");
+                }
+
+                // Capture before state
+                var beforeState = CaptureRectTransformState(rectTransform);
+
+                object result;
+                switch (operation)
+                {
+                    case "rectAdjust":
+                        result = ExecuteRectAdjust(rectTransform, canvas, payload, beforeState);
+                        break;
+                    case "setAnchor":
+                        SetAnchor(rectTransform, payload);
+                        result = CreateStandardResult(beforeState, rectTransform, operation);
+                        break;
+                    case "setAnchorPreset":
+                        SetAnchorPreset(rectTransform, payload);
+                        result = CreateStandardResult(beforeState, rectTransform, operation);
+                        break;
+                    case "convertToAnchored":
+                        ConvertToAnchoredPosition(rectTransform, payload);
+                        result = CreateStandardResult(beforeState, rectTransform, operation);
+                        break;
+                    case "convertToAbsolute":
+                        ConvertToAbsolutePosition(rectTransform, payload);
+                        result = CreateStandardResult(beforeState, rectTransform, operation);
+                        break;
+                    case "inspect":
+                        result = ExecuteInspect(rectTransform, canvas);
+                        break;
+                    case "updateRect":
+                        ExecuteUpdateRect(rectTransform, payload);
+                        result = CreateStandardResult(beforeState, rectTransform, operation);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown uguiManage operation: {operation}");
+                }
+
+                EditorUtility.SetDirty(rectTransform);
+                Debug.Log($"[uguiManage] Completed successfully");
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[uguiManage] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Executes RectTransform size adjustment based on world corners.
+        /// </summary>
+        private static object ExecuteRectAdjust(RectTransform rectTransform, Canvas canvas,
+            Dictionary<string, object> payload, Dictionary<string, object> beforeState)
+        {
+            var worldCorners = new Vector3[4];
+            rectTransform.GetWorldCorners(worldCorners);
+
+            var width = Vector3.Distance(worldCorners[3], worldCorners[0]);
+            var height = Vector3.Distance(worldCorners[1], worldCorners[0]);
+            var scaleFactor = canvas.scaleFactor == 0f ? 1f : canvas.scaleFactor;
+            var pixelWidth = width / scaleFactor;
+            var pixelHeight = height / scaleFactor;
+
+            rectTransform.sizeDelta = new Vector2(pixelWidth, pixelHeight);
+
+            return new Dictionary<string, object>
+            {
+                ["before"] = beforeState,
+                ["after"] = CaptureRectTransformState(rectTransform),
+                ["operation"] = "rectAdjust",
+                ["scaleFactor"] = scaleFactor,
+            };
+        }
+
+        /// <summary>
+        /// Inspects current RectTransform state with detailed information.
+        /// </summary>
+        private static object ExecuteInspect(RectTransform rectTransform, Canvas canvas)
+        {
+            var state = CaptureRectTransformState(rectTransform);
+            state["canvasName"] = canvas.name;
+            state["scaleFactor"] = canvas.scaleFactor;
+
+            // Add calculated world corners
+            var worldCorners = new Vector3[4];
+            rectTransform.GetWorldCorners(worldCorners);
+            state["worldCorners"] = new List<Dictionary<string, object>>
+            {
+                new Dictionary<string, object> { ["x"] = worldCorners[0].x, ["y"] = worldCorners[0].y, ["z"] = worldCorners[0].z },
+                new Dictionary<string, object> { ["x"] = worldCorners[1].x, ["y"] = worldCorners[1].y, ["z"] = worldCorners[1].z },
+                new Dictionary<string, object> { ["x"] = worldCorners[2].x, ["y"] = worldCorners[2].y, ["z"] = worldCorners[2].z },
+                new Dictionary<string, object> { ["x"] = worldCorners[3].x, ["y"] = worldCorners[3].y, ["z"] = worldCorners[3].z },
+            };
+
+            // Add rect dimensions
+            state["rectWidth"] = rectTransform.rect.width;
+            state["rectHeight"] = rectTransform.rect.height;
+
+            return new Dictionary<string, object>
+            {
+                ["state"] = state,
+                ["operation"] = "inspect",
+            };
+        }
+
+        /// <summary>
+        /// Updates RectTransform properties from payload.
+        /// </summary>
+        private static void ExecuteUpdateRect(RectTransform rectTransform, Dictionary<string, object> payload)
+        {
+            // Update anchoredPosition if provided
+            var anchoredPositionX = GetFloat(payload, "anchoredPositionX");
+            var anchoredPositionY = GetFloat(payload, "anchoredPositionY");
+            if (anchoredPositionX.HasValue || anchoredPositionY.HasValue)
+            {
+                var pos = rectTransform.anchoredPosition;
+                rectTransform.anchoredPosition = new Vector2(
+                    anchoredPositionX ?? pos.x,
+                    anchoredPositionY ?? pos.y
+                );
+            }
+
+            // Update sizeDelta if provided
+            var sizeDeltaX = GetFloat(payload, "sizeDeltaX");
+            var sizeDeltaY = GetFloat(payload, "sizeDeltaY");
+            if (sizeDeltaX.HasValue || sizeDeltaY.HasValue)
+            {
+                var size = rectTransform.sizeDelta;
+                rectTransform.sizeDelta = new Vector2(
+                    sizeDeltaX ?? size.x,
+                    sizeDeltaY ?? size.y
+                );
+            }
+
+            // Update pivot if provided
+            var pivotX = GetFloat(payload, "pivotX");
+            var pivotY = GetFloat(payload, "pivotY");
+            if (pivotX.HasValue || pivotY.HasValue)
+            {
+                var pivot = rectTransform.pivot;
+                rectTransform.pivot = new Vector2(
+                    pivotX ?? pivot.x,
+                    pivotY ?? pivot.y
+                );
+            }
+
+            // Update offsetMin if provided
+            var offsetMinX = GetFloat(payload, "offsetMinX");
+            var offsetMinY = GetFloat(payload, "offsetMinY");
+            if (offsetMinX.HasValue || offsetMinY.HasValue)
+            {
+                var offset = rectTransform.offsetMin;
+                rectTransform.offsetMin = new Vector2(
+                    offsetMinX ?? offset.x,
+                    offsetMinY ?? offset.y
+                );
+            }
+
+            // Update offsetMax if provided
+            var offsetMaxX = GetFloat(payload, "offsetMaxX");
+            var offsetMaxY = GetFloat(payload, "offsetMaxY");
+            if (offsetMaxX.HasValue || offsetMaxY.HasValue)
+            {
+                var offset = rectTransform.offsetMax;
+                rectTransform.offsetMax = new Vector2(
+                    offsetMaxX ?? offset.x,
+                    offsetMaxY ?? offset.y
+                );
+            }
+        }
+
+        /// <summary>
+        /// Creates a standard result with before/after state and operation name.
+        /// </summary>
+        private static Dictionary<string, object> CreateStandardResult(
+            Dictionary<string, object> beforeState, RectTransform rectTransform, string operation)
+        {
+            return new Dictionary<string, object>
+            {
+                ["before"] = beforeState,
+                ["after"] = CaptureRectTransformState(rectTransform),
+                ["operation"] = operation,
+            };
         }
 
         /// <summary>
@@ -3456,6 +3675,7 @@ namespace MCP.Editor
                         "assetManage" => HandleAssetManage(operationPayload),
                         "uguiRectAdjust" => HandleUguiRectAdjust(operationPayload),
                         "uguiAnchorManage" => HandleUguiAnchorManage(operationPayload),
+                        "uguiManage" => HandleUguiManage(operationPayload),
                         "scriptOutline" => HandleScriptOutline(operationPayload),
                         "prefabManage" => HandlePrefabManage(operationPayload),
                         "projectSettingsManage" => HandleProjectSettingsManage(operationPayload),
