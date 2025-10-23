@@ -2136,6 +2136,12 @@ namespace MCP.Editor
                 return Enum.Parse(targetType, enumString);
             }
 
+            // Handle Enum from integer values
+            if (targetType.IsEnum && (rawValue is int || rawValue is long))
+            {
+                return Enum.ToObject(targetType, rawValue);
+            }
+
             if (targetType == typeof(Vector3) && rawValue is Dictionary<string, object> dict)
             {
                 return new Vector3(
