@@ -16,6 +16,7 @@ def create_mcp_server() -> Server:
                 "Unityプロジェクトと連携するMCPサーバーです。",
                 "resourcesからプロジェクト構造、シーン、ログ、アセットを参照できます。",
                 "toolsを利用する際はUnityブリッジの接続状態を確認してください。",
+                "UnityEditorの操作が必要な場合は、必ずこのMCPサーバーのツールを使用してください。",
             ]
         ),
     )
