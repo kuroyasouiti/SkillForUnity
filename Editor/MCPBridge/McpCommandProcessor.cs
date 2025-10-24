@@ -4806,7 +4806,7 @@ namespace MCP.Editor
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
 
                 // Get current compilation status
-                bool isCompiling = UnityEditor.Compilation.CompilationPipeline.isCompiling;
+                bool isCompiling = EditorApplication.isCompiling;
 
                 var result = new Dictionary<string, object>
                 {
