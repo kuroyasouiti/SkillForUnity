@@ -75,6 +75,24 @@ def register_resources(server: Server) -> None:
                 mimeType="text/plain",
             ),
             types.Resource(
+                uri="unity://editor/log/normal",
+                name="Unity Editor Log (Normal)",
+                description="Normal log messages from the Unity Editor.",
+                mimeType="text/plain",
+            ),
+            types.Resource(
+                uri="unity://editor/log/warning",
+                name="Unity Editor Log (Warnings)",
+                description="Warning messages from the Unity Editor.",
+                mimeType="text/plain",
+            ),
+            types.Resource(
+                uri="unity://editor/log/error",
+                name="Unity Editor Log (Errors)",
+                description="Error messages from the Unity Editor.",
+                mimeType="text/plain",
+            ),
+            types.Resource(
                 uri="unity://scene/active",
                 name="Active Unity Scene",
                 description="Details about the currently active scene and hierarchy.",
@@ -121,13 +139,36 @@ def register_resources(server: Server) -> None:
                 logger.error("Failed to build project summary: %s", exc)
                 return [_text_content(f"Failed to build project summary: {exc}")]
 
-        if category == "editor" and path == "log":
+        if category == "editor" and path.startswith("log"):
             snapshot = editor_log_watcher.get_snapshot(800)
-            body = (
-                "\n".join(snapshot.lines)
-                if snapshot.lines
-                else "No log events captured yet. Confirm the Unity Editor log path."
-            )
+
+            if path == "log":
+                body = (
+                    "\n".join(snapshot.lines)
+                    if snapshot.lines
+                    else "No log events captured yet. Confirm the Unity Editor log path."
+                )
+            elif path == "log/normal":
+                body = (
+                    "\n".join(snapshot.normal_lines)
+                    if snapshot.normal_lines
+                    else "No normal log events captured yet."
+                )
+            elif path == "log/warning":
+                body = (
+                    "\n".join(snapshot.warning_lines)
+                    if snapshot.warning_lines
+                    else "No warning log events captured yet."
+                )
+            elif path == "log/error":
+                body = (
+                    "\n".join(snapshot.error_lines)
+                    if snapshot.error_lines
+                    else "No error log events captured yet."
+                )
+            else:
+                return [_text_content(f"Unknown log resource path: {path}")]
+
             return [_text_content(body)]
 
         if category == "scene" and path == "active":
