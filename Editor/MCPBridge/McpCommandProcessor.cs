@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -2167,6 +2168,30 @@ namespace MCP.Editor
                     Convert.ToSingle(colorDict.GetValueOrDefault("g", 1f), CultureInfo.InvariantCulture),
                     Convert.ToSingle(colorDict.GetValueOrDefault("b", 1f), CultureInfo.InvariantCulture),
                     Convert.ToSingle(colorDict.GetValueOrDefault("a", 1f), CultureInfo.InvariantCulture));
+            }
+
+            // Handle arrays
+            if (targetType.IsArray && rawValue is IList rawList)
+            {
+                var elementType = targetType.GetElementType();
+                var array = Array.CreateInstance(elementType, rawList.Count);
+                for (int i = 0; i < rawList.Count; i++)
+                {
+                    array.SetValue(ConvertValue(rawList[i], elementType), i);
+                }
+                return array;
+            }
+
+            // Handle List<T>
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>) && rawValue is IList rawListGeneric)
+            {
+                var elementType = targetType.GetGenericArguments()[0];
+                var list = (IList)Activator.CreateInstance(targetType);
+                foreach (var item in rawListGeneric)
+                {
+                    list.Add(ConvertValue(item, elementType));
+                }
+                return list;
             }
 
             if (rawValue is double d)
