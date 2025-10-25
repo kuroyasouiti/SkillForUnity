@@ -473,7 +473,7 @@ namespace MCP.Editor
 
         private static object AddComponent(Dictionary<string, object> payload)
         {
-            var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
+            var go = ResolveGameObjectFromPayload(payload);
             var type = ResolveType(EnsureValue(GetString(payload, "componentType"), "componentType"));
 
             var component = go.GetComponent(type);
@@ -492,7 +492,7 @@ namespace MCP.Editor
 
         private static object RemoveComponent(Dictionary<string, object> payload)
         {
-            var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
+            var go = ResolveGameObjectFromPayload(payload);
             var type = ResolveType(EnsureValue(GetString(payload, "componentType"), "componentType"));
             var component = go.GetComponent(type);
             if (component == null)
@@ -509,7 +509,7 @@ namespace MCP.Editor
 
         private static object UpdateComponent(Dictionary<string, object> payload)
         {
-            var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
+            var go = ResolveGameObjectFromPayload(payload);
             var type = ResolveType(EnsureValue(GetString(payload, "componentType"), "componentType"));
             var component = go.GetComponent(type);
             if (component == null)
@@ -531,7 +531,7 @@ namespace MCP.Editor
 
         private static object InspectComponent(Dictionary<string, object> payload)
         {
-            var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
+            var go = ResolveGameObjectFromPayload(payload);
             var type = ResolveType(EnsureValue(GetString(payload, "componentType"), "componentType"));
             var component = go.GetComponent(type);
             if (component == null)
@@ -2032,6 +2032,73 @@ namespace MCP.Editor
             return go;
         }
 
+        /// <summary>
+        /// Resolves a GameObject from a payload dictionary by GlobalObjectId only.
+        /// </summary>
+        /// <param name="payload">Payload dictionary containing GameObject identification</param>
+        /// <returns>Resolved GameObject</returns>
+        /// <exception cref="InvalidOperationException">Thrown when GameObject cannot be resolved</exception>
+        private static GameObject ResolveGameObjectFromPayload(Dictionary<string, object> payload)
+        {
+            var globalObjectIdString = GetString(payload, "gameObjectGlobalObjectId");
+
+            if (string.IsNullOrEmpty(globalObjectIdString))
+            {
+                throw new InvalidOperationException("Payload must contain 'gameObjectGlobalObjectId' parameter");
+            }
+
+            return ResolveGameObjectByGlobalObjectId(globalObjectIdString);
+        }
+
+        /// <summary>
+        /// Resolves a GameObject by its GlobalObjectId string.
+        /// </summary>
+        /// <param name="globalObjectIdString">GlobalObjectId in string format (e.g., "GlobalObjectId_V1-1-abc123-456-0")</param>
+        /// <returns>The resolved GameObject</returns>
+        /// <exception cref="InvalidOperationException">Thrown when GameObject is not found</exception>
+        private static GameObject ResolveGameObjectByGlobalObjectId(string globalObjectIdString)
+        {
+            if (string.IsNullOrEmpty(globalObjectIdString))
+            {
+                throw new InvalidOperationException("GlobalObjectId string cannot be null or empty");
+            }
+
+            if (!GlobalObjectId.TryParse(globalObjectIdString, out GlobalObjectId globalObjectId))
+            {
+                throw new InvalidOperationException($"Invalid GlobalObjectId format: {globalObjectIdString}");
+            }
+
+            var obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(globalObjectId);
+            if (obj == null)
+            {
+                throw new InvalidOperationException($"GameObject not found with GlobalObjectId: {globalObjectIdString}");
+            }
+
+            if (obj is GameObject go)
+            {
+                return go;
+            }
+
+            // If it's a component, return its GameObject
+            if (obj is Component component)
+            {
+                return component.gameObject;
+            }
+
+            throw new InvalidOperationException($"Object with GlobalObjectId {globalObjectIdString} is not a GameObject or Component");
+        }
+
+        /// <summary>
+        /// Gets the GlobalObjectId string for a GameObject.
+        /// </summary>
+        /// <param name="go">The GameObject</param>
+        /// <returns>GlobalObjectId in string format</returns>
+        private static string GetGlobalObjectIdString(GameObject go)
+        {
+            var globalObjectId = GlobalObjectId.GetGlobalObjectIdSlow(go);
+            return globalObjectId.ToString();
+        }
+
         private static string GetHierarchyPath(GameObject go)
         {
             var stack = new Stack<string>();
@@ -2316,6 +2383,29 @@ namespace MCP.Editor
         }
 
         /// <summary>
+        /// Resolves an asset by GUID.
+        /// </summary>
+        /// <param name="guid">Asset GUID string</param>
+        /// <param name="targetType">Expected asset type</param>
+        /// <returns>Loaded asset</returns>
+        /// <exception cref="InvalidOperationException">Thrown when asset is not found or type mismatch</exception>
+        private static UnityEngine.Object ResolveAssetByGuid(string guid, Type targetType)
+        {
+            if (string.IsNullOrEmpty(guid))
+            {
+                throw new InvalidOperationException("Asset GUID cannot be null or empty");
+            }
+
+            var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                throw new InvalidOperationException($"Asset not found with GUID: {guid}");
+            }
+
+            return ResolveAssetPath(assetPath, targetType);
+        }
+
+        /// <summary>
         /// Resolves a Unity object reference from a dictionary specification.
         /// Supports GameObject, Component, and Asset references by path, instance ID, or GUID.
         /// </summary>
@@ -2347,17 +2437,18 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Resolves a GameObject reference by hierarchy path.
+        /// Resolves a GameObject reference by GlobalObjectId only.
         /// </summary>
         private static UnityEngine.Object ResolveGameObjectReference(Dictionary<string, object> refDict, Type targetType)
         {
-            var path = GetString(refDict, "path");
-            if (string.IsNullOrEmpty(path))
+            var globalObjectIdString = GetString(refDict, "globalObjectId");
+
+            if (string.IsNullOrEmpty(globalObjectIdString))
             {
-                throw new InvalidOperationException("GameObject reference requires 'path' parameter");
+                throw new InvalidOperationException("GameObject reference requires 'globalObjectId' parameter");
             }
 
-            var gameObject = ResolveGameObject(path);
+            var gameObject = ResolveGameObjectByGlobalObjectId(globalObjectIdString);
 
             // If target is GameObject, return directly
             if (targetType == typeof(GameObject) || targetType.IsAssignableFrom(typeof(GameObject)))
@@ -2371,7 +2462,7 @@ namespace MCP.Editor
                 var component = gameObject.GetComponent(targetType);
                 if (component == null)
                 {
-                    throw new InvalidOperationException($"Component {targetType.FullName} not found on GameObject: {path}");
+                    throw new InvalidOperationException($"Component {targetType.FullName} not found on GameObject: {globalObjectIdString}");
                 }
                 return component;
             }
@@ -2380,19 +2471,19 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Resolves a Component reference by GameObject path and component type.
+        /// Resolves a Component reference by GameObject GlobalObjectId and component type.
         /// </summary>
         private static UnityEngine.Object ResolveComponentReference(Dictionary<string, object> refDict, Type targetType)
         {
-            var path = GetString(refDict, "path");
+            var globalObjectIdString = GetString(refDict, "globalObjectId");
             var typeName = GetString(refDict, "type");
 
-            if (string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(globalObjectIdString))
             {
-                throw new InvalidOperationException("Component reference requires 'path' parameter");
+                throw new InvalidOperationException("Component reference requires 'globalObjectId' parameter");
             }
 
-            var gameObject = ResolveGameObject(path);
+            var gameObject = ResolveGameObjectByGlobalObjectId(globalObjectIdString);
 
             // Determine which component type to get
             Type componentType = targetType;
@@ -2404,53 +2495,25 @@ namespace MCP.Editor
             var component = gameObject.GetComponent(componentType);
             if (component == null)
             {
-                throw new InvalidOperationException($"Component {componentType.FullName} not found on GameObject: {path}");
+                throw new InvalidOperationException($"Component {componentType.FullName} not found on GameObject: {globalObjectIdString}");
             }
 
             return component;
         }
 
         /// <summary>
-        /// Resolves an Asset reference by asset path or GUID.
+        /// Resolves an Asset reference by GUID only.
         /// </summary>
         private static UnityEngine.Object ResolveAssetReference(Dictionary<string, object> refDict, Type targetType)
         {
-            var path = GetString(refDict, "path");
             var guid = GetString(refDict, "guid");
 
-            // Resolve path from GUID if provided
-            if (!string.IsNullOrEmpty(guid))
+            if (string.IsNullOrEmpty(guid))
             {
-                path = AssetDatabase.GUIDToAssetPath(guid);
-                if (string.IsNullOrEmpty(path))
-                {
-                    throw new InvalidOperationException($"Asset not found with GUID: {guid}");
-                }
+                throw new InvalidOperationException("Asset reference requires 'guid' parameter");
             }
 
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new InvalidOperationException("Asset reference requires 'path' or 'guid' parameter");
-            }
-
-            // Load the asset
-            var asset = AssetDatabase.LoadAssetAtPath(path, targetType);
-            if (asset == null)
-            {
-                // Try loading as generic Object if specific type fails
-                asset = AssetDatabase.LoadMainAssetAtPath(path);
-                if (asset != null && !targetType.IsInstanceOfType(asset))
-                {
-                    throw new InvalidOperationException($"Asset at {path} is type {asset.GetType().FullName}, expected {targetType.FullName}");
-                }
-            }
-
-            if (asset == null)
-            {
-                throw new InvalidOperationException($"Asset not found or incompatible type at path: {path}");
-            }
-
-            return asset;
+            return ResolveAssetByGuid(guid, targetType);
         }
 
         /// <summary>
