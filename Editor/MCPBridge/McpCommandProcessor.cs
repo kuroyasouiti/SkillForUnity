@@ -4749,6 +4749,16 @@ namespace MCP.Editor
             return defaultValue;
         }
 
+        private static List<object> GetList(Dictionary<string, object> payload, string key)
+        {
+            if (!payload.TryGetValue(key, out var value) || value == null)
+            {
+                return null;
+            }
+
+            return value as List<object>;
+        }
+
         /// <summary>
         /// Handles batch execution of multiple operations.
         /// </summary>
