@@ -237,6 +237,9 @@ namespace MCP.Editor
                 "rename" => RenameGameObject(payload),
                 "duplicate" => DuplicateGameObject(payload),
                 "inspect" => InspectGameObject(payload),
+                "findMultiple" => FindMultipleGameObjects(payload),
+                "deleteMultiple" => DeleteMultipleGameObjects(payload),
+                "inspectMultiple" => InspectMultipleGameObjects(payload),
                 _ => throw new InvalidOperationException($"Unknown gameObjectManage operation: {operation}"),
             };
         }
@@ -451,6 +454,105 @@ namespace MCP.Editor
             };
         }
 
+        private static object FindMultipleGameObjects(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+
+            var results = new List<Dictionary<string, object>>();
+            foreach (var go in gameObjects)
+            {
+                results.Add(new Dictionary<string, object>
+                {
+                    ["path"] = GetHierarchyPath(go),
+                    ["name"] = go.name,
+                    ["id"] = go.GetInstanceID(),
+                    ["active"] = go.activeSelf,
+                    ["tag"] = go.tag,
+                    ["layer"] = LayerMask.LayerToName(go.layer),
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = results.Count,
+                ["gameObjects"] = results,
+            };
+        }
+
+        private static object DeleteMultipleGameObjects(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+            var deletedPaths = new List<string>();
+
+            foreach (var go in gameObjects)
+            {
+                var path = GetHierarchyPath(go);
+                UnityEngine.Object.DestroyImmediate(go);
+                deletedPaths.Add(path);
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = deletedPaths.Count,
+                ["deleted"] = deletedPaths,
+            };
+        }
+
+        private static object InspectMultipleGameObjects(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var includeComponents = GetBool(payload, "includeComponents");
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+
+            var results = new List<Dictionary<string, object>>();
+            foreach (var go in gameObjects)
+            {
+                var goData = new Dictionary<string, object>
+                {
+                    ["path"] = GetHierarchyPath(go),
+                    ["name"] = go.name,
+                    ["id"] = go.GetInstanceID(),
+                    ["active"] = go.activeSelf,
+                    ["tag"] = go.tag,
+                    ["layer"] = LayerMask.LayerToName(go.layer),
+                };
+
+                if (includeComponents)
+                {
+                    var components = go.GetComponents<Component>();
+                    var componentsList = new List<string>();
+                    foreach (var component in components)
+                    {
+                        if (component != null)
+                        {
+                            componentsList.Add(component.GetType().FullName);
+                        }
+                    }
+                    goData["components"] = componentsList;
+                    goData["componentCount"] = componentsList.Count;
+                }
+
+                results.Add(goData);
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = results.Count,
+                ["gameObjects"] = results,
+            };
+        }
+
         /// <summary>
         /// Handles component management operations (add, remove, update, inspect).
         /// Uses reflection to set component properties from the payload.
@@ -467,6 +569,10 @@ namespace MCP.Editor
                 "remove" => RemoveComponent(payload),
                 "update" => UpdateComponent(payload),
                 "inspect" => InspectComponent(payload),
+                "addMultiple" => AddMultipleComponents(payload),
+                "removeMultiple" => RemoveMultipleComponents(payload),
+                "updateMultiple" => UpdateMultipleComponents(payload),
+                "inspectMultiple" => InspectMultipleComponents(payload),
                 _ => throw new InvalidOperationException($"Unknown componentManage operation: {operation}"),
             };
         }
@@ -585,6 +691,184 @@ namespace MCP.Editor
             };
         }
 
+        private static object AddMultipleComponents(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var componentTypeName = EnsureValue(GetString(payload, "componentType"), "componentType");
+            var type = ResolveType(componentTypeName);
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+            var results = new List<Dictionary<string, object>>();
+
+            foreach (var go in gameObjects)
+            {
+                var component = go.AddComponent(type);
+                results.Add(new Dictionary<string, object>
+                {
+                    ["gameObject"] = GetHierarchyPath(go),
+                    ["type"] = type.FullName,
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["componentType"] = type.FullName,
+                ["count"] = results.Count,
+                ["results"] = results,
+            };
+        }
+
+        private static object RemoveMultipleComponents(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var componentTypeName = EnsureValue(GetString(payload, "componentType"), "componentType");
+            var type = ResolveType(componentTypeName);
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+            var results = new List<Dictionary<string, object>>();
+
+            foreach (var go in gameObjects)
+            {
+                var component = go.GetComponent(type);
+                if (component != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(component);
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["gameObject"] = GetHierarchyPath(go),
+                        ["type"] = type.FullName,
+                        ["removed"] = true,
+                    });
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["componentType"] = type.FullName,
+                ["count"] = results.Count,
+                ["results"] = results,
+            };
+        }
+
+        private static object UpdateMultipleComponents(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var componentTypeName = EnsureValue(GetString(payload, "componentType"), "componentType");
+            var type = ResolveType(componentTypeName);
+            var propertyChanges = payload.ContainsKey("propertyChanges") && payload["propertyChanges"] is Dictionary<string, object> changes
+                ? changes
+                : new Dictionary<string, object>();
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+            var results = new List<Dictionary<string, object>>();
+
+            foreach (var go in gameObjects)
+            {
+                var component = go.GetComponent(type);
+                if (component != null)
+                {
+                    // Apply each property change using existing ApplyProperty method
+                    foreach (var kvp in propertyChanges)
+                    {
+                        ApplyProperty(component, kvp.Key, kvp.Value);
+                    }
+
+                    EditorUtility.SetDirty(component);
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["gameObject"] = GetHierarchyPath(go),
+                        ["type"] = type.FullName,
+                        ["updated"] = true,
+                    });
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["componentType"] = type.FullName,
+                ["count"] = results.Count,
+                ["results"] = results,
+            };
+        }
+
+        private static object InspectMultipleComponents(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var componentTypeName = EnsureValue(GetString(payload, "componentType"), "componentType");
+            var type = ResolveType(componentTypeName);
+
+            var gameObjects = McpWildcardUtility.ResolveGameObjects(pattern, useRegex);
+            var results = new List<Dictionary<string, object>>();
+
+            foreach (var go in gameObjects)
+            {
+                var component = go.GetComponent(type);
+                if (component != null)
+                {
+                    var properties = new Dictionary<string, object>();
+                    var componentType = component.GetType();
+
+                    // Get all public properties
+                    var propertyInfos = componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var prop in propertyInfos)
+                    {
+                        if (!prop.CanRead)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var value = prop.GetValue(component);
+                            properties[prop.Name] = SerializeValue(value);
+                        }
+                        catch (Exception ex)
+                        {
+                            properties[prop.Name] = $"<Error: {ex.Message}>";
+                        }
+                    }
+
+                    // Get all public fields
+                    var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var field in fieldInfos)
+                    {
+                        try
+                        {
+                            var value = field.GetValue(component);
+                            properties[field.Name] = SerializeValue(value);
+                        }
+                        catch (Exception ex)
+                        {
+                            properties[field.Name] = $"<Error: {ex.Message}>";
+                        }
+                    }
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["gameObject"] = GetHierarchyPath(go),
+                        ["type"] = componentType.FullName,
+                        ["properties"] = properties,
+                    });
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["componentType"] = type.FullName,
+                ["count"] = results.Count,
+                ["results"] = results,
+            };
+        }
+
         /// <summary>
         /// Handles asset management operations (create, update, delete, rename, duplicate, inspect).
         /// </summary>
@@ -601,6 +885,9 @@ namespace MCP.Editor
                 "rename" => RenameAsset(payload),
                 "duplicate" => DuplicateAsset(payload),
                 "inspect" => InspectAsset(payload),
+                "findMultiple" => FindMultipleAssets(payload),
+                "deleteMultiple" => DeleteMultipleAssets(payload),
+                "inspectMultiple" => InspectMultipleAssets(payload),
                 _ => throw new InvalidOperationException($"Unknown assetManage operation: {operation}"),
             };
         }
@@ -739,6 +1026,138 @@ namespace MCP.Editor
             }
 
             return result;
+        }
+
+        private static object FindMultipleAssets(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+
+            var assetPaths = McpWildcardUtility.ResolveAssetPaths(pattern, useRegex);
+
+            var results = new List<Dictionary<string, object>>();
+            foreach (var path in assetPaths)
+            {
+                var guid = AssetDatabase.AssetPathToGUID(path);
+                var mainAssetType = AssetDatabase.GetMainAssetTypeAtPath(path);
+
+                results.Add(new Dictionary<string, object>
+                {
+                    ["path"] = path,
+                    ["guid"] = guid,
+                    ["type"] = mainAssetType?.FullName,
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = results.Count,
+                ["assets"] = results,
+            };
+        }
+
+        private static object DeleteMultipleAssets(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+
+            var assetPaths = McpWildcardUtility.ResolveAssetPaths(pattern, useRegex);
+            var deletedPaths = new List<string>();
+
+            foreach (var path in assetPaths)
+            {
+                if (AssetDatabase.DeleteAsset(path))
+                {
+                    deletedPaths.Add(path);
+                }
+            }
+
+            AssetDatabase.Refresh();
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = deletedPaths.Count,
+                ["deleted"] = deletedPaths,
+            };
+        }
+
+        private static object InspectMultipleAssets(Dictionary<string, object> payload)
+        {
+            var pattern = EnsureValue(GetString(payload, "pattern"), "pattern");
+            var useRegex = GetBool(payload, "useRegex");
+            var includeProperties = GetBool(payload, "includeProperties");
+
+            var assetPaths = McpWildcardUtility.ResolveAssetPaths(pattern, useRegex);
+
+            var results = new List<Dictionary<string, object>>();
+            foreach (var path in assetPaths)
+            {
+                var guid = AssetDatabase.AssetPathToGUID(path);
+                var mainAssetType = AssetDatabase.GetMainAssetTypeAtPath(path);
+                var assetObj = AssetDatabase.LoadMainAssetAtPath(path);
+
+                var assetData = new Dictionary<string, object>
+                {
+                    ["path"] = path,
+                    ["guid"] = guid,
+                    ["type"] = mainAssetType?.FullName,
+                    ["exists"] = assetObj != null,
+                };
+
+                if (includeProperties && assetObj != null)
+                {
+                    var properties = new Dictionary<string, object>();
+                    var assetType = assetObj.GetType();
+
+                    // Get all public properties
+                    var propertyInfos = assetType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var prop in propertyInfos)
+                    {
+                        if (!prop.CanRead)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var value = prop.GetValue(assetObj);
+                            properties[prop.Name] = SerializeValue(value);
+                        }
+                        catch (Exception ex)
+                        {
+                            properties[prop.Name] = $"<Error: {ex.Message}>";
+                        }
+                    }
+
+                    // Get all public fields
+                    var fieldInfos = assetType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var field in fieldInfos)
+                    {
+                        try
+                        {
+                            var value = field.GetValue(assetObj);
+                            properties[field.Name] = SerializeValue(value);
+                        }
+                        catch (Exception ex)
+                        {
+                            properties[field.Name] = $"<Error: {ex.Message}>";
+                        }
+                    }
+
+                    assetData["properties"] = properties;
+                }
+
+                results.Add(assetData);
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["pattern"] = pattern,
+                ["count"] = results.Count,
+                ["assets"] = results,
+            };
         }
 
         private static object HandleUguiRectAdjust(Dictionary<string, object> payload)

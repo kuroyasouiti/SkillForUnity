@@ -68,12 +68,12 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "delete", "move", "rename", "duplicate", "inspect"],
-                    "description": "Operation to perform. Use 'inspect' to read GameObject details including all attached components.",
+                    "enum": ["create", "delete", "move", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
+                    "description": "Operation to perform. Use 'inspect' to read GameObject details including all attached components. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple GameObjects matching a wildcard or regex pattern.",
                 },
                 "gameObjectPath": {
                     "type": "string",
-                    "description": "Hierarchy path of the GameObject (e.g. Root/Child/Button).",
+                    "description": "Hierarchy path of the GameObject (e.g. Root/Child/Button). Not required for multiple operations (use 'pattern' instead).",
                 },
                 "parentPath": {
                     "type": "string",
@@ -87,13 +87,25 @@ def register_tools(server: Server) -> None:
                     "type": "string",
                     "description": "Name for the new or renamed GameObject.",
                 },
+                "pattern": {
+                    "type": "string",
+                    "description": "Wildcard pattern (e.g. 'Enemy*', 'Player?') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
+                },
+                "useRegex": {
+                    "type": "boolean",
+                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
+                },
+                "includeComponents": {
+                    "type": "boolean",
+                    "description": "For inspectMultiple operation: if true, includes component type names in results. Default is false.",
+                },
                 "payload": {
                     "type": "object",
                     "additionalProperties": True,
                 },
             },
         },
-        ["operation", "gameObjectPath"],
+        ["operation"],
     )
 
     component_manage_schema = _schema_with_required(
@@ -102,10 +114,13 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["add", "remove", "update", "inspect"],
-                    "description": "Operation to perform. Use 'inspect' to read component state.",
+                    "enum": ["add", "remove", "update", "inspect", "addMultiple", "removeMultiple", "updateMultiple", "inspectMultiple"],
+                    "description": "Operation to perform. Use 'inspect' to read component state. Use 'addMultiple', 'removeMultiple', 'updateMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple GameObjects matching a wildcard or regex pattern.",
                 },
-                "gameObjectPath": {"type": "string"},
+                "gameObjectPath": {
+                    "type": "string",
+                    "description": "Hierarchy path of the GameObject. Not required for multiple operations (use 'pattern' instead).",
+                },
                 "componentType": {
                     "type": "string",
                     "description": "Fully qualified component type (e.g. UnityEngine.UI.Text).",
@@ -116,9 +131,17 @@ def register_tools(server: Server) -> None:
                     "description": "Property/value pairs to apply to the component. For UnityEngine.Object properties (e.g. Mesh, Material), you can use: 1) Asset reference with GUID (recommended): {'_ref': 'asset', 'guid': 'abc123...'}, 2) Asset reference with path: {'_ref': 'asset', 'path': 'Assets/Models/Sphere.fbx'}, 3) Direct asset path string: 'Assets/Models/Sphere.fbx', or 4) Built-in resources: 'Library/unity default resources::Sphere'. When both GUID and path are provided, GUID takes priority.",
                 },
                 "applyDefaults": {"type": "boolean"},
+                "pattern": {
+                    "type": "string",
+                    "description": "Wildcard pattern (e.g. 'Enemy*', 'Player?') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
+                },
+                "useRegex": {
+                    "type": "boolean",
+                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
+                },
             },
         },
-        ["operation", "gameObjectPath", "componentType"],
+        ["operation", "componentType"],
     )
 
     asset_manage_schema = _schema_with_required(
@@ -127,12 +150,12 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "update", "delete", "rename", "duplicate", "inspect"],
-                    "description": "Operation to perform. Use 'inspect' to read asset details.",
+                    "enum": ["create", "update", "delete", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
+                    "description": "Operation to perform. Use 'inspect' to read asset details. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern.",
                 },
                 "assetPath": {
                     "type": "string",
-                    "description": "Path under Assets/ for the target asset.",
+                    "description": "Path under Assets/ for the target asset. Not required for multiple operations (use 'pattern' instead).",
                 },
                 "destinationPath": {"type": "string"},
                 "contents": {
@@ -144,9 +167,21 @@ def register_tools(server: Server) -> None:
                     "type": "object",
                     "additionalProperties": True,
                 },
+                "pattern": {
+                    "type": "string",
+                    "description": "Wildcard pattern (e.g. 'Assets/Scripts/*.cs', 'Assets/Prefabs/Enemy*') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
+                },
+                "useRegex": {
+                    "type": "boolean",
+                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
+                },
+                "includeProperties": {
+                    "type": "boolean",
+                    "description": "For inspectMultiple operation: if true, includes detailed asset properties in results. Default is false.",
+                },
             },
         },
-        ["operation", "assetPath"],
+        ["operation"],
     )
 
     ugui_rect_adjust_schema = _schema_with_required(
@@ -791,17 +826,17 @@ def register_tools(server: Server) -> None:
         ),
         types.Tool(
             name="unity_gameobject_crud",
-            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties.",
+            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations (e.g., pattern='Enemy*' to find all enemies).",
             inputSchema=game_object_manage_schema,
         ),
         types.Tool(
             name="unity_component_crud",
-            description="Add, remove, update, or inspect components on a GameObject.",
+            description="Add, remove, update, or inspect components on a GameObject. Supports wildcard/regex patterns with 'addMultiple', 'removeMultiple', 'updateMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple GameObjects (e.g., pattern='Player/Weapon*' to add colliders to all weapons).",
             inputSchema=component_manage_schema,
         ),
         types.Tool(
             name="unity_asset_crud",
-            description="Create, update, rename, duplicate, delete, or inspect Assets/ files.",
+            description="Create, update, rename, duplicate, delete, or inspect Assets/ files. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple assets (e.g., pattern='Assets/Scripts/*.cs' to find all C# scripts).",
             inputSchema=asset_manage_schema,
         ),
         types.Tool(
