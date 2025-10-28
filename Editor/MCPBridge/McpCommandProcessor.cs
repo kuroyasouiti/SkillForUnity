@@ -3034,37 +3034,57 @@ namespace MCP.Editor
         {
             var created = new List<string>();
 
-            // Create Main Camera
-            var camera = new GameObject("Main Camera");
-            camera.AddComponent<Camera>();
-            camera.tag = "MainCamera";
-
-            var camPosDict = payload.ContainsKey("cameraPosition") ? payload["cameraPosition"] as Dictionary<string, object> : null;
-            if (camPosDict != null)
+            // Check if Main Camera already exists
+            var existingCamera = Camera.main;
+            if (existingCamera == null)
             {
-                camera.transform.position = new Vector3(
-                    GetFloat(camPosDict, "x") ?? 0,
-                    GetFloat(camPosDict, "y") ?? 1,
-                    GetFloat(camPosDict, "z") ?? -10
-                );
+                // Create Main Camera
+                var camera = new GameObject("Main Camera");
+                camera.AddComponent<Camera>();
+                camera.tag = "MainCamera";
+
+                var camPosDict = payload.ContainsKey("cameraPosition") ? payload["cameraPosition"] as Dictionary<string, object> : null;
+                if (camPosDict != null)
+                {
+                    camera.transform.position = new Vector3(
+                        GetFloat(camPosDict, "x") ?? 0,
+                        GetFloat(camPosDict, "y") ?? 1,
+                        GetFloat(camPosDict, "z") ?? -10
+                    );
+                }
+                else
+                {
+                    camera.transform.position = new Vector3(0, 1, -10);
+                }
+
+                Undo.RegisterCreatedObjectUndo(camera, "Create Main Camera");
+                created.Add("Main Camera");
             }
-            else
+
+            // Check if Directional Light already exists
+            var existingLights = UnityEngine.Object.FindObjectsOfType<Light>();
+            var hasDirectionalLight = false;
+            foreach (var existingLight in existingLights)
             {
-                camera.transform.position = new Vector3(0, 1, -10);
+                if (existingLight.type == LightType.Directional)
+                {
+                    hasDirectionalLight = true;
+                    break;
+                }
             }
 
-            Undo.RegisterCreatedObjectUndo(camera, "Create Main Camera");
-            created.Add("Main Camera");
+            if (!hasDirectionalLight)
+            {
+                // Create Directional Light
+                var light = new GameObject("Directional Light");
+                var lightComp = light.AddComponent<Light>();
+                lightComp.type = LightType.Directional;
+                lightComp.intensity = GetFloat(payload, "lightIntensity") ?? 1f;
+                light.transform.rotation = Quaternion.Euler(50, -30, 0);
 
-            // Create Directional Light
-            var light = new GameObject("Directional Light");
-            var lightComp = light.AddComponent<Light>();
-            lightComp.type = LightType.Directional;
-            lightComp.intensity = GetFloat(payload, "lightIntensity") ?? 1f;
-            light.transform.rotation = Quaternion.Euler(50, -30, 0);
-
-            Undo.RegisterCreatedObjectUndo(light, "Create Directional Light");
-            created.Add("Directional Light");
+                Undo.RegisterCreatedObjectUndo(light, "Create Directional Light");
+                created.Add("Directional Light");
+            }
 
             return created;
         }
