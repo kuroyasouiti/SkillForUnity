@@ -39,6 +39,12 @@ namespace MCP.Editor
                 "uguiRectAdjust" => HandleUguiRectAdjust(command.Payload),
                 "uguiAnchorManage" => HandleUguiAnchorManage(command.Payload),
                 "uguiManage" => HandleUguiManage(command.Payload),
+                "uguiCreateFromTemplate" => HandleUguiCreateFromTemplate(command.Payload),
+                "uguiLayoutManage" => HandleUguiLayoutManage(command.Payload),
+                "hierarchyBuilder" => HandleHierarchyBuilder(command.Payload),
+                "sceneQuickSetup" => HandleSceneQuickSetup(command.Payload),
+                "gameObjectCreateFromTemplate" => HandleGameObjectCreateFromTemplate(command.Payload),
+                "contextInspect" => HandleContextInspect(command.Payload),
                 "tagLayerManage" => HandleTagLayerManage(command.Payload),
                 "scriptManage" => HandleScriptManage(command.Payload),
                 "prefabManage" => HandlePrefabManage(command.Payload),
@@ -1807,6 +1813,1614 @@ namespace MCP.Editor
                 ["after"] = CaptureRectTransformState(rectTransform),
                 ["operation"] = operation,
             };
+        }
+
+        /// <summary>
+        /// Creates UI elements from templates (Button, Text, Image, Panel, ScrollView, InputField, Slider, Toggle, Dropdown).
+        /// Each template automatically includes necessary components and sensible defaults.
+        /// </summary>
+        /// <param name="payload">Template parameters including 'template' type, name, parentPath, size, position, etc.</param>
+        /// <returns>Result dictionary with created GameObject information.</returns>
+        private static object HandleUguiCreateFromTemplate(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var template = GetString(payload, "template");
+                if (string.IsNullOrEmpty(template))
+                {
+                    throw new InvalidOperationException("template is required");
+                }
+
+                Debug.Log($"[uguiCreateFromTemplate] Creating template: {template}");
+
+                // Get parent path or find first Canvas
+                var parentPath = GetString(payload, "parentPath");
+                GameObject parent = null;
+                if (!string.IsNullOrEmpty(parentPath))
+                {
+                    parent = ResolveGameObject(parentPath);
+                }
+                else
+                {
+                    // Find first Canvas in the scene
+                    var canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+                    if (canvas != null)
+                    {
+                        parent = canvas.gameObject;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("No Canvas found in scene. Please specify parentPath or create a Canvas first.");
+                    }
+                }
+
+                // Verify parent is under a Canvas
+                if (parent.GetComponentInParent<Canvas>() == null)
+                {
+                    throw new InvalidOperationException("Parent must be under a Canvas");
+                }
+
+                // Get name or use template as default
+                var name = GetString(payload, "name");
+                if (string.IsNullOrEmpty(name))
+                {
+                    name = template;
+                }
+
+                // Create the GameObject based on template
+                GameObject go = null;
+                switch (template)
+                {
+                    case "Button":
+                        go = CreateButtonTemplate(name, parent, payload);
+                        break;
+                    case "Text":
+                        go = CreateTextTemplate(name, parent, payload);
+                        break;
+                    case "Image":
+                        go = CreateImageTemplate(name, parent, payload);
+                        break;
+                    case "RawImage":
+                        go = CreateRawImageTemplate(name, parent, payload);
+                        break;
+                    case "Panel":
+                        go = CreatePanelTemplate(name, parent, payload);
+                        break;
+                    case "ScrollView":
+                        go = CreateScrollViewTemplate(name, parent, payload);
+                        break;
+                    case "InputField":
+                        go = CreateInputFieldTemplate(name, parent, payload);
+                        break;
+                    case "Slider":
+                        go = CreateSliderTemplate(name, parent, payload);
+                        break;
+                    case "Toggle":
+                        go = CreateToggleTemplate(name, parent, payload);
+                        break;
+                    case "Dropdown":
+                        go = CreateDropdownTemplate(name, parent, payload);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown template: {template}");
+                }
+
+                Undo.RegisterCreatedObjectUndo(go, $"Create {template}");
+                Selection.activeGameObject = go;
+
+                Debug.Log($"[uguiCreateFromTemplate] Created {template}: {GetHierarchyPath(go)}");
+
+                return new Dictionary<string, object>
+                {
+                    ["template"] = template,
+                    ["gameObjectPath"] = GetHierarchyPath(go),
+                    ["name"] = go.name,
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[uguiCreateFromTemplate] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private static GameObject CreateButtonTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = new Color(1f, 1f, 1f, 1f);
+
+            var button = go.AddComponent<UnityEngine.UI.Button>();
+            button.interactable = GetBool(payload, "interactable", true);
+
+            // Create Text child
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            textGo.transform.SetParent(go.transform, false);
+            var text = textGo.AddComponent<UnityEngine.UI.Text>();
+            text.text = GetString(payload, "text") ?? "Button";
+            text.fontSize = GetInt(payload, "fontSize", 14);
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.black;
+
+            var textRect = textGo.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 30);
+
+            return go;
+        }
+
+        private static GameObject CreateTextTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var text = go.AddComponent<UnityEngine.UI.Text>();
+            text.text = GetString(payload, "text") ?? "New Text";
+            text.fontSize = GetInt(payload, "fontSize", 14);
+            text.color = Color.black;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 30);
+
+            return go;
+        }
+
+        private static GameObject CreateImageTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = Color.white;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 100, 100);
+
+            return go;
+        }
+
+        private static GameObject CreateRawImageTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var rawImage = go.AddComponent<UnityEngine.UI.RawImage>();
+            rawImage.color = Color.white;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 100, 100);
+
+            return go;
+        }
+
+        private static GameObject CreatePanelTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = new Color(1f, 1f, 1f, 0.392f);
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 200, 200);
+
+            return go;
+        }
+
+        private static GameObject CreateScrollViewTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            // Create main ScrollView GameObject
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var scrollRect = go.AddComponent<UnityEngine.UI.ScrollRect>();
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = new Color(1f, 1f, 1f, 1f);
+
+            // Create Viewport
+            var viewport = new GameObject("Viewport", typeof(RectTransform));
+            viewport.transform.SetParent(go.transform, false);
+            var viewportRect = viewport.GetComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.sizeDelta = Vector2.zero;
+            viewport.AddComponent<UnityEngine.UI.Mask>();
+            var viewportImage = viewport.AddComponent<UnityEngine.UI.Image>();
+            viewportImage.color = new Color(1f, 1f, 1f, 0.01f);
+
+            // Create Content
+            var content = new GameObject("Content", typeof(RectTransform));
+            content.transform.SetParent(viewport.transform, false);
+            var contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(0.5f, 1);
+            contentRect.sizeDelta = new Vector2(0, 300);
+
+            scrollRect.content = contentRect;
+            scrollRect.viewport = viewportRect;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 200, 200);
+
+            return go;
+        }
+
+        private static GameObject CreateInputFieldTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = Color.white;
+
+            var inputField = go.AddComponent<UnityEngine.UI.InputField>();
+            inputField.interactable = GetBool(payload, "interactable", true);
+
+            // Create Text child
+            var textGo = new GameObject("Text", typeof(RectTransform));
+            textGo.transform.SetParent(go.transform, false);
+            var text = textGo.AddComponent<UnityEngine.UI.Text>();
+            text.text = GetString(payload, "text") ?? "";
+            text.fontSize = GetInt(payload, "fontSize", 14);
+            text.color = Color.black;
+            text.supportRichText = false;
+
+            var textRect = textGo.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(10, 6);
+            textRect.offsetMax = new Vector2(-10, -7);
+
+            // Create Placeholder child
+            var placeholderGo = new GameObject("Placeholder", typeof(RectTransform));
+            placeholderGo.transform.SetParent(go.transform, false);
+            var placeholder = placeholderGo.AddComponent<UnityEngine.UI.Text>();
+            placeholder.text = "Enter text...";
+            placeholder.fontSize = GetInt(payload, "fontSize", 14);
+            placeholder.color = new Color(0.2f, 0.2f, 0.2f, 0.5f);
+            placeholder.fontStyle = FontStyle.Italic;
+
+            var placeholderRect = placeholderGo.GetComponent<RectTransform>();
+            placeholderRect.anchorMin = Vector2.zero;
+            placeholderRect.anchorMax = Vector2.one;
+            placeholderRect.offsetMin = new Vector2(10, 6);
+            placeholderRect.offsetMax = new Vector2(-10, -7);
+
+            inputField.textComponent = text;
+            inputField.placeholder = placeholder;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 30);
+
+            return go;
+        }
+
+        private static GameObject CreateSliderTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var slider = go.AddComponent<UnityEngine.UI.Slider>();
+            slider.interactable = GetBool(payload, "interactable", true);
+
+            // Create Background
+            var bgGo = new GameObject("Background", typeof(RectTransform));
+            bgGo.transform.SetParent(go.transform, false);
+            var bgImage = bgGo.AddComponent<UnityEngine.UI.Image>();
+            bgImage.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(0, 0.25f);
+            bgRect.anchorMax = new Vector2(1, 0.75f);
+            bgRect.sizeDelta = new Vector2(0, 0);
+
+            // Create Fill Area
+            var fillAreaGo = new GameObject("Fill Area", typeof(RectTransform));
+            fillAreaGo.transform.SetParent(go.transform, false);
+            var fillAreaRect = fillAreaGo.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0, 0.25f);
+            fillAreaRect.anchorMax = new Vector2(1, 0.75f);
+            fillAreaRect.offsetMin = new Vector2(5, 0);
+            fillAreaRect.offsetMax = new Vector2(-5, 0);
+
+            // Create Fill
+            var fillGo = new GameObject("Fill", typeof(RectTransform));
+            fillGo.transform.SetParent(fillAreaGo.transform, false);
+            var fillImage = fillGo.AddComponent<UnityEngine.UI.Image>();
+            fillImage.color = new Color(0.5f, 0.8f, 1f, 1f);
+            var fillRect = fillGo.GetComponent<RectTransform>();
+            fillRect.sizeDelta = new Vector2(10, 0);
+
+            // Create Handle Slide Area
+            var handleAreaGo = new GameObject("Handle Slide Area", typeof(RectTransform));
+            handleAreaGo.transform.SetParent(go.transform, false);
+            var handleAreaRect = handleAreaGo.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = new Vector2(0, 0);
+            handleAreaRect.anchorMax = new Vector2(1, 1);
+            handleAreaRect.offsetMin = new Vector2(10, 0);
+            handleAreaRect.offsetMax = new Vector2(-10, 0);
+
+            // Create Handle
+            var handleGo = new GameObject("Handle", typeof(RectTransform));
+            handleGo.transform.SetParent(handleAreaGo.transform, false);
+            var handleImage = handleGo.AddComponent<UnityEngine.UI.Image>();
+            handleImage.color = Color.white;
+            var handleRect = handleGo.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(20, 0);
+
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
+            slider.direction = UnityEngine.UI.Slider.Direction.LeftToRight;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 20);
+
+            return go;
+        }
+
+        private static GameObject CreateToggleTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var toggle = go.AddComponent<UnityEngine.UI.Toggle>();
+            toggle.interactable = GetBool(payload, "interactable", true);
+
+            // Create Background
+            var bgGo = new GameObject("Background", typeof(RectTransform));
+            bgGo.transform.SetParent(go.transform, false);
+            var bgImage = bgGo.AddComponent<UnityEngine.UI.Image>();
+            bgImage.color = Color.white;
+            var bgRect = bgGo.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(0, 0.5f);
+            bgRect.anchorMax = new Vector2(0, 0.5f);
+            bgRect.anchoredPosition = new Vector2(10, 0);
+            bgRect.sizeDelta = new Vector2(20, 20);
+
+            // Create Checkmark
+            var checkGo = new GameObject("Checkmark", typeof(RectTransform));
+            checkGo.transform.SetParent(bgGo.transform, false);
+            var checkImage = checkGo.AddComponent<UnityEngine.UI.Image>();
+            checkImage.color = new Color(0.2f, 0.8f, 0.2f, 1f);
+            var checkRect = checkGo.GetComponent<RectTransform>();
+            checkRect.anchorMin = Vector2.zero;
+            checkRect.anchorMax = Vector2.one;
+            checkRect.sizeDelta = Vector2.zero;
+
+            // Create Label
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var label = labelGo.AddComponent<UnityEngine.UI.Text>();
+            label.text = GetString(payload, "text") ?? "Toggle";
+            label.fontSize = GetInt(payload, "fontSize", 14);
+            label.color = Color.black;
+            var labelRect = labelGo.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(1, 1);
+            labelRect.offsetMin = new Vector2(23, 0);
+            labelRect.offsetMax = new Vector2(0, 0);
+
+            toggle.graphic = checkImage;
+            toggle.targetGraphic = bgImage;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 20);
+
+            return go;
+        }
+
+        private static GameObject CreateDropdownTemplate(string name, GameObject parent, Dictionary<string, object> payload)
+        {
+            var go = new GameObject(name, typeof(RectTransform));
+            go.transform.SetParent(parent.transform, false);
+
+            var image = go.AddComponent<UnityEngine.UI.Image>();
+            image.color = Color.white;
+
+            var dropdown = go.AddComponent<UnityEngine.UI.Dropdown>();
+            dropdown.interactable = GetBool(payload, "interactable", true);
+
+            // Create Label
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(go.transform, false);
+            var label = labelGo.AddComponent<UnityEngine.UI.Text>();
+            label.text = GetString(payload, "text") ?? "Option A";
+            label.fontSize = GetInt(payload, "fontSize", 14);
+            label.color = Color.black;
+            var labelRect = labelGo.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(10, 6);
+            labelRect.offsetMax = new Vector2(-25, -7);
+
+            // Create Arrow
+            var arrowGo = new GameObject("Arrow", typeof(RectTransform));
+            arrowGo.transform.SetParent(go.transform, false);
+            var arrow = arrowGo.AddComponent<UnityEngine.UI.Text>();
+            arrow.text = "▼";
+            arrow.fontSize = GetInt(payload, "fontSize", 14);
+            arrow.color = Color.black;
+            arrow.alignment = TextAnchor.MiddleCenter;
+            var arrowRect = arrowGo.GetComponent<RectTransform>();
+            arrowRect.anchorMin = new Vector2(1, 0);
+            arrowRect.anchorMax = new Vector2(1, 1);
+            arrowRect.sizeDelta = new Vector2(20, 0);
+            arrowRect.anchoredPosition = new Vector2(-15, 0);
+
+            // Create Template (simplified version)
+            var templateGo = new GameObject("Template", typeof(RectTransform));
+            templateGo.transform.SetParent(go.transform, false);
+            var templateRect = templateGo.GetComponent<RectTransform>();
+            templateRect.anchorMin = new Vector2(0, 0);
+            templateRect.anchorMax = new Vector2(1, 0);
+            templateRect.pivot = new Vector2(0.5f, 1);
+            templateRect.anchoredPosition = new Vector2(0, 2);
+            templateRect.sizeDelta = new Vector2(0, 150);
+            templateGo.SetActive(false);
+
+            dropdown.captionText = label;
+            dropdown.template = templateRect;
+
+            ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 30);
+
+            return go;
+        }
+
+        private static void ApplyCommonRectTransformSettings(RectTransform rectTransform, Dictionary<string, object> payload, float defaultWidth, float defaultHeight)
+        {
+            // Apply anchor preset
+            var anchorPreset = GetString(payload, "anchorPreset") ?? "center";
+            var presetPayload = new Dictionary<string, object>
+            {
+                ["preset"] = anchorPreset,
+                ["preservePosition"] = false
+            };
+            SetAnchorPreset(rectTransform, presetPayload);
+
+            // Apply size
+            var width = GetFloat(payload, "width") ?? defaultWidth;
+            var height = GetFloat(payload, "height") ?? defaultHeight;
+            rectTransform.sizeDelta = new Vector2(width, height);
+
+            // Apply position
+            var posX = GetFloat(payload, "positionX") ?? 0f;
+            var posY = GetFloat(payload, "positionY") ?? 0f;
+            rectTransform.anchoredPosition = new Vector2(posX, posY);
+        }
+
+        /// <summary>
+        /// Manages layout components (HorizontalLayoutGroup, VerticalLayoutGroup, GridLayoutGroup,
+        /// ContentSizeFitter, LayoutElement, AspectRatioFitter) on UI GameObjects.
+        /// </summary>
+        /// <param name="payload">Operation parameters including 'operation', 'gameObjectPath', 'layoutType', and layout-specific settings.</param>
+        /// <returns>Result dictionary with operation-specific data.</returns>
+        private static object HandleUguiLayoutManage(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var operation = GetString(payload, "operation");
+                if (string.IsNullOrEmpty(operation))
+                {
+                    throw new InvalidOperationException("operation is required");
+                }
+
+                var path = GetString(payload, "gameObjectPath");
+                if (string.IsNullOrEmpty(path))
+                {
+                    throw new InvalidOperationException("gameObjectPath is required");
+                }
+
+                Debug.Log($"[uguiLayoutManage] Processing operation '{operation}' on: {path}");
+
+                var go = ResolveGameObject(path);
+
+                object result;
+                switch (operation)
+                {
+                    case "add":
+                        result = AddLayoutComponent(go, payload);
+                        break;
+                    case "update":
+                        result = UpdateLayoutComponent(go, payload);
+                        break;
+                    case "remove":
+                        result = RemoveLayoutComponent(go, payload);
+                        break;
+                    case "inspect":
+                        result = InspectLayoutComponent(go, payload);
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown uguiLayoutManage operation: {operation}");
+                }
+
+                EditorUtility.SetDirty(go);
+                Debug.Log($"[uguiLayoutManage] Completed successfully");
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[uguiLayoutManage] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private static object AddLayoutComponent(GameObject go, Dictionary<string, object> payload)
+        {
+            var layoutType = GetString(payload, "layoutType");
+            if (string.IsNullOrEmpty(layoutType))
+            {
+                throw new InvalidOperationException("layoutType is required for add operation");
+            }
+
+            Component component;
+            switch (layoutType)
+            {
+                case "HorizontalLayoutGroup":
+                    component = go.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                    ApplyLayoutGroupSettings(component, payload);
+                    break;
+                case "VerticalLayoutGroup":
+                    component = go.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    ApplyLayoutGroupSettings(component, payload);
+                    break;
+                case "GridLayoutGroup":
+                    component = go.AddComponent<UnityEngine.UI.GridLayoutGroup>();
+                    ApplyGridLayoutGroupSettings((UnityEngine.UI.GridLayoutGroup)component, payload);
+                    break;
+                case "ContentSizeFitter":
+                    component = go.AddComponent<UnityEngine.UI.ContentSizeFitter>();
+                    ApplyContentSizeFitterSettings((UnityEngine.UI.ContentSizeFitter)component, payload);
+                    break;
+                case "LayoutElement":
+                    component = go.AddComponent<UnityEngine.UI.LayoutElement>();
+                    ApplyLayoutElementSettings((UnityEngine.UI.LayoutElement)component, payload);
+                    break;
+                case "AspectRatioFitter":
+                    component = go.AddComponent<UnityEngine.UI.AspectRatioFitter>();
+                    ApplyAspectRatioFitterSettings((UnityEngine.UI.AspectRatioFitter)component, payload);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown layoutType: {layoutType}");
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["operation"] = "add",
+                ["layoutType"] = layoutType,
+                ["gameObjectPath"] = GetHierarchyPath(go),
+            };
+        }
+
+        private static object UpdateLayoutComponent(GameObject go, Dictionary<string, object> payload)
+        {
+            var layoutType = GetString(payload, "layoutType");
+            if (string.IsNullOrEmpty(layoutType))
+            {
+                throw new InvalidOperationException("layoutType is required for update operation");
+            }
+
+            Component component = null;
+            switch (layoutType)
+            {
+                case "HorizontalLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                    if (component != null) ApplyLayoutGroupSettings(component, payload);
+                    break;
+                case "VerticalLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    if (component != null) ApplyLayoutGroupSettings(component, payload);
+                    break;
+                case "GridLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+                    if (component != null) ApplyGridLayoutGroupSettings((UnityEngine.UI.GridLayoutGroup)component, payload);
+                    break;
+                case "ContentSizeFitter":
+                    component = go.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+                    if (component != null) ApplyContentSizeFitterSettings((UnityEngine.UI.ContentSizeFitter)component, payload);
+                    break;
+                case "LayoutElement":
+                    component = go.GetComponent<UnityEngine.UI.LayoutElement>();
+                    if (component != null) ApplyLayoutElementSettings((UnityEngine.UI.LayoutElement)component, payload);
+                    break;
+                case "AspectRatioFitter":
+                    component = go.GetComponent<UnityEngine.UI.AspectRatioFitter>();
+                    if (component != null) ApplyAspectRatioFitterSettings((UnityEngine.UI.AspectRatioFitter)component, payload);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown layoutType: {layoutType}");
+            }
+
+            if (component == null)
+            {
+                throw new InvalidOperationException($"Component {layoutType} not found on GameObject");
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["operation"] = "update",
+                ["layoutType"] = layoutType,
+                ["gameObjectPath"] = GetHierarchyPath(go),
+            };
+        }
+
+        private static object RemoveLayoutComponent(GameObject go, Dictionary<string, object> payload)
+        {
+            var layoutType = GetString(payload, "layoutType");
+            if (string.IsNullOrEmpty(layoutType))
+            {
+                throw new InvalidOperationException("layoutType is required for remove operation");
+            }
+
+            Component component = null;
+            switch (layoutType)
+            {
+                case "HorizontalLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                    break;
+                case "VerticalLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                    break;
+                case "GridLayoutGroup":
+                    component = go.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+                    break;
+                case "ContentSizeFitter":
+                    component = go.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+                    break;
+                case "LayoutElement":
+                    component = go.GetComponent<UnityEngine.UI.LayoutElement>();
+                    break;
+                case "AspectRatioFitter":
+                    component = go.GetComponent<UnityEngine.UI.AspectRatioFitter>();
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown layoutType: {layoutType}");
+            }
+
+            if (component == null)
+            {
+                throw new InvalidOperationException($"Component {layoutType} not found on GameObject");
+            }
+
+            UnityEngine.Object.DestroyImmediate(component);
+
+            return new Dictionary<string, object>
+            {
+                ["operation"] = "remove",
+                ["layoutType"] = layoutType,
+                ["gameObjectPath"] = GetHierarchyPath(go),
+            };
+        }
+
+        private static object InspectLayoutComponent(GameObject go, Dictionary<string, object> payload)
+        {
+            var layoutType = GetString(payload, "layoutType");
+            var result = new Dictionary<string, object>
+            {
+                ["operation"] = "inspect",
+                ["gameObjectPath"] = GetHierarchyPath(go),
+                ["layouts"] = new List<object>(),
+            };
+
+            var layouts = new List<object>();
+
+            if (string.IsNullOrEmpty(layoutType))
+            {
+                // Inspect all layout components if layoutType not specified
+                var hlg = go.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                if (hlg != null) layouts.Add(SerializeLayoutGroup(hlg, "HorizontalLayoutGroup"));
+
+                var vlg = go.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                if (vlg != null) layouts.Add(SerializeLayoutGroup(vlg, "VerticalLayoutGroup"));
+
+                var glg = go.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+                if (glg != null) layouts.Add(SerializeGridLayoutGroup(glg));
+
+                var csf = go.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+                if (csf != null) layouts.Add(SerializeContentSizeFitter(csf));
+
+                var le = go.GetComponent<UnityEngine.UI.LayoutElement>();
+                if (le != null) layouts.Add(SerializeLayoutElement(le));
+
+                var arf = go.GetComponent<UnityEngine.UI.AspectRatioFitter>();
+                if (arf != null) layouts.Add(SerializeAspectRatioFitter(arf));
+            }
+            else
+            {
+                // Inspect specific layout type
+                switch (layoutType)
+                {
+                    case "HorizontalLayoutGroup":
+                        var hlg = go.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+                        if (hlg != null) layouts.Add(SerializeLayoutGroup(hlg, "HorizontalLayoutGroup"));
+                        break;
+                    case "VerticalLayoutGroup":
+                        var vlg = go.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                        if (vlg != null) layouts.Add(SerializeLayoutGroup(vlg, "VerticalLayoutGroup"));
+                        break;
+                    case "GridLayoutGroup":
+                        var glg = go.GetComponent<UnityEngine.UI.GridLayoutGroup>();
+                        if (glg != null) layouts.Add(SerializeGridLayoutGroup(glg));
+                        break;
+                    case "ContentSizeFitter":
+                        var csf = go.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+                        if (csf != null) layouts.Add(SerializeContentSizeFitter(csf));
+                        break;
+                    case "LayoutElement":
+                        var le = go.GetComponent<UnityEngine.UI.LayoutElement>();
+                        if (le != null) layouts.Add(SerializeLayoutElement(le));
+                        break;
+                    case "AspectRatioFitter":
+                        var arf = go.GetComponent<UnityEngine.UI.AspectRatioFitter>();
+                        if (arf != null) layouts.Add(SerializeAspectRatioFitter(arf));
+                        break;
+                }
+            }
+
+            result["layouts"] = layouts;
+            return result;
+        }
+
+        private static void ApplyLayoutGroupSettings(Component component, Dictionary<string, object> payload)
+        {
+            var layoutGroup = component as UnityEngine.UI.HorizontalOrVerticalLayoutGroup;
+            if (layoutGroup == null) return;
+
+            // Apply padding
+            if (payload.ContainsKey("padding"))
+            {
+                var paddingDict = payload["padding"] as Dictionary<string, object>;
+                if (paddingDict != null)
+                {
+                    layoutGroup.padding = new RectOffset(
+                        GetInt(paddingDict, "left", layoutGroup.padding.left),
+                        GetInt(paddingDict, "right", layoutGroup.padding.right),
+                        GetInt(paddingDict, "top", layoutGroup.padding.top),
+                        GetInt(paddingDict, "bottom", layoutGroup.padding.bottom)
+                    );
+                }
+            }
+
+            // Apply spacing
+            var spacing = GetFloat(payload, "spacing");
+            if (spacing.HasValue) layoutGroup.spacing = spacing.Value;
+
+            // Apply childAlignment
+            var childAlignment = GetString(payload, "childAlignment");
+            if (!string.IsNullOrEmpty(childAlignment))
+            {
+                layoutGroup.childAlignment = (TextAnchor)System.Enum.Parse(typeof(TextAnchor), childAlignment);
+            }
+
+            // Apply child control settings
+            if (payload.ContainsKey("childControlWidth"))
+                layoutGroup.childControlWidth = GetBool(payload, "childControlWidth");
+            if (payload.ContainsKey("childControlHeight"))
+                layoutGroup.childControlHeight = GetBool(payload, "childControlHeight");
+            if (payload.ContainsKey("childForceExpandWidth"))
+                layoutGroup.childForceExpandWidth = GetBool(payload, "childForceExpandWidth");
+            if (payload.ContainsKey("childForceExpandHeight"))
+                layoutGroup.childForceExpandHeight = GetBool(payload, "childForceExpandHeight");
+        }
+
+        private static void ApplyGridLayoutGroupSettings(UnityEngine.UI.GridLayoutGroup grid, Dictionary<string, object> payload)
+        {
+            // Apply common layout group settings
+            if (payload.ContainsKey("padding"))
+            {
+                var paddingDict = payload["padding"] as Dictionary<string, object>;
+                if (paddingDict != null)
+                {
+                    grid.padding = new RectOffset(
+                        GetInt(paddingDict, "left", grid.padding.left),
+                        GetInt(paddingDict, "right", grid.padding.right),
+                        GetInt(paddingDict, "top", grid.padding.top),
+                        GetInt(paddingDict, "bottom", grid.padding.bottom)
+                    );
+                }
+            }
+
+            var childAlignment = GetString(payload, "childAlignment");
+            if (!string.IsNullOrEmpty(childAlignment))
+            {
+                grid.childAlignment = (TextAnchor)System.Enum.Parse(typeof(TextAnchor), childAlignment);
+            }
+
+            // Apply grid-specific settings
+            var cellSizeX = GetFloat(payload, "cellSizeX");
+            var cellSizeY = GetFloat(payload, "cellSizeY");
+            if (cellSizeX.HasValue || cellSizeY.HasValue)
+            {
+                grid.cellSize = new Vector2(
+                    cellSizeX ?? grid.cellSize.x,
+                    cellSizeY ?? grid.cellSize.y
+                );
+            }
+
+            var spacingX = GetFloat(payload, "spacing");
+            var spacingY = GetFloat(payload, "spacingY");
+            if (spacingX.HasValue || spacingY.HasValue)
+            {
+                grid.spacing = new Vector2(
+                    spacingX ?? grid.spacing.x,
+                    spacingY ?? grid.spacing.y
+                );
+            }
+
+            var constraint = GetString(payload, "constraint");
+            if (!string.IsNullOrEmpty(constraint))
+            {
+                grid.constraint = (UnityEngine.UI.GridLayoutGroup.Constraint)System.Enum.Parse(typeof(UnityEngine.UI.GridLayoutGroup.Constraint), constraint);
+            }
+
+            var constraintCount = GetInt(payload, "constraintCount", -1);
+            if (constraintCount >= 0)
+            {
+                grid.constraintCount = constraintCount;
+            }
+
+            var startCorner = GetString(payload, "startCorner");
+            if (!string.IsNullOrEmpty(startCorner))
+            {
+                grid.startCorner = (UnityEngine.UI.GridLayoutGroup.Corner)System.Enum.Parse(typeof(UnityEngine.UI.GridLayoutGroup.Corner), startCorner);
+            }
+
+            var startAxis = GetString(payload, "startAxis");
+            if (!string.IsNullOrEmpty(startAxis))
+            {
+                grid.startAxis = (UnityEngine.UI.GridLayoutGroup.Axis)System.Enum.Parse(typeof(UnityEngine.UI.GridLayoutGroup.Axis), startAxis);
+            }
+        }
+
+        private static void ApplyContentSizeFitterSettings(UnityEngine.UI.ContentSizeFitter fitter, Dictionary<string, object> payload)
+        {
+            var horizontalFit = GetString(payload, "horizontalFit");
+            if (!string.IsNullOrEmpty(horizontalFit))
+            {
+                fitter.horizontalFit = (UnityEngine.UI.ContentSizeFitter.FitMode)System.Enum.Parse(typeof(UnityEngine.UI.ContentSizeFitter.FitMode), horizontalFit);
+            }
+
+            var verticalFit = GetString(payload, "verticalFit");
+            if (!string.IsNullOrEmpty(verticalFit))
+            {
+                fitter.verticalFit = (UnityEngine.UI.ContentSizeFitter.FitMode)System.Enum.Parse(typeof(UnityEngine.UI.ContentSizeFitter.FitMode), verticalFit);
+            }
+        }
+
+        private static void ApplyLayoutElementSettings(UnityEngine.UI.LayoutElement element, Dictionary<string, object> payload)
+        {
+            var minWidth = GetFloat(payload, "minWidth");
+            if (minWidth.HasValue) element.minWidth = minWidth.Value;
+
+            var minHeight = GetFloat(payload, "minHeight");
+            if (minHeight.HasValue) element.minHeight = minHeight.Value;
+
+            var preferredWidth = GetFloat(payload, "preferredWidth");
+            if (preferredWidth.HasValue) element.preferredWidth = preferredWidth.Value;
+
+            var preferredHeight = GetFloat(payload, "preferredHeight");
+            if (preferredHeight.HasValue) element.preferredHeight = preferredHeight.Value;
+
+            var flexibleWidth = GetFloat(payload, "flexibleWidth");
+            if (flexibleWidth.HasValue) element.flexibleWidth = flexibleWidth.Value;
+
+            var flexibleHeight = GetFloat(payload, "flexibleHeight");
+            if (flexibleHeight.HasValue) element.flexibleHeight = flexibleHeight.Value;
+
+            if (payload.ContainsKey("ignoreLayout"))
+                element.ignoreLayout = GetBool(payload, "ignoreLayout");
+        }
+
+        private static void ApplyAspectRatioFitterSettings(UnityEngine.UI.AspectRatioFitter fitter, Dictionary<string, object> payload)
+        {
+            var aspectMode = GetString(payload, "aspectMode");
+            if (!string.IsNullOrEmpty(aspectMode))
+            {
+                fitter.aspectMode = (UnityEngine.UI.AspectRatioFitter.AspectMode)System.Enum.Parse(typeof(UnityEngine.UI.AspectRatioFitter.AspectMode), aspectMode);
+            }
+
+            var aspectRatio = GetFloat(payload, "aspectRatio");
+            if (aspectRatio.HasValue) fitter.aspectRatio = aspectRatio.Value;
+        }
+
+        private static Dictionary<string, object> SerializeLayoutGroup(Component component, string typeName)
+        {
+            var layoutGroup = component as UnityEngine.UI.HorizontalOrVerticalLayoutGroup;
+            return new Dictionary<string, object>
+            {
+                ["type"] = typeName,
+                ["padding"] = new Dictionary<string, object>
+                {
+                    ["left"] = layoutGroup.padding.left,
+                    ["right"] = layoutGroup.padding.right,
+                    ["top"] = layoutGroup.padding.top,
+                    ["bottom"] = layoutGroup.padding.bottom,
+                },
+                ["spacing"] = layoutGroup.spacing,
+                ["childAlignment"] = layoutGroup.childAlignment.ToString(),
+                ["childControlWidth"] = layoutGroup.childControlWidth,
+                ["childControlHeight"] = layoutGroup.childControlHeight,
+                ["childForceExpandWidth"] = layoutGroup.childForceExpandWidth,
+                ["childForceExpandHeight"] = layoutGroup.childForceExpandHeight,
+            };
+        }
+
+        private static Dictionary<string, object> SerializeGridLayoutGroup(UnityEngine.UI.GridLayoutGroup grid)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "GridLayoutGroup",
+                ["padding"] = new Dictionary<string, object>
+                {
+                    ["left"] = grid.padding.left,
+                    ["right"] = grid.padding.right,
+                    ["top"] = grid.padding.top,
+                    ["bottom"] = grid.padding.bottom,
+                },
+                ["cellSize"] = new Dictionary<string, object>
+                {
+                    ["x"] = grid.cellSize.x,
+                    ["y"] = grid.cellSize.y,
+                },
+                ["spacing"] = new Dictionary<string, object>
+                {
+                    ["x"] = grid.spacing.x,
+                    ["y"] = grid.spacing.y,
+                },
+                ["childAlignment"] = grid.childAlignment.ToString(),
+                ["constraint"] = grid.constraint.ToString(),
+                ["constraintCount"] = grid.constraintCount,
+                ["startCorner"] = grid.startCorner.ToString(),
+                ["startAxis"] = grid.startAxis.ToString(),
+            };
+        }
+
+        private static Dictionary<string, object> SerializeContentSizeFitter(UnityEngine.UI.ContentSizeFitter fitter)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "ContentSizeFitter",
+                ["horizontalFit"] = fitter.horizontalFit.ToString(),
+                ["verticalFit"] = fitter.verticalFit.ToString(),
+            };
+        }
+
+        private static Dictionary<string, object> SerializeLayoutElement(UnityEngine.UI.LayoutElement element)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "LayoutElement",
+                ["minWidth"] = element.minWidth,
+                ["minHeight"] = element.minHeight,
+                ["preferredWidth"] = element.preferredWidth,
+                ["preferredHeight"] = element.preferredHeight,
+                ["flexibleWidth"] = element.flexibleWidth,
+                ["flexibleHeight"] = element.flexibleHeight,
+                ["ignoreLayout"] = element.ignoreLayout,
+            };
+        }
+
+        private static Dictionary<string, object> SerializeAspectRatioFitter(UnityEngine.UI.AspectRatioFitter fitter)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "AspectRatioFitter",
+                ["aspectMode"] = fitter.aspectMode.ToString(),
+                ["aspectRatio"] = fitter.aspectRatio,
+            };
+        }
+
+        /// <summary>
+        /// Builds GameObject hierarchies declaratively from a nested structure definition.
+        /// Allows creating complex multi-level hierarchies with components in a single command.
+        /// </summary>
+        /// <param name="payload">Hierarchy definition including nested GameObjects, components, and properties.</param>
+        /// <returns>Result dictionary with created GameObject paths.</returns>
+        private static object HandleHierarchyBuilder(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var hierarchyDict = payload["hierarchy"] as Dictionary<string, object>;
+                if (hierarchyDict == null)
+                {
+                    throw new InvalidOperationException("hierarchy is required");
+                }
+
+                var parentPath = GetString(payload, "parentPath");
+                GameObject parent = null;
+                if (!string.IsNullOrEmpty(parentPath))
+                {
+                    parent = ResolveGameObject(parentPath);
+                }
+
+                Debug.Log($"[hierarchyBuilder] Building hierarchy with {hierarchyDict.Count} root objects");
+
+                var createdPaths = new List<string>();
+                foreach (var kvp in hierarchyDict)
+                {
+                    var goName = kvp.Key;
+                    var goSpec = kvp.Value as Dictionary<string, object>;
+                    if (goSpec != null)
+                    {
+                        var createdGo = BuildGameObjectFromSpec(goName, goSpec, parent);
+                        createdPaths.Add(GetHierarchyPath(createdGo));
+                    }
+                }
+
+                return new Dictionary<string, object>
+                {
+                    ["createdObjects"] = createdPaths,
+                    ["count"] = createdPaths.Count,
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[hierarchyBuilder] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private static GameObject BuildGameObjectFromSpec(string name, Dictionary<string, object> spec, GameObject parent)
+        {
+            var go = new GameObject(name);
+            if (parent != null)
+            {
+                go.transform.SetParent(parent.transform, false);
+            }
+
+            // Add components
+            if (spec.ContainsKey("components"))
+            {
+                var components = spec["components"] as List<object>;
+                if (components != null)
+                {
+                    foreach (var comp in components)
+                    {
+                        var componentType = comp as string;
+                        if (!string.IsNullOrEmpty(componentType))
+                        {
+                            var type = ResolveType(componentType);
+                            if (type != null)
+                            {
+                                go.AddComponent(type);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Set properties
+            if (spec.ContainsKey("properties"))
+            {
+                var properties = spec["properties"] as Dictionary<string, object>;
+                if (properties != null)
+                {
+                    // Apply transform properties
+                    if (properties.ContainsKey("position"))
+                    {
+                        var posDict = properties["position"] as Dictionary<string, object>;
+                        if (posDict != null)
+                        {
+                            go.transform.localPosition = new Vector3(
+                                GetFloat(posDict, "x") ?? 0,
+                                GetFloat(posDict, "y") ?? 0,
+                                GetFloat(posDict, "z") ?? 0
+                            );
+                        }
+                    }
+
+                    if (properties.ContainsKey("rotation"))
+                    {
+                        var rotDict = properties["rotation"] as Dictionary<string, object>;
+                        if (rotDict != null)
+                        {
+                            go.transform.localEulerAngles = new Vector3(
+                                GetFloat(rotDict, "x") ?? 0,
+                                GetFloat(rotDict, "y") ?? 0,
+                                GetFloat(rotDict, "z") ?? 0
+                            );
+                        }
+                    }
+
+                    if (properties.ContainsKey("scale"))
+                    {
+                        var scaleDict = properties["scale"] as Dictionary<string, object>;
+                        if (scaleDict != null)
+                        {
+                            go.transform.localScale = new Vector3(
+                                GetFloat(scaleDict, "x") ?? 1,
+                                GetFloat(scaleDict, "y") ?? 1,
+                                GetFloat(scaleDict, "z") ?? 1
+                            );
+                        }
+                    }
+
+                    // Apply component properties
+                    foreach (var component in go.GetComponents<Component>())
+                    {
+                        var componentTypeName = component.GetType().Name;
+                        if (properties.ContainsKey(componentTypeName))
+                        {
+                            var compProps = properties[componentTypeName] as Dictionary<string, object>;
+                            if (compProps != null)
+                            {
+                                foreach (var propKvp in compProps)
+                                {
+                                    ApplyProperty(component, propKvp.Key, propKvp.Value);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Build children recursively
+            if (spec.ContainsKey("children"))
+            {
+                var children = spec["children"] as Dictionary<string, object>;
+                if (children != null)
+                {
+                    foreach (var childKvp in children)
+                    {
+                        var childName = childKvp.Key;
+                        var childSpec = childKvp.Value as Dictionary<string, object>;
+                        if (childSpec != null)
+                        {
+                            BuildGameObjectFromSpec(childName, childSpec, go);
+                        }
+                    }
+                }
+            }
+
+            Undo.RegisterCreatedObjectUndo(go, $"Create {name}");
+            return go;
+        }
+
+        /// <summary>
+        /// Quickly sets up new scenes with common configurations (3D, 2D, UI, VR).
+        /// Automatically creates necessary GameObjects like Camera, Lights, Canvas, EventSystem.
+        /// </summary>
+        /// <param name="payload">Setup type and optional camera/light settings.</param>
+        /// <returns>Result dictionary with created objects.</returns>
+        private static object HandleSceneQuickSetup(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var setupType = GetString(payload, "setupType");
+                if (string.IsNullOrEmpty(setupType))
+                {
+                    throw new InvalidOperationException("setupType is required");
+                }
+
+                Debug.Log($"[sceneQuickSetup] Setting up {setupType} scene");
+
+                var createdObjects = new List<string>();
+
+                switch (setupType)
+                {
+                    case "3D":
+                        createdObjects.AddRange(Setup3DScene(payload));
+                        break;
+                    case "2D":
+                        createdObjects.AddRange(Setup2DScene(payload));
+                        break;
+                    case "UI":
+                        createdObjects.AddRange(SetupUIScene(payload));
+                        break;
+                    case "VR":
+                        createdObjects.AddRange(SetupVRScene(payload));
+                        break;
+                    case "Empty":
+                        // Do nothing for empty scene
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown setupType: {setupType}");
+                }
+
+                return new Dictionary<string, object>
+                {
+                    ["setupType"] = setupType,
+                    ["createdObjects"] = createdObjects,
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[sceneQuickSetup] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private static List<string> Setup3DScene(Dictionary<string, object> payload)
+        {
+            var created = new List<string>();
+
+            // Create Main Camera
+            var camera = new GameObject("Main Camera");
+            camera.AddComponent<Camera>();
+            camera.tag = "MainCamera";
+
+            var camPosDict = payload.ContainsKey("cameraPosition") ? payload["cameraPosition"] as Dictionary<string, object> : null;
+            if (camPosDict != null)
+            {
+                camera.transform.position = new Vector3(
+                    GetFloat(camPosDict, "x") ?? 0,
+                    GetFloat(camPosDict, "y") ?? 1,
+                    GetFloat(camPosDict, "z") ?? -10
+                );
+            }
+            else
+            {
+                camera.transform.position = new Vector3(0, 1, -10);
+            }
+
+            Undo.RegisterCreatedObjectUndo(camera, "Create Main Camera");
+            created.Add("Main Camera");
+
+            // Create Directional Light
+            var light = new GameObject("Directional Light");
+            var lightComp = light.AddComponent<Light>();
+            lightComp.type = LightType.Directional;
+            lightComp.intensity = GetFloat(payload, "lightIntensity") ?? 1f;
+            light.transform.rotation = Quaternion.Euler(50, -30, 0);
+
+            Undo.RegisterCreatedObjectUndo(light, "Create Directional Light");
+            created.Add("Directional Light");
+
+            return created;
+        }
+
+        private static List<string> Setup2DScene(Dictionary<string, object> payload)
+        {
+            var created = new List<string>();
+
+            // Create Main Camera for 2D
+            var camera = new GameObject("Main Camera");
+            var cam = camera.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 5;
+            camera.tag = "MainCamera";
+            camera.transform.position = new Vector3(0, 0, -10);
+
+            Undo.RegisterCreatedObjectUndo(camera, "Create Main Camera");
+            created.Add("Main Camera");
+
+            return created;
+        }
+
+        private static List<string> SetupUIScene(Dictionary<string, object> payload)
+        {
+            var created = new List<string>();
+
+            // Create Canvas
+            var canvas = new GameObject("Canvas");
+            var canvasComp = canvas.AddComponent<Canvas>();
+            canvasComp.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.AddComponent<UnityEngine.UI.CanvasScaler>();
+            canvas.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+
+            Undo.RegisterCreatedObjectUndo(canvas, "Create Canvas");
+            created.Add("Canvas");
+
+            // Create EventSystem
+            var includeEventSystem = GetBool(payload, "includeEventSystem", true);
+            if (includeEventSystem)
+            {
+                var eventSystem = new GameObject("EventSystem");
+                eventSystem.AddComponent<UnityEngine.EventSystems.EventSystem>();
+                eventSystem.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+
+                Undo.RegisterCreatedObjectUndo(eventSystem, "Create EventSystem");
+                created.Add("EventSystem");
+            }
+
+            return created;
+        }
+
+        private static List<string> SetupVRScene(Dictionary<string, object> payload)
+        {
+            var created = new List<string>();
+
+            // Create XR Origin (simplified - would need XR packages in real implementation)
+            var camera = new GameObject("Main Camera");
+            camera.AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.transform.position = new Vector3(0, 1.6f, 0);
+
+            Undo.RegisterCreatedObjectUndo(camera, "Create Main Camera");
+            created.Add("Main Camera");
+
+            return created;
+        }
+
+        /// <summary>
+        /// Creates GameObjects from predefined templates (primitives, lights, camera, etc.).
+        /// Each template includes appropriate components and sensible defaults.
+        /// </summary>
+        /// <param name="payload">Template type, name, parent, transform properties.</param>
+        /// <returns>Result dictionary with created GameObject information.</returns>
+        private static object HandleGameObjectCreateFromTemplate(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var template = GetString(payload, "template");
+                if (string.IsNullOrEmpty(template))
+                {
+                    throw new InvalidOperationException("template is required");
+                }
+
+                Debug.Log($"[gameObjectCreateFromTemplate] Creating template: {template}");
+
+                var name = GetString(payload, "name");
+                if (string.IsNullOrEmpty(name))
+                {
+                    name = template.Replace("Light-", "");
+                }
+
+                GameObject parent = null;
+                var parentPath = GetString(payload, "parentPath");
+                if (!string.IsNullOrEmpty(parentPath))
+                {
+                    parent = ResolveGameObject(parentPath);
+                }
+
+                GameObject go = null;
+                switch (template)
+                {
+                    case "Camera":
+                        go = new GameObject(name);
+                        go.AddComponent<Camera>();
+                        go.tag = "MainCamera";
+                        break;
+                    case "Light-Directional":
+                        go = new GameObject(name);
+                        var dirLight = go.AddComponent<Light>();
+                        dirLight.type = LightType.Directional;
+                        go.transform.rotation = Quaternion.Euler(50, -30, 0);
+                        break;
+                    case "Light-Point":
+                        go = new GameObject(name);
+                        var pointLight = go.AddComponent<Light>();
+                        pointLight.type = LightType.Point;
+                        break;
+                    case "Light-Spot":
+                        go = new GameObject(name);
+                        var spotLight = go.AddComponent<Light>();
+                        spotLight.type = LightType.Spot;
+                        break;
+                    case "Cube":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        go.name = name;
+                        break;
+                    case "Sphere":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        go.name = name;
+                        break;
+                    case "Plane":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                        go.name = name;
+                        break;
+                    case "Cylinder":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                        go.name = name;
+                        break;
+                    case "Capsule":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        go.name = name;
+                        break;
+                    case "Quad":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                        go.name = name;
+                        break;
+                    case "Empty":
+                        go = new GameObject(name);
+                        break;
+                    case "Player":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                        go.name = name;
+                        go.AddComponent<Rigidbody>();
+                        var playerCollider = go.GetComponent<Collider>();
+                        if (playerCollider != null)
+                        {
+                            playerCollider.material = new PhysicsMaterial("PlayerPhysics");
+                        }
+                        break;
+                    case "Enemy":
+                        go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                        go.name = name;
+                        go.AddComponent<Rigidbody>();
+                        break;
+                    case "Particle System":
+                        go = new GameObject(name);
+                        go.AddComponent<ParticleSystem>();
+                        break;
+                    case "Audio Source":
+                        go = new GameObject(name);
+                        go.AddComponent<AudioSource>();
+                        break;
+                    default:
+                        throw new InvalidOperationException($"Unknown template: {template}");
+                }
+
+                if (parent != null)
+                {
+                    go.transform.SetParent(parent.transform, false);
+                }
+
+                // Apply transform properties
+                if (payload.ContainsKey("position"))
+                {
+                    var posDict = payload["position"] as Dictionary<string, object>;
+                    if (posDict != null)
+                    {
+                        go.transform.position = new Vector3(
+                            GetFloat(posDict, "x") ?? 0,
+                            GetFloat(posDict, "y") ?? 0,
+                            GetFloat(posDict, "z") ?? 0
+                        );
+                    }
+                }
+
+                if (payload.ContainsKey("rotation"))
+                {
+                    var rotDict = payload["rotation"] as Dictionary<string, object>;
+                    if (rotDict != null)
+                    {
+                        go.transform.eulerAngles = new Vector3(
+                            GetFloat(rotDict, "x") ?? 0,
+                            GetFloat(rotDict, "y") ?? 0,
+                            GetFloat(rotDict, "z") ?? 0
+                        );
+                    }
+                }
+
+                if (payload.ContainsKey("scale"))
+                {
+                    var scaleDict = payload["scale"] as Dictionary<string, object>;
+                    if (scaleDict != null)
+                    {
+                        go.transform.localScale = new Vector3(
+                            GetFloat(scaleDict, "x") ?? 1,
+                            GetFloat(scaleDict, "y") ?? 1,
+                            GetFloat(scaleDict, "z") ?? 1
+                        );
+                    }
+                }
+
+                Undo.RegisterCreatedObjectUndo(go, $"Create {template}");
+                Selection.activeGameObject = go;
+
+                return new Dictionary<string, object>
+                {
+                    ["template"] = template,
+                    ["gameObjectPath"] = GetHierarchyPath(go),
+                    ["name"] = go.name,
+                };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[gameObjectCreateFromTemplate] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Inspects the current scene context including hierarchy, GameObjects, and components.
+        /// Provides a comprehensive overview for Claude to understand the current state.
+        /// </summary>
+        /// <param name="payload">Options for what to include in the inspection.</param>
+        /// <returns>Result dictionary with scene context information.</returns>
+        private static object HandleContextInspect(Dictionary<string, object> payload)
+        {
+            try
+            {
+                var includeHierarchy = GetBool(payload, "includeHierarchy", true);
+                var includeComponents = GetBool(payload, "includeComponents", false);
+                var maxDepth = GetInt(payload, "maxDepth", -1);
+                var filter = GetString(payload, "filter");
+
+                Debug.Log($"[contextInspect] Inspecting scene context");
+
+                var result = new Dictionary<string, object>
+                {
+                    ["sceneName"] = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
+                    ["scenePath"] = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,
+                };
+
+                if (includeHierarchy)
+                {
+                    var rootObjects = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+                    var hierarchy = new List<object>();
+
+                    foreach (var root in rootObjects)
+                    {
+                        if (!string.IsNullOrEmpty(filter))
+                        {
+                            if (!McpWildcardUtility.IsMatch(root.name, filter, false))
+                            {
+                                continue;
+                            }
+                        }
+
+                        hierarchy.Add(BuildHierarchyInfo(root, 0, maxDepth, includeComponents, filter));
+                    }
+
+                    result["hierarchy"] = hierarchy;
+                    result["rootObjectCount"] = rootObjects.Length;
+                }
+
+                // Add scene statistics
+                var allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
+                result["totalGameObjects"] = allObjects.Length;
+
+                var cameras = UnityEngine.Object.FindObjectsOfType<Camera>();
+                result["cameraCount"] = cameras.Length;
+
+                var lights = UnityEngine.Object.FindObjectsOfType<Light>();
+                result["lightCount"] = lights.Length;
+
+                var canvases = UnityEngine.Object.FindObjectsOfType<Canvas>();
+                result["canvasCount"] = canvases.Length;
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[contextInspect] Error: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private static Dictionary<string, object> BuildHierarchyInfo(GameObject go, int currentDepth, int maxDepth, bool includeComponents, string filter)
+        {
+            var info = new Dictionary<string, object>
+            {
+                ["name"] = go.name,
+                ["path"] = GetHierarchyPath(go),
+                ["active"] = go.activeSelf,
+                ["childCount"] = go.transform.childCount,
+            };
+
+            if (includeComponents)
+            {
+                var components = new List<string>();
+                foreach (var comp in go.GetComponents<Component>())
+                {
+                    if (comp != null)
+                    {
+                        components.Add(comp.GetType().Name);
+                    }
+                }
+                info["components"] = components;
+            }
+
+            // Include children if within depth limit
+            if (maxDepth < 0 || currentDepth < maxDepth)
+            {
+                if (go.transform.childCount > 0)
+                {
+                    var children = new List<object>();
+                    for (int i = 0; i < go.transform.childCount; i++)
+                    {
+                        var child = go.transform.GetChild(i).gameObject;
+
+                        if (!string.IsNullOrEmpty(filter))
+                        {
+                            if (!McpWildcardUtility.IsMatch(child.name, filter, false))
+                            {
+                                continue;
+                            }
+                        }
+
+                        children.Add(BuildHierarchyInfo(child, currentDepth + 1, maxDepth, includeComponents, filter));
+                    }
+                    if (children.Count > 0)
+                    {
+                        info["children"] = children;
+                    }
+                }
+            }
+
+            return info;
         }
 
         /// <summary>
@@ -5253,6 +6867,12 @@ namespace MCP.Editor
                         "uguiRectAdjust" => HandleUguiRectAdjust(operationPayload),
                         "uguiAnchorManage" => HandleUguiAnchorManage(operationPayload),
                         "uguiManage" => HandleUguiManage(operationPayload),
+                        "uguiCreateFromTemplate" => HandleUguiCreateFromTemplate(operationPayload),
+                        "uguiLayoutManage" => HandleUguiLayoutManage(operationPayload),
+                        "hierarchyBuilder" => HandleHierarchyBuilder(operationPayload),
+                        "sceneQuickSetup" => HandleSceneQuickSetup(operationPayload),
+                        "gameObjectCreateFromTemplate" => HandleGameObjectCreateFromTemplate(operationPayload),
+                        "contextInspect" => HandleContextInspect(operationPayload),
                         "tagLayerManage" => HandleTagLayerManage(operationPayload),
                         "scriptManage" => HandleScriptManage(operationPayload),
                         "prefabManage" => HandlePrefabManage(operationPayload),

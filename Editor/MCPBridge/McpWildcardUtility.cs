@@ -272,6 +272,45 @@ namespace MCP.Editor
         }
 
         /// <summary>
+        /// Checks if a string matches a wildcard pattern.
+        /// </summary>
+        /// <param name="input">String to test.</param>
+        /// <param name="pattern">Wildcard pattern (* and ?).</param>
+        /// <param name="useRegex">If true, treats pattern as regex instead of wildcard.</param>
+        /// <returns>True if input matches pattern.</returns>
+        public static bool IsMatch(string input, string pattern, bool useRegex = false)
+        {
+            if (string.IsNullOrEmpty(pattern))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
+            Regex regex;
+            if (useRegex)
+            {
+                try
+                {
+                    regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                }
+                catch (ArgumentException)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                regex = WildcardToRegex(pattern);
+            }
+
+            return regex.IsMatch(input);
+        }
+
+        /// <summary>
         /// Loads multiple assets by paths.
         /// </summary>
         /// <typeparam name="T">Asset type to load.</typeparam>

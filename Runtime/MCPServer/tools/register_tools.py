@@ -698,6 +698,320 @@ def register_tools(server: Server) -> None:
         "additionalProperties": False,
     }
 
+    hierarchy_builder_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "hierarchy": {
+                    "type": "object",
+                    "description": "Hierarchical structure definition. Each key is the GameObject name, and the value is an object with 'components' (list of component types), 'properties' (dict of property changes), and 'children' (nested hierarchy).",
+                },
+                "parentPath": {
+                    "type": "string",
+                    "description": "Parent GameObject path. If not specified, creates at root level.",
+                },
+            },
+        },
+        ["hierarchy"],
+    )
+
+    scene_quick_setup_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "setupType": {
+                    "type": "string",
+                    "enum": ["3D", "2D", "UI", "VR", "Empty"],
+                    "description": "Type of scene setup: '3D' (Main Camera + Directional Light), '2D' (2D Camera + 2D settings), 'UI' (Canvas + EventSystem), 'VR' (VR Camera + XR settings), 'Empty' (no default objects).",
+                },
+                "includeEventSystem": {
+                    "type": "boolean",
+                    "description": "Whether to include EventSystem (for UI). Default is true for UI setup, false otherwise.",
+                },
+                "cameraPosition": {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "number"},
+                        "y": {"type": "number"},
+                        "z": {"type": "number"},
+                    },
+                    "description": "Camera position. Default varies by setup type.",
+                },
+                "cameraRotation": {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "number"},
+                        "y": {"type": "number"},
+                        "z": {"type": "number"},
+                    },
+                    "description": "Camera rotation (Euler angles). Default varies by setup type.",
+                },
+                "lightIntensity": {
+                    "type": "number",
+                    "description": "Directional Light intensity (for 3D setup). Default is 1.0.",
+                },
+            },
+        },
+        ["setupType"],
+    )
+
+    gameobject_template_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string",
+                    "enum": ["Camera", "Light-Directional", "Light-Point", "Light-Spot", "Cube", "Sphere", "Plane", "Cylinder", "Capsule", "Quad", "Empty", "Player", "Enemy", "Particle System", "Audio Source"],
+                    "description": "GameObject template to create. Each template includes appropriate components and settings.",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name for the GameObject. If not specified, uses template name.",
+                },
+                "parentPath": {
+                    "type": "string",
+                    "description": "Parent GameObject path. If not specified, creates at root level.",
+                },
+                "position": {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "number"},
+                        "y": {"type": "number"},
+                        "z": {"type": "number"},
+                    },
+                    "description": "Position in world space. Default is (0, 0, 0).",
+                },
+                "rotation": {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "number"},
+                        "y": {"type": "number"},
+                        "z": {"type": "number"},
+                    },
+                    "description": "Rotation (Euler angles). Default is (0, 0, 0).",
+                },
+                "scale": {
+                    "type": "object",
+                    "properties": {
+                        "x": {"type": "number"},
+                        "y": {"type": "number"},
+                        "z": {"type": "number"},
+                    },
+                    "description": "Scale. Default is (1, 1, 1).",
+                },
+            },
+        },
+        ["template"],
+    )
+
+    context_inspect_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "includeHierarchy": {
+                    "type": "boolean",
+                    "description": "Include full scene hierarchy. Default is true.",
+                },
+                "includeComponents": {
+                    "type": "boolean",
+                    "description": "Include component types for each GameObject. Default is false.",
+                },
+                "maxDepth": {
+                    "type": "integer",
+                    "description": "Maximum hierarchy depth to inspect. Default is unlimited.",
+                },
+                "filter": {
+                    "type": "string",
+                    "description": "Filter GameObjects by name pattern (supports wildcards * and ?).",
+                },
+            },
+        },
+        [],
+    )
+
+    ugui_template_create_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "type": "string",
+                    "enum": ["Button", "Text", "Image", "RawImage", "Panel", "ScrollView", "InputField", "Slider", "Toggle", "Dropdown"],
+                    "description": "UI element template to create. Each template includes necessary components and default settings.",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Name for the new GameObject. If not specified, uses template name as default.",
+                },
+                "parentPath": {
+                    "type": "string",
+                    "description": "Hierarchy path of the parent GameObject. Must be under a Canvas. If not specified, creates under first Canvas found.",
+                },
+                "anchorPreset": {
+                    "type": "string",
+                    "enum": [
+                        "top-left", "top-center", "top-right",
+                        "middle-left", "middle-center", "middle-right", "center",
+                        "bottom-left", "bottom-center", "bottom-right",
+                        "stretch-horizontal", "stretch-vertical", "stretch-all", "stretch"
+                    ],
+                    "description": "Anchor preset to apply. Default is 'center'.",
+                },
+                "width": {
+                    "type": "number",
+                    "description": "Width of the UI element. Default varies by template.",
+                },
+                "height": {
+                    "type": "number",
+                    "description": "Height of the UI element. Default varies by template.",
+                },
+                "positionX": {
+                    "type": "number",
+                    "description": "Anchored position X. Default is 0.",
+                },
+                "positionY": {
+                    "type": "number",
+                    "description": "Anchored position Y. Default is 0.",
+                },
+                "text": {
+                    "type": "string",
+                    "description": "Text content for Button, Text, InputField, Toggle, or Dropdown templates.",
+                },
+                "fontSize": {
+                    "type": "integer",
+                    "description": "Font size for text elements. Default varies by template.",
+                },
+                "interactable": {
+                    "type": "boolean",
+                    "description": "Whether the element is interactable (for Button, InputField, Slider, Toggle, Dropdown). Default is true.",
+                },
+            },
+        },
+        ["template"],
+    )
+
+    ugui_layout_manage_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "gameObjectPath": {
+                    "type": "string",
+                    "description": "Target GameObject path to add/update/remove layout component.",
+                },
+                "operation": {
+                    "type": "string",
+                    "enum": ["add", "update", "remove", "inspect"],
+                    "description": "Operation type: 'add' adds layout component, 'update' modifies existing component, 'remove' removes component, 'inspect' retrieves current layout settings.",
+                },
+                "layoutType": {
+                    "type": "string",
+                    "enum": ["HorizontalLayoutGroup", "VerticalLayoutGroup", "GridLayoutGroup", "ContentSizeFitter", "LayoutElement", "AspectRatioFitter"],
+                    "description": "Layout component type to add/update/remove.",
+                },
+                # Common layout group properties
+                "padding": {
+                    "type": "object",
+                    "properties": {
+                        "left": {"type": "integer"},
+                        "right": {"type": "integer"},
+                        "top": {"type": "integer"},
+                        "bottom": {"type": "integer"},
+                    },
+                    "description": "Padding for layout groups (left, right, top, bottom).",
+                },
+                "spacing": {
+                    "type": "number",
+                    "description": "Spacing between elements for Horizontal/VerticalLayoutGroup, or x-spacing for GridLayoutGroup.",
+                },
+                "spacingY": {
+                    "type": "number",
+                    "description": "Y-spacing between elements for GridLayoutGroup.",
+                },
+                "childAlignment": {
+                    "type": "string",
+                    "enum": ["UpperLeft", "UpperCenter", "UpperRight", "MiddleLeft", "MiddleCenter", "MiddleRight", "LowerLeft", "LowerCenter", "LowerRight"],
+                    "description": "Child alignment for layout groups.",
+                },
+                "childControlWidth": {
+                    "type": "boolean",
+                    "description": "Whether the layout group controls child width.",
+                },
+                "childControlHeight": {
+                    "type": "boolean",
+                    "description": "Whether the layout group controls child height.",
+                },
+                "childForceExpandWidth": {
+                    "type": "boolean",
+                    "description": "Whether children should be forced to expand width.",
+                },
+                "childForceExpandHeight": {
+                    "type": "boolean",
+                    "description": "Whether children should be forced to expand height.",
+                },
+                # GridLayoutGroup specific
+                "cellSizeX": {
+                    "type": "number",
+                    "description": "Cell width for GridLayoutGroup.",
+                },
+                "cellSizeY": {
+                    "type": "number",
+                    "description": "Cell height for GridLayoutGroup.",
+                },
+                "constraint": {
+                    "type": "string",
+                    "enum": ["Flexible", "FixedColumnCount", "FixedRowCount"],
+                    "description": "Constraint mode for GridLayoutGroup.",
+                },
+                "constraintCount": {
+                    "type": "integer",
+                    "description": "Number of columns/rows for GridLayoutGroup constraint.",
+                },
+                "startCorner": {
+                    "type": "string",
+                    "enum": ["UpperLeft", "UpperRight", "LowerLeft", "LowerRight"],
+                    "description": "Start corner for GridLayoutGroup.",
+                },
+                "startAxis": {
+                    "type": "string",
+                    "enum": ["Horizontal", "Vertical"],
+                    "description": "Start axis for GridLayoutGroup.",
+                },
+                # ContentSizeFitter specific
+                "horizontalFit": {
+                    "type": "string",
+                    "enum": ["Unconstrained", "MinSize", "PreferredSize"],
+                    "description": "Horizontal fit mode for ContentSizeFitter.",
+                },
+                "verticalFit": {
+                    "type": "string",
+                    "enum": ["Unconstrained", "MinSize", "PreferredSize"],
+                    "description": "Vertical fit mode for ContentSizeFitter.",
+                },
+                # LayoutElement specific
+                "minWidth": {"type": "number", "description": "Minimum width for LayoutElement."},
+                "minHeight": {"type": "number", "description": "Minimum height for LayoutElement."},
+                "preferredWidth": {"type": "number", "description": "Preferred width for LayoutElement."},
+                "preferredHeight": {"type": "number", "description": "Preferred height for LayoutElement."},
+                "flexibleWidth": {"type": "number", "description": "Flexible width for LayoutElement."},
+                "flexibleHeight": {"type": "number", "description": "Flexible height for LayoutElement."},
+                "ignoreLayout": {
+                    "type": "boolean",
+                    "description": "Whether to ignore parent layout for LayoutElement.",
+                },
+                # AspectRatioFitter specific
+                "aspectMode": {
+                    "type": "string",
+                    "enum": ["None", "WidthControlsHeight", "HeightControlsWidth", "FitInParent", "EnvelopeParent"],
+                    "description": "Aspect mode for AspectRatioFitter.",
+                },
+                "aspectRatio": {
+                    "type": "number",
+                    "description": "Aspect ratio (width/height) for AspectRatioFitter.",
+                },
+            },
+        },
+        ["gameObjectPath", "operation"],
+    )
+
     ugui_manage_schema = _schema_with_required(
         {
             "type": "object",
@@ -855,6 +1169,36 @@ def register_tools(server: Server) -> None:
             inputSchema=ugui_manage_schema,
         ),
         types.Tool(
+            name="unity_hierarchy_builder",
+            description="Build complex GameObject hierarchies declaratively in one command! Define nested structures with components and properties using a simple JSON format. Perfect for creating multi-level UI layouts, scene structures, or prefab hierarchies without multiple separate commands.",
+            inputSchema=hierarchy_builder_schema,
+        ),
+        types.Tool(
+            name="unity_scene_quickSetup",
+            description="Instantly set up new scenes with common configurations! Choose from 3D (Camera + Light), 2D (2D Camera), UI (Canvas + EventSystem), or VR setups. Saves time by automatically creating all necessary GameObjects with proper settings.",
+            inputSchema=scene_quick_setup_schema,
+        ),
+        types.Tool(
+            name="unity_gameobject_createFromTemplate",
+            description="Create common GameObjects from templates with one command! Supports primitives (Cube, Sphere, Plane, etc.), lights (Directional, Point, Spot), Camera, Empty, Player, Enemy, Particle System, and Audio Source. Each template includes appropriate components and sensible defaults.",
+            inputSchema=gameobject_template_schema,
+        ),
+        types.Tool(
+            name="unity_context_inspect",
+            description="Get a comprehensive overview of the current scene structure! Returns scene hierarchy, active GameObjects, components, and other context information. Optionally filter by pattern and control detail level. Helps Claude understand the current state before making changes.",
+            inputSchema=context_inspect_schema,
+        ),
+        types.Tool(
+            name="unity_ugui_createFromTemplate",
+            description="Create UI elements from templates with one command. Supports Button, Text, Image, Panel, ScrollView, InputField, Slider, Toggle, and Dropdown. Each template automatically includes necessary components (Image, Button, Text, etc.) with sensible defaults. This is the easiest way for Claude to create common UI elements!",
+            inputSchema=ugui_template_create_schema,
+        ),
+        types.Tool(
+            name="unity_ugui_layoutManage",
+            description="Manage layout components (HorizontalLayoutGroup, VerticalLayoutGroup, GridLayoutGroup, ContentSizeFitter, LayoutElement, AspectRatioFitter) on UI GameObjects. Add, update, remove, or inspect layout settings. Makes it easy for Claude to create organized UI layouts with proper spacing and alignment.",
+            inputSchema=ugui_layout_manage_schema,
+        ),
+        types.Tool(
             name="unity_tagLayer_manage",
             description="Manage tags and layers in Unity. Set/get tags and layers on GameObjects (supports recursive layer setting for hierarchies). Add/remove tags and layers from the project. List all available tags and layers.",
             inputSchema=tag_layer_manage_schema,
@@ -950,6 +1294,24 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_ugui_manage":
             return await _call_bridge_tool("uguiManage", args)
+
+        if name == "unity_hierarchy_builder":
+            return await _call_bridge_tool("hierarchyBuilder", args)
+
+        if name == "unity_scene_quickSetup":
+            return await _call_bridge_tool("sceneQuickSetup", args)
+
+        if name == "unity_gameobject_createFromTemplate":
+            return await _call_bridge_tool("gameObjectCreateFromTemplate", args)
+
+        if name == "unity_context_inspect":
+            return await _call_bridge_tool("contextInspect", args)
+
+        if name == "unity_ugui_createFromTemplate":
+            return await _call_bridge_tool("uguiCreateFromTemplate", args)
+
+        if name == "unity_ugui_layoutManage":
+            return await _call_bridge_tool("uguiLayoutManage", args)
 
         if name == "unity_tagLayer_manage":
             return await _call_bridge_tool("tagLayerManage", args)

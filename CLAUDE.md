@@ -2,6 +2,50 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> 💡 **NEW TO UNITYMCP?** Check out the [Quick Start Guide](QUICKSTART.md) for a fast introduction with common commands and examples!
+
+## 🎯 For Claude: How to Use This System Effectively
+
+**You are working with UnityMCP - a powerful system that lets you control Unity Editor directly!**
+
+### What You Can Do
+
+- ✅ Create complete UI systems with single commands
+- ✅ Build 3D game scenes instantly
+- ✅ Manage GameObjects, components, and assets
+- ✅ Set up entire scene hierarchies declaratively
+- ✅ Inspect and understand Unity project structure
+
+### Quick Command Reference
+
+**Most Common Commands:**
+```python
+# Set up a new scene
+unity_scene_quickSetup({"setupType": "UI"})  # or "3D", "2D"
+
+# Create UI elements
+unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
+
+# Create GameObjects
+unity_gameobject_createFromTemplate({"template": "Cube", "position": {"x": 0, "y": 1, "z": 0}})
+
+# Build complex hierarchies
+unity_hierarchy_builder({"hierarchy": {...}})
+
+# Check current scene
+unity_context_inspect({"includeHierarchy": True})
+```
+
+**See [QUICKSTART.md](QUICKSTART.md) for complete examples and workflows!**
+
+### Important Guidelines
+
+1. **Always use templates when available** - Much faster than manual creation
+2. **Check context before making changes** - Use `unity_context_inspect()`
+3. **Use hierarchy builder for complex structures** - Create entire trees in one command
+4. **Batch related operations** - Use `unity_batch_execute()` for efficiency
+5. **Refer to the Quick Start guide** - Contains copy-paste examples for common tasks
+
 ## Project Overview
 
 **UnityMCP** is a Model Context Protocol (MCP) server that enables AI assistants to interact with Unity Editor in real-time. It consists of two main components:
@@ -291,9 +335,390 @@ private static object HandleTool(Dictionary<string, object> payload)
    }
    ```
 
+## Quick Start for Claude
+
+### Creating Your First UI
+
+The easiest way to create UI in Unity:
+
+```python
+# 1. Set up a UI scene (creates Canvas + EventSystem automatically)
+unity_scene_quickSetup({"setupType": "UI"})
+
+# 2. Create a button with one command
+unity_ugui_createFromTemplate({
+    "template": "Button",
+    "text": "Click Me!",
+    "width": 200,
+    "height": 50
+})
+
+# 3. Add a layout to organize elements
+unity_ugui_layoutManage({
+    "operation": "add",
+    "gameObjectPath": "Canvas",
+    "layoutType": "VerticalLayoutGroup",
+    "spacing": 10,
+    "padding": {"left": 20, "right": 20, "top": 20, "bottom": 20}
+})
+```
+
+### Creating a 3D Scene
+
+```python
+# 1. Set up 3D scene (Camera + Light automatically)
+unity_scene_quickSetup({"setupType": "3D"})
+
+# 2. Create a player
+unity_gameobject_createFromTemplate({
+    "template": "Player",
+    "position": {"x": 0, "y": 1, "z": 0}
+})
+
+# 3. Create some obstacles
+unity_gameobject_createFromTemplate({
+    "template": "Cube",
+    "name": "Obstacle1",
+    "position": {"x": 5, "y": 0.5, "z": 0}
+})
+```
+
+### Building Complex Hierarchies
+
+Use the hierarchy builder for complex nested structures:
+
+```python
+unity_hierarchy_builder({
+    "hierarchy": {
+        "Player": {
+            "components": ["Rigidbody", "CapsuleCollider"],
+            "properties": {
+                "position": {"x": 0, "y": 1, "z": 0}
+            },
+            "children": {
+                "Camera": {
+                    "components": ["Camera"],
+                    "properties": {
+                        "position": {"x": 0, "y": 0.5, "z": -3}
+                    }
+                },
+                "Weapon": {
+                    "components": ["BoxCollider"]
+                }
+            }
+        }
+    }
+})
+```
+
+## Best Practices for Claude
+
+### 1. Always Check Context First
+
+Before making changes, inspect the scene to understand current state:
+
+```python
+# Get overview of current scene
+unity_context_inspect({
+    "includeHierarchy": True,
+    "includeComponents": False,
+    "maxDepth": 2
+})
+```
+
+### 2. Use Templates Instead of Manual Creation
+
+❌ **Avoid this (slow, error-prone):**
+```python
+unity_gameobject_crud({"operation": "create", "name": "Button"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Button", "componentType": "UnityEngine.UI.Image"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Button", "componentType": "UnityEngine.UI.Button"})
+# ... more steps
+```
+
+✅ **Use this instead (fast, reliable):**
+```python
+unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
+```
+
+### 3. Batch Operations When Possible
+
+Use `unity_batch_execute` for multiple related operations:
+
+```python
+unity_batch_execute({
+    "operations": [
+        {"tool": "gameObjectManage", "payload": {"operation": "create", "name": "Panel"}},
+        {"tool": "uguiCreateFromTemplate", "payload": {"template": "Button", "parentPath": "Panel"}},
+        {"tool": "uguiCreateFromTemplate", "payload": {"template": "Text", "parentPath": "Panel"}}
+    ]
+})
+```
+
+### 4. Use Hierarchy Builder for Complex Structures
+
+When creating multi-level hierarchies, use hierarchy builder instead of individual commands:
+
+```python
+# One command creates entire UI layout
+unity_hierarchy_builder({
+    "hierarchy": {
+        "MainMenu": {
+            "components": ["UnityEngine.UI.Image"],
+            "children": {
+                "Title": {"components": ["UnityEngine.UI.Text"]},
+                "ButtonContainer": {
+                    "components": ["UnityEngine.UI.VerticalLayoutGroup"],
+                    "children": {
+                        "PlayButton": {"components": ["UnityEngine.UI.Button", "UnityEngine.UI.Image"]},
+                        "SettingsButton": {"components": ["UnityEngine.UI.Button", "UnityEngine.UI.Image"]},
+                        "QuitButton": {"components": ["UnityEngine.UI.Button", "UnityEngine.UI.Image"]}
+                    }
+                }
+            }
+        }
+    },
+    "parentPath": "Canvas"
+})
+```
+
+## Common Use Cases
+
+### Use Case 1: Create a Game Menu
+
+```python
+# Step 1: Setup UI scene
+unity_scene_quickSetup({"setupType": "UI"})
+
+# Step 2: Create menu structure
+unity_hierarchy_builder({
+    "hierarchy": {
+        "MenuPanel": {
+            "components": ["UnityEngine.UI.Image"],
+            "properties": {
+                "Image": {"color": {"r": 0, "g": 0, "b": 0, "a": 0.8}}
+            },
+            "children": {
+                "Title": {
+                    "components": ["UnityEngine.UI.Text"],
+                    "properties": {
+                        "Text": {"text": "Main Menu", "fontSize": 48, "alignment": "MiddleCenter"}
+                    }
+                },
+                "ButtonList": {
+                    "components": ["UnityEngine.UI.VerticalLayoutGroup"]
+                }
+            }
+        }
+    },
+    "parentPath": "Canvas"
+})
+
+# Step 3: Add buttons to ButtonList
+for button_text in ["Start Game", "Options", "Quit"]:
+    unity_ugui_createFromTemplate({
+        "template": "Button",
+        "name": f"{button_text}Button",
+        "parentPath": "Canvas/MenuPanel/ButtonList",
+        "text": button_text,
+        "width": 300,
+        "height": 60
+    })
+```
+
+### Use Case 2: Create a Simple Game Level
+
+```python
+# Setup 3D scene
+unity_scene_quickSetup({"setupType": "3D"})
+
+# Create player
+unity_gameobject_createFromTemplate({
+    "template": "Player",
+    "name": "Player",
+    "position": {"x": 0, "y": 1, "z": 0}
+})
+
+# Create ground
+unity_gameobject_createFromTemplate({
+    "template": "Plane",
+    "name": "Ground",
+    "scale": {"x": 10, "y": 1, "z": 10}
+})
+
+# Create obstacles using batch execute
+unity_batch_execute({
+    "operations": [
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Obstacle1", "position": {"x": 3, "y": 0.5, "z": 0}}},
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Obstacle2", "position": {"x": -3, "y": 0.5, "z": 0}}},
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Obstacle3", "position": {"x": 0, "y": 0.5, "z": 3}}}
+    ]
+})
+```
+
+### Use Case 3: Create an Inventory UI
+
+```python
+# Create inventory panel with grid layout
+unity_hierarchy_builder({
+    "hierarchy": {
+        "InventoryPanel": {
+            "components": ["UnityEngine.UI.Image", "UnityEngine.UI.GridLayoutGroup"],
+            "properties": {
+                "position": {"x": 0, "y": 0, "z": 0}
+            }
+        }
+    },
+    "parentPath": "Canvas"
+})
+
+# Configure grid layout
+unity_ugui_layoutManage({
+    "operation": "update",
+    "gameObjectPath": "Canvas/InventoryPanel",
+    "layoutType": "GridLayoutGroup",
+    "cellSizeX": 80,
+    "cellSizeY": 80,
+    "spacing": 10,
+    "constraint": "FixedColumnCount",
+    "constraintCount": 5
+})
+
+# Add inventory slots
+for i in range(20):
+    unity_ugui_createFromTemplate({
+        "template": "Image",
+        "name": f"Slot{i}",
+        "parentPath": "Canvas/InventoryPanel"
+    })
+```
+
 ## Available Tools
 
-### Batch Execute (`unity.batch.execute`)
+### New High-Level Tools (Recommended)
+
+These tools make common Unity tasks much easier:
+
+#### 1. Scene Quick Setup (`unity_scene_quickSetup`)
+
+Instantly set up new scenes with common configurations.
+
+**Setup Types:**
+- `"3D"` - Main Camera + Directional Light
+- `"2D"` - 2D Camera (orthographic)
+- `"UI"` - Canvas + EventSystem
+- `"VR"` - VR Camera setup
+- `"Empty"` - Empty scene
+
+**Example:**
+```python
+unity_scene_quickSetup({"setupType": "UI"})
+```
+
+#### 2. GameObject Templates (`unity_gameobject_createFromTemplate`)
+
+Create common GameObjects with one command.
+
+**Available Templates:**
+- **Primitives**: Cube, Sphere, Plane, Cylinder, Capsule, Quad
+- **Lights**: Light-Directional, Light-Point, Light-Spot
+- **Special**: Camera, Empty, Player, Enemy, Particle System, Audio Source
+
+**Example:**
+```python
+unity_gameobject_createFromTemplate({
+    "template": "Sphere",
+    "name": "Ball",
+    "position": {"x": 0, "y": 5, "z": 0},
+    "scale": {"x": 0.5, "y": 0.5, "z": 0.5}
+})
+```
+
+#### 3. UI Templates (`unity_ugui_createFromTemplate`)
+
+Create complete UI elements with all necessary components.
+
+**Available Templates:**
+- Button, Text, Image, RawImage, Panel
+- ScrollView, InputField, Slider, Toggle, Dropdown
+
+**Example:**
+```python
+unity_ugui_createFromTemplate({
+    "template": "Button",
+    "text": "Start Game",
+    "width": 200,
+    "height": 50,
+    "anchorPreset": "middle-center"
+})
+```
+
+#### 4. Hierarchy Builder (`unity_hierarchy_builder`)
+
+Build complex nested GameObject structures declaratively.
+
+**Example:**
+```python
+unity_hierarchy_builder({
+    "hierarchy": {
+        "GameManager": {
+            "components": ["MyNamespace.GameManager"],
+            "children": {
+                "UI": {
+                    "children": {
+                        "ScoreText": {"components": ["UnityEngine.UI.Text"]},
+                        "HealthBar": {"components": ["UnityEngine.UI.Slider"]}
+                    }
+                },
+                "Audio": {
+                    "children": {
+                        "MusicSource": {"components": ["AudioSource"]},
+                        "SFXSource": {"components": ["AudioSource"]}
+                    }
+                }
+            }
+        }
+    }
+})
+```
+
+#### 5. Layout Management (`unity_ugui_layoutManage`)
+
+Manage layout components on UI GameObjects.
+
+**Layout Types:**
+- HorizontalLayoutGroup, VerticalLayoutGroup
+- GridLayoutGroup
+- ContentSizeFitter, LayoutElement, AspectRatioFitter
+
+**Example:**
+```python
+unity_ugui_layoutManage({
+    "operation": "add",
+    "gameObjectPath": "Canvas/Panel",
+    "layoutType": "VerticalLayoutGroup",
+    "spacing": 15,
+    "padding": {"left": 20, "right": 20, "top": 20, "bottom": 20},
+    "childControlWidth": True,
+    "childControlHeight": False
+})
+```
+
+#### 6. Context Inspector (`unity_context_inspect`)
+
+Get comprehensive scene information.
+
+**Example:**
+```python
+unity_context_inspect({
+    "includeHierarchy": True,
+    "includeComponents": True,
+    "maxDepth": 3,
+    "filter": "Player*"  # Optional: filter by pattern
+})
+```
+
+### Batch Execute (`unity_batch_execute`)
 
 The batch execute tool allows you to execute multiple Unity operations in a single request, improving efficiency for bulk operations.
 
@@ -755,6 +1180,194 @@ The prefab management tool provides comprehensive operations for working with Un
 6. **EditorPrefs Cleanup**: Remember to delete EditorPrefs keys after using them to avoid state pollution.
 7. **Prefab Paths**: Prefab files must have `.prefab` extension and be under `Assets/` directory.
 8. **Prefab Instances**: Operations like `update`, `applyOverrides`, and `revertOverrides` require the GameObject to be a prefab instance (checked via `PrefabUtility.IsPartOfPrefabInstance()`).
+
+## Troubleshooting for Claude
+
+### Error: "Unity bridge is not connected"
+
+**Problem:** The Python MCP server cannot connect to Unity Editor.
+
+**Solutions:**
+1. Check Unity Editor is open
+2. Go to **Tools > MCP Assistant** in Unity
+3. Click **Start Bridge** button
+4. Verify the status shows "Connected"
+5. Check firewall isn't blocking localhost connections
+
+### Error: "GameObject not found"
+
+**Problem:** Cannot find the specified GameObject by path.
+
+**Solutions:**
+1. Use `unity_context_inspect()` to see current hierarchy
+2. Check the path is correct (case-sensitive)
+3. Verify the GameObject exists in the active scene
+4. Use hierarchy path format: `"Parent/Child/Target"`
+
+**Example:**
+```python
+# Check what exists first
+unity_context_inspect({"includeHierarchy": True, "maxDepth": 2})
+
+# Then use correct path
+unity_gameobject_crud({"operation": "inspect", "gameObjectPath": "Canvas/Panel/Button"})
+```
+
+### Error: "Component type not found"
+
+**Problem:** Component type name is not fully qualified.
+
+**Solutions:**
+1. Use full namespace: `UnityEngine.UI.Button` not `Button`
+2. Common namespaces:
+   - UI components: `UnityEngine.UI.*`
+   - Standard components: `UnityEngine.*`
+   - Custom scripts: `YourNamespace.ClassName`
+
+**Example:**
+```python
+# Wrong
+unity_component_crud({"componentType": "Button"})
+
+# Correct
+unity_component_crud({"componentType": "UnityEngine.UI.Button"})
+```
+
+### Error: "Must be under a Canvas"
+
+**Problem:** Trying to create UI elements without a Canvas.
+
+**Solution:** Always set up UI scene first:
+```python
+# Set up UI scene (creates Canvas + EventSystem)
+unity_scene_quickSetup({"setupType": "UI"})
+
+# Now you can create UI elements
+unity_ugui_createFromTemplate({"template": "Button"})
+```
+
+### Error: "Parent must be under a Canvas"
+
+**Problem:** Trying to create UI element under a non-Canvas parent.
+
+**Solution:** Ensure parent path is under Canvas:
+```python
+# Wrong - "Player" is not under Canvas
+unity_ugui_createFromTemplate({"template": "Button", "parentPath": "Player"})
+
+# Correct
+unity_ugui_createFromTemplate({"template": "Button", "parentPath": "Canvas"})
+```
+
+### Common Mistakes for Claude to Avoid
+
+#### ❌ Mistake 1: Creating UI manually instead of using templates
+
+**Wrong:**
+```python
+unity_gameobject_crud({"operation": "create", "name": "Button"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Button", "componentType": "UnityEngine.UI.Image"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Button", "componentType": "UnityEngine.UI.Button"})
+unity_gameobject_crud({"operation": "create", "name": "Text", "parentPath": "Button"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Button/Text", "componentType": "UnityEngine.UI.Text"})
+# ... many more steps
+```
+
+**Right:**
+```python
+unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
+```
+
+#### ❌ Mistake 2: Not checking context before making changes
+
+**Wrong:**
+```python
+# Directly try to modify something that might not exist
+unity_component_crud({"operation": "update", "gameObjectPath": "Player", ...})
+```
+
+**Right:**
+```python
+# Check what exists first
+unity_context_inspect({"includeHierarchy": True})
+
+# Then make informed changes
+unity_component_crud({"operation": "update", "gameObjectPath": "Player", ...})
+```
+
+#### ❌ Mistake 3: Creating hierarchy manually instead of using hierarchy builder
+
+**Wrong:**
+```python
+unity_gameobject_crud({"operation": "create", "name": "Player"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Player", "componentType": "Rigidbody"})
+unity_gameobject_crud({"operation": "create", "name": "Camera", "parentPath": "Player"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Player/Camera", "componentType": "Camera"})
+unity_gameobject_crud({"operation": "create", "name": "Weapon", "parentPath": "Player"})
+# ... many more steps
+```
+
+**Right:**
+```python
+unity_hierarchy_builder({
+    "hierarchy": {
+        "Player": {
+            "components": ["Rigidbody"],
+            "children": {
+                "Camera": {"components": ["Camera"]},
+                "Weapon": {"components": ["BoxCollider"]}
+            }
+        }
+    }
+})
+```
+
+#### ❌ Mistake 4: Forgetting to set up scene first
+
+**Wrong:**
+```python
+# Try to create UI without Canvas
+unity_ugui_createFromTemplate({"template": "Button"})  # Error!
+```
+
+**Right:**
+```python
+# Set up scene first
+unity_scene_quickSetup({"setupType": "UI"})
+
+# Now create UI
+unity_ugui_createFromTemplate({"template": "Button"})
+```
+
+#### ❌ Mistake 5: Not using batch execute for related operations
+
+**Wrong:**
+```python
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Wall1", "position": {"x": 5, "y": 0, "z": 0}})
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Wall2", "position": {"x": -5, "y": 0, "z": 0}})
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Wall3", "position": {"x": 0, "y": 0, "z": 5}})
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Wall4", "position": {"x": 0, "y": 0, "z": -5}})
+```
+
+**Right:**
+```python
+unity_batch_execute({
+    "operations": [
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Wall1", "position": {"x": 5, "y": 0, "z": 0}}},
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Wall2", "position": {"x": -5, "y": 0, "z": 0}}},
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Wall3", "position": {"x": 0, "y": 0, "z": 5}}},
+        {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Wall4", "position": {"x": 0, "y": 0, "z": -5}}}
+    ]
+})
+```
+
+### Performance Tips for Claude
+
+1. **Use templates** - 10x faster than manual creation
+2. **Batch operations** - Reduce round trips to Unity
+3. **Use hierarchy builder** - Create entire trees in one command
+4. **Check context once** - Don't repeatedly inspect the same thing
+5. **Filter context queries** - Use `maxDepth` and `filter` parameters
 
 ## Configuration Files
 
