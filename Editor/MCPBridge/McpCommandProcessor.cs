@@ -7936,9 +7936,6 @@ namespace MCP.Editor
                 UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
 
                 // Check if we should wait for compilation to complete
-                var waitForCompletion = GetBool(payload, "waitForCompletion", false);
-                var timeoutSeconds = GetInt(payload, "timeoutSeconds", 30);
-
                 if (waitForCompletion)
                 {
                     var waitResult = WaitForCompilation(timeoutSeconds);
