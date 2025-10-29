@@ -1926,6 +1926,74 @@ namespace MCP.Editor
             }
         }
 
+        /// <summary>
+        /// Creates a text component (UI.Text or TextMeshPro) based on the useTextMeshPro flag.
+        /// </summary>
+        private static Component CreateTextComponent(GameObject textGo, Dictionary<string, object> payload, string defaultText, int defaultFontSize)
+        {
+            var useTextMeshPro = GetBool(payload, "useTextMeshPro", false);
+            var textContent = GetString(payload, "text") ?? defaultText;
+            var fontSize = GetInt(payload, "fontSize", defaultFontSize);
+
+            if (useTextMeshPro)
+            {
+                // Try to use TextMeshPro (TMPro)
+                var tmpType = Type.GetType("TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+                if (tmpType == null)
+                {
+                    Debug.LogWarning("[CreateTextComponent] TextMeshPro package not found. Falling back to UI.Text. Install TextMeshPro package to use TMP components.");
+                    useTextMeshPro = false;
+                }
+                else
+                {
+                    var tmpComponent = textGo.AddComponent(tmpType);
+
+                    // Set text property
+                    var textProp = tmpType.GetProperty("text");
+                    if (textProp != null)
+                    {
+                        textProp.SetValue(tmpComponent, textContent);
+                    }
+
+                    // Set fontSize property
+                    var fontSizeProp = tmpType.GetProperty("fontSize");
+                    if (fontSizeProp != null)
+                    {
+                        fontSizeProp.SetValue(tmpComponent, (float)fontSize);
+                    }
+
+                    // Set alignment property
+                    var alignmentProp = tmpType.GetProperty("alignment");
+                    if (alignmentProp != null)
+                    {
+                        // TextAlignmentOptions.Center = 514
+                        var alignmentType = Type.GetType("TMPro.TextAlignmentOptions, Unity.TextMeshPro");
+                        if (alignmentType != null)
+                        {
+                            alignmentProp.SetValue(tmpComponent, Enum.ToObject(alignmentType, 514));
+                        }
+                    }
+
+                    // Set color property
+                    var colorProp = tmpType.GetProperty("color");
+                    if (colorProp != null)
+                    {
+                        colorProp.SetValue(tmpComponent, Color.black);
+                    }
+
+                    return tmpComponent;
+                }
+            }
+
+            // Use standard UI.Text
+            var text = textGo.AddComponent<UnityEngine.UI.Text>();
+            text.text = textContent;
+            text.fontSize = fontSize;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.black;
+            return text;
+        }
+
         private static GameObject CreateButtonTemplate(string name, GameObject parent, Dictionary<string, object> payload)
         {
             var go = new GameObject(name, typeof(RectTransform));
@@ -1940,11 +2008,7 @@ namespace MCP.Editor
             // Create Text child
             var textGo = new GameObject("Text", typeof(RectTransform));
             textGo.transform.SetParent(go.transform, false);
-            var text = textGo.AddComponent<UnityEngine.UI.Text>();
-            text.text = GetString(payload, "text") ?? "Button";
-            text.fontSize = GetInt(payload, "fontSize", 14);
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.black;
+            CreateTextComponent(textGo, payload, "Button", 14);
 
             var textRect = textGo.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -1961,10 +2025,7 @@ namespace MCP.Editor
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent.transform, false);
 
-            var text = go.AddComponent<UnityEngine.UI.Text>();
-            text.text = GetString(payload, "text") ?? "New Text";
-            text.fontSize = GetInt(payload, "fontSize", 14);
-            text.color = Color.black;
+            CreateTextComponent(go, payload, "New Text", 14);
 
             ApplyCommonRectTransformSettings(go.GetComponent<RectTransform>(), payload, 160, 30);
 

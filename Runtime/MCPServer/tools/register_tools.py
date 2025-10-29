@@ -907,6 +907,10 @@ def register_tools(server: Server) -> None:
                     "type": "boolean",
                     "description": "Whether the element is interactable (for Button, InputField, Slider, Toggle, Dropdown). Default is true.",
                 },
+                "useTextMeshPro": {
+                    "type": "boolean",
+                    "description": "Use TextMeshPro (TMP) components instead of standard UI.Text for text elements. Requires TextMeshPro package to be installed. Default is false.",
+                },
             },
         },
         ["template"],
