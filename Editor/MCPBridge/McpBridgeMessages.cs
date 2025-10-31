@@ -48,6 +48,16 @@ namespace MCP.Editor
                 ["errorMessage"] = errorMessage,
             };
         }
+
+        public static Dictionary<string, object> CreateCompilationComplete(Dictionary<string, object> compilationResult)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "compilation:complete",
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["result"] = compilationResult,
+            };
+        }
     }
 
     internal sealed class McpIncomingCommand

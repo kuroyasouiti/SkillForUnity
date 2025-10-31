@@ -40,6 +40,8 @@ namespace MCP.Editor
         private static readonly ConcurrentQueue<string> IncomingMessages = new();
         private static readonly Queue<Action> MainThreadActions = new();
         private static readonly object SendLock = new();
+        private static bool _isCompiling = false;
+        private static DateTime _compilationStartTime;
 
         private static TcpListener _listener;
         private static CancellationTokenSource _listenerCts;
@@ -71,6 +73,9 @@ namespace MCP.Editor
 
             // コンパイル開始時に接続状態を保存
             CompilationPipeline.compilationStarted += OnCompilationStarted;
+
+            // コンパイル完了時に保留コマンドを処理
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
 
             // アセンブリリロード前に接続状態を保存
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
@@ -942,6 +947,38 @@ namespace MCP.Editor
                 _isCompilingOrReloading = true;
                 EditorPrefs.SetBool(WasConnectedBeforeCompileKey, true);
                 Debug.Log("MCP Bridge: Saving connection state before compilation...");
+            }
+
+            _isCompiling = true;
+            _compilationStartTime = DateTime.UtcNow;
+        }
+
+        private static void OnCompilationFinished(object obj)
+        {
+            _isCompiling = false;
+
+            // コンパイル結果を取得して送信
+            lock (MainThreadActions)
+            {
+                MainThreadActions.Enqueue(SendCompilationCompleteMessage);
+            }
+        }
+
+        /// <summary>
+        /// Sends compilation complete message to connected clients.
+        /// Called from OnCompilationFinished via the main thread queue.
+        /// </summary>
+        private static void SendCompilationCompleteMessage()
+        {
+            try
+            {
+                var compilationResult = McpCommandProcessor.GetCompilationResult();
+                Send(McpBridgeMessages.CreateCompilationComplete(compilationResult));
+                Debug.Log($"MCP Bridge: Sent compilation complete message (success: {compilationResult["success"]})");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"MCP Bridge: Failed to send compilation complete message: {ex.Message}\n{ex}");
             }
         }
 

@@ -38,6 +38,7 @@ class BridgeManager:
         self._last_heartbeat_at: int | None = None
         self._context: UnityContextPayload | None = None
         self._pending_commands: Dict[str, PendingCommand] = {}
+        self._compilation_waiters: list[asyncio.Future[Dict[str, Any]]] = []
         self._listeners: dict[str, list[Callable[..., None]]] = {
             "connected": [],
             "disconnected": [],
@@ -68,6 +69,51 @@ class BridgeManager:
 
     def get_last_heartbeat(self) -> int | None:
         return self._last_heartbeat_at
+
+    async def await_compilation(self, timeout_seconds: int = 30) -> Dict[str, Any]:
+        """
+        Wait for the next compilation to complete.
+
+        Args:
+            timeout_seconds: Maximum time to wait in seconds (default: 30)
+
+        Returns:
+            Compilation result dictionary with keys:
+            - success: bool
+            - completed: bool
+            - timedOut: bool
+            - hasErrors: bool
+            - errors: list of error messages
+            - errorCount: int
+            - message: str
+
+        Raises:
+            RuntimeError: If bridge is not connected
+            TimeoutError: If compilation does not complete within timeout
+        """
+        self._ensure_socket()
+        loop = asyncio.get_running_loop()
+
+        future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+        self._compilation_waiters.append(future)
+
+        def on_timeout() -> None:
+            if not future.done():
+                # Remove from waiters list
+                with contextlib.suppress(ValueError):
+                    self._compilation_waiters.remove(future)
+                future.set_exception(
+                    TimeoutError(
+                        f"Compilation did not complete within {timeout_seconds} seconds"
+                    )
+                )
+
+        timeout_handle = loop.call_later(timeout_seconds, on_timeout)
+
+        try:
+            return await future
+        finally:
+            timeout_handle.cancel()
 
     async def send_command(
         self,
@@ -158,6 +204,8 @@ class BridgeManager:
             self._handle_context_update(message)
         elif message_type == "command:result":
             self._handle_command_result(message)
+        elif message_type == "compilation:complete":
+            self._handle_compilation_complete(message)
         else:
             logger.warning("Received unsupported bridge message: %s", message_type)
 
@@ -211,6 +259,23 @@ class BridgeManager:
                     or f'Bridge command "{pending.tool_name}" failed without message'
                 )
             )
+
+    def _handle_compilation_complete(self, message: Dict[str, Any]) -> None:
+        """Handle compilation:complete message from Unity bridge."""
+        result = message.get("result", {})
+        logger.info(
+            "Compilation complete: success=%s, errors=%s",
+            result.get("success"),
+            result.get("errorCount", 0),
+        )
+
+        # Resolve all pending compilation waiters
+        waiters = self._compilation_waiters[:]
+        self._compilation_waiters.clear()
+
+        for future in waiters:
+            if not future.done():
+                future.set_result(result)
 
     def _emit(self, event: str, *args) -> None:
         for callback in list(self._listeners.get(event, [])):

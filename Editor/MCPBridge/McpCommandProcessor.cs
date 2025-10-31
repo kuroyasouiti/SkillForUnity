@@ -903,25 +903,12 @@ namespace MCP.Editor
         {
             var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
             var contents = GetString(payload, "contents") ?? string.Empty;
-            var timeoutSeconds = GetInt(payload, "timeoutSeconds", 30);
 
             EnsureDirectoryExists(path);
             File.WriteAllText(path, contents, Encoding.UTF8);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 
-            var result = DescribeAsset(path);
-
-            // If this is a C# script file, wait for compilation to complete
-            if (path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            {
-                var compilationResult = WaitForCompilation(timeoutSeconds);
-                if (result is Dictionary<string, object> dict)
-                {
-                    dict["compilation"] = compilationResult;
-                }
-            }
-
-            return result;
+            return DescribeAsset(path);
         }
 
         private static object UpdateAsset(Dictionary<string, object> payload)
@@ -929,7 +916,6 @@ namespace MCP.Editor
             var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
             var contents = GetString(payload, "contents");
             var overwrite = GetBool(payload, "overwrite", true);
-            var timeoutSeconds = GetInt(payload, "timeoutSeconds", 30);
 
             if (!File.Exists(path) && !overwrite)
             {
@@ -940,19 +926,7 @@ namespace MCP.Editor
             File.WriteAllText(path, contents ?? string.Empty, Encoding.UTF8);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
 
-            var result = DescribeAsset(path);
-
-            // If this is a C# script file, wait for compilation to complete
-            if (path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            {
-                var compilationResult = WaitForCompilation(timeoutSeconds);
-                if (result is Dictionary<string, object> dict)
-                {
-                    dict["compilation"] = compilationResult;
-                }
-            }
-
-            return result;
+            return DescribeAsset(path);
         }
 
         private static object DeleteAsset(Dictionary<string, object> payload)
@@ -4099,18 +4073,6 @@ namespace MCP.Editor
                 throw new FileNotFoundException("Script file not found", fullPath);
             }
 
-            var waitForCompilation = GetBool(payload, "waitForCompilation", true);
-            var timeoutSeconds = GetInt(payload, "timeoutSeconds", 30);
-
-            // Wait for any ongoing compilation to complete before reading
-            // This ensures we get the latest compiled state
-            if (waitForCompilation && EditorApplication.isCompiling)
-            {
-                var compilationResult = WaitForCompilation(timeoutSeconds);
-                // Continue even if compilation timed out or had errors
-                // User might still want to read the script
-            }
-
             var source = File.ReadAllText(fullPath);
             var outline = AnalyzeScriptOutline(source);
             var syntaxOk = CheckBraceBalance(source);
@@ -4196,9 +4158,12 @@ namespace MCP.Editor
             {
                 File.WriteAllText(fullPath, updatedSource, Encoding.UTF8);
                 AssetDatabase.ImportAsset(scriptPath, ImportAssetOptions.ForceSynchronousImport);
+
+                // Force AssetDatabase refresh to trigger compilation immediately
+                AssetDatabase.Refresh();
             }
 
-            var result = new Dictionary<string, object>
+            return new Dictionary<string, object>
             {
                 ["scriptPath"] = scriptPath,
                 ["dryRun"] = dryRun,
@@ -4207,15 +4172,6 @@ namespace MCP.Editor
                 ["updatedLength"] = updatedSource.Length,
                 ["previewSource"] = dryRun ? updatedSource : null,
             };
-
-            // Always wait for compilation after script updates (unless dry run)
-            if (!dryRun && appliedCount > 0)
-            {
-                var compilationResult = WaitForCompilation(timeoutSeconds);
-                result["compilation"] = compilationResult;
-            }
-
-            return result;
         }
 
         private static object HandleScriptDelete(Dictionary<string, object> payload)
@@ -4240,22 +4196,12 @@ namespace MCP.Editor
                 AssetDatabase.Refresh();
             }
 
-            var result = new Dictionary<string, object>
+            return new Dictionary<string, object>
             {
                 ["scriptPath"] = scriptPath,
                 ["deleted"] = !dryRun,
                 ["dryRun"] = dryRun,
             };
-
-            // Wait for compilation after script deletion (unless dry run)
-            if (!dryRun)
-            {
-                var compilationResult = WaitForCompilation(timeoutSeconds);
-                result["compilation"] = compilationResult;
-                result["success"] = (bool)compilationResult["success"];
-            }
-
-            return result;
         }
 
         private static List<Dictionary<string, object>> ApplyScriptEdits(ref string source, List<object> edits)
@@ -4502,20 +4448,16 @@ namespace MCP.Editor
             File.WriteAllText(scriptPath, scriptContent, Encoding.UTF8);
             AssetDatabase.ImportAsset(scriptPath, ImportAssetOptions.ForceSynchronousImport);
 
-            var result = new Dictionary<string, object>
+            // Force AssetDatabase refresh to trigger compilation immediately
+            AssetDatabase.Refresh();
+
+            return new Dictionary<string, object>
             {
                 ["scriptPath"] = scriptPath,
                 ["className"] = className,
                 ["scriptType"] = scriptType,
                 ["success"] = true,
             };
-
-            // Always wait for compilation after script creation
-            var compilationResult = WaitForCompilation(timeoutSeconds);
-            result["compilation"] = compilationResult;
-            result["success"] = (bool)compilationResult["success"];
-
-            return result;
         }
 
         private static string GenerateScriptContent(
@@ -7956,55 +7898,15 @@ namespace MCP.Editor
         #region Project Compile
 
         /// <summary>
-        /// Handles project compilation operations.
+        /// Gets compilation result by checking for compilation errors.
+        /// This is called after compilation completes to check if there were any errors.
         /// </summary>
-        /// <param name="payload">Operation parameters (currently unused, reserved for future options).</param>
-        /// <returns>Result dictionary with compilation status and error information.</returns>
-        /// <summary>
-        /// Waits for Unity compilation to complete with optimized polling.
-        /// Uses short sleep intervals (10ms) to improve Editor responsiveness while waiting.
-        /// </summary>
-        /// <param name="timeoutSeconds">Maximum time to wait in seconds. Default is 30 seconds.</param>
         /// <returns>Dictionary with compilation result including success status and any errors.</returns>
-        private static Dictionary<string, object> WaitForCompilation(int timeoutSeconds = 30)
+        public static Dictionary<string, object> GetCompilationResult()
         {
-            var startTime = DateTimeOffset.UtcNow;
-            var timeoutMs = timeoutSeconds * 1000;
-
-            // Wait for compilation to start (if not already started)
-            // Use 10ms sleep intervals for better responsiveness
-            var initialWaitMs = 0;
-            while (!EditorApplication.isCompiling && initialWaitMs < 2000)
-            {
-                System.Threading.Thread.Sleep(10);  // Reduced from 50ms to 10ms
-                initialWaitMs += 10;
-            }
-
-            // Wait for compilation to complete
-            // Use 10ms sleep intervals to allow Unity Editor to remain responsive
-            while (EditorApplication.isCompiling)
-            {
-                var elapsed = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
-                if (elapsed > timeoutMs)
-                {
-                    return new Dictionary<string, object>
-                    {
-                        ["success"] = false,
-                        ["completed"] = false,
-                        ["timedOut"] = true,
-                        ["message"] = $"Compilation did not complete within {timeoutSeconds} seconds",
-                        ["elapsedSeconds"] = elapsed / 1000.0,
-                    };
-                }
-
-                System.Threading.Thread.Sleep(10);  // Reduced from 100ms to 10ms
-            }
-
-            var totalElapsed = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds / 1000.0;
-
-            // Compilation completed, check for errors
             var errorMessages = new List<string>();
             var logEntries = GetConsoleLogEntries();
+
             foreach (var entry in logEntries)
             {
                 if (entry.ContainsKey("type") && entry["type"].ToString() == "Error" &&
@@ -8027,13 +7929,11 @@ namespace MCP.Editor
                 ["hasErrors"] = hasErrors,
                 ["errors"] = errorMessages,
                 ["errorCount"] = errorMessages.Count,
-                ["elapsedSeconds"] = totalElapsed,
                 ["message"] = hasErrors
                     ? $"Compilation completed with {errorMessages.Count} error(s)"
                     : "Compilation completed successfully",
             };
         }
-
 
         /// <summary>
         /// Gets console log entries for error checking.

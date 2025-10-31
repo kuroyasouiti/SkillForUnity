@@ -1331,7 +1331,44 @@ def register_tools(server: Server) -> None:
             return await _call_bridge_tool("tagLayerManage", args)
 
         if name == "unity_script_manage":
-            return await _call_bridge_tool("scriptManage", args)
+            result = await _call_bridge_tool("scriptManage", args)
+
+            # If the operation requires compilation, wait for it
+            operation = args.get("operation")
+            requires_compilation = operation in ("create", "update", "delete")
+
+            # Check if dryRun is true for delete operation
+            if operation == "delete" and args.get("dryRun"):
+                requires_compilation = False
+
+            if requires_compilation:
+                timeout_seconds = args.get("timeoutSeconds", 30)
+                try:
+                    logger.info("Waiting for compilation to complete (timeout=%ss)...", timeout_seconds)
+                    compilation_result = await bridge_manager.await_compilation(timeout_seconds)
+                    # Add compilation result to response
+                    if isinstance(result, dict):
+                        result["compilation"] = compilation_result
+                    logger.info("Compilation complete: success=%s", compilation_result.get("success"))
+                except TimeoutError as e:
+                    logger.warning("Compilation timeout: %s", e)
+                    if isinstance(result, dict):
+                        result["compilation"] = {
+                            "success": False,
+                            "completed": False,
+                            "timedOut": True,
+                            "message": str(e),
+                        }
+                except Exception as e:
+                    logger.error("Error waiting for compilation: %s", e)
+                    if isinstance(result, dict):
+                        result["compilation"] = {
+                            "success": False,
+                            "completed": False,
+                            "error": str(e),
+                        }
+
+            return result
 
         if name == "unity_prefab_crud":
             return await _call_bridge_tool("prefabManage", args)
