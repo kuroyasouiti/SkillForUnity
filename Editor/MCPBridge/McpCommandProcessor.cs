@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEditor.SceneManagement;
+using UnityEditor.Compilation;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -4049,6 +4050,85 @@ namespace MCP.Editor
             return null;
         }
 
+        /// <summary>
+        /// Schedules Unity script reimports and compilation into a consolidated batch, so multiple create/update/delete
+        /// operations issued in rapid succession trigger only a single compilation cycle.
+        /// </summary>
+        private static class ScriptCompilationBatchScheduler
+        {
+            private static readonly HashSet<string> pendingAssetPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            private static bool flushQueued;
+
+            public static void RegisterAssetChange(string assetPath)
+            {
+                if (!string.IsNullOrEmpty(assetPath))
+                {
+                    pendingAssetPaths.Add(NormalizeAssetPath(assetPath));
+                }
+
+                QueueFlush();
+            }
+
+            public static void RegisterDeletion()
+            {
+                QueueFlush();
+            }
+
+            private static void QueueFlush()
+            {
+                if (flushQueued)
+                {
+                    return;
+                }
+
+                flushQueued = true;
+                EditorApplication.delayCall += Flush;
+            }
+
+            private static void Flush()
+            {
+                EditorApplication.delayCall -= Flush;
+                flushQueued = false;
+
+                try
+                {
+                    if (pendingAssetPaths.Count > 0)
+                    {
+                        foreach (var assetPath in pendingAssetPaths.ToArray())
+                        {
+                            try
+                            {
+                                pendingAssetPaths.Remove(assetPath);
+
+                                // Skip import for assets that vanished during the batch (e.g. deletions or renames)
+                                var fullPath = Path.GetFullPath(assetPath);
+                                if (File.Exists(fullPath))
+                                {
+                                    AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[MCP] Failed to import script asset '{assetPath}': {ex.Message}");
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    pendingAssetPaths.Clear();
+                }
+
+                AssetDatabase.Refresh();
+                CompilationPipeline.RequestScriptCompilation();
+            }
+
+            private static string NormalizeAssetPath(string assetPath)
+            {
+                return assetPath.Replace("\\", "/");
+            }
+        }
+
         private static object HandleScriptManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation").ToLowerInvariant();
@@ -4446,10 +4526,7 @@ namespace MCP.Editor
 
             // Write file
             File.WriteAllText(scriptPath, scriptContent, Encoding.UTF8);
-            AssetDatabase.ImportAsset(scriptPath, ImportAssetOptions.ForceSynchronousImport);
-
-            // Force AssetDatabase refresh to trigger compilation immediately
-            AssetDatabase.Refresh();
+            ScriptCompilationBatchScheduler.RegisterAssetChange(scriptPath);
 
             return new Dictionary<string, object>
             {
@@ -5154,6 +5231,12 @@ namespace MCP.Editor
                 {
                     return ResolveUnityObjectReference(refDict, targetType);
                 }
+
+                var implicitReference = TryResolveImplicitUnityReference(refDict, targetType);
+                if (implicitReference != null)
+                {
+                    return implicitReference;
+                }
             }
 
             // Handle Unity object references (string format for asset paths)
@@ -5292,6 +5375,42 @@ namespace MCP.Editor
             return defaultValue;
         }
 
+        private static int ConvertToInt(object value, string parameterName)
+        {
+            if (value == null)
+            {
+                throw new InvalidOperationException($"{parameterName} cannot be null");
+            }
+
+            switch (value)
+            {
+                case int intValue:
+                    return intValue;
+                case long longValue:
+                    return checked((int)longValue);
+                case double doubleValue:
+                    return Convert.ToInt32(doubleValue);
+                case float floatValue:
+                    return Convert.ToInt32(floatValue);
+                case string stringValue when int.TryParse(stringValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed):
+                    return parsed;
+            }
+
+            if (value is IConvertible convertible)
+            {
+                try
+                {
+                    return convertible.ToInt32(CultureInfo.InvariantCulture);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to convert {parameterName} to int: {ex.Message}", ex);
+                }
+            }
+
+            throw new InvalidOperationException($"Unable to convert value of type {value.GetType().FullName} to int for {parameterName}");
+        }
+
         private static string EnsureValue(string value, string parameterName)
         {
             if (string.IsNullOrEmpty(value))
@@ -5423,6 +5542,154 @@ namespace MCP.Editor
                 default:
                     throw new InvalidOperationException($"Unknown reference type: {refType}");
             }
+        }
+
+        /// <summary>
+        /// Attempts to resolve Unity object references provided without the explicit "_ref" key.
+        /// Supports simplified dictionaries that specify common identification keys such as paths or GUIDs.
+        /// </summary>
+        /// <param name="refDict">Dictionary describing the reference.</param>
+        /// <param name="targetType">Expected Unity object type.</param>
+        /// <returns>Resolved object or null when no implicit pattern matched.</returns>
+        private static UnityEngine.Object TryResolveImplicitUnityReference(Dictionary<string, object> refDict, Type targetType)
+        {
+            if (refDict == null || refDict.Count == 0)
+            {
+                return null;
+            }
+
+            // Component-specific GlobalObjectId
+            var componentGlobalId = GetString(refDict, "componentGlobalObjectId");
+            if (!string.IsNullOrEmpty(componentGlobalId))
+            {
+                if (!GlobalObjectId.TryParse(componentGlobalId, out var componentObjectId))
+                {
+                    throw new InvalidOperationException($"Invalid GlobalObjectId format: {componentGlobalId}");
+                }
+
+                var resolved = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(componentObjectId);
+                if (resolved == null)
+                {
+                    throw new InvalidOperationException($"Component not found with GlobalObjectId: {componentGlobalId}");
+                }
+
+                if (resolved is Component componentFromGlobalId)
+                {
+                    if (!targetType.IsAssignableFrom(componentFromGlobalId.GetType()) &&
+                        targetType != typeof(UnityEngine.Object) &&
+                        targetType != typeof(Component) &&
+                        targetType != typeof(Behaviour) &&
+                        targetType != typeof(MonoBehaviour))
+                    {
+                        throw new InvalidOperationException(
+                            $"Component reference type mismatch: expected assignable to {targetType.FullName}, but resolved {componentFromGlobalId.GetType().FullName}");
+                    }
+
+                    return componentFromGlobalId;
+                }
+
+                throw new InvalidOperationException($"Object with GlobalObjectId {componentGlobalId} is not a Component");
+            }
+
+            // Resolve via GameObject identification
+            GameObject referencedGameObject = null;
+            var globalObjectIdString = GetString(refDict, "gameObjectGlobalObjectId") ?? GetString(refDict, "globalObjectId");
+            if (!string.IsNullOrEmpty(globalObjectIdString))
+            {
+                referencedGameObject = ResolveGameObjectByGlobalObjectId(globalObjectIdString);
+            }
+
+            if (referencedGameObject == null)
+            {
+                var gameObjectPath = GetString(refDict, "gameObjectPath");
+                if (!string.IsNullOrEmpty(gameObjectPath))
+                {
+                    referencedGameObject = ResolveGameObject(gameObjectPath);
+                }
+            }
+
+            if (referencedGameObject != null)
+            {
+                if (typeof(Component).IsAssignableFrom(targetType))
+                {
+                    return ResolveComponentOnGameObject(referencedGameObject, targetType, refDict);
+                }
+
+                if (typeof(GameObject).IsAssignableFrom(targetType))
+                {
+                    return referencedGameObject;
+                }
+            }
+
+            // Resolve assets by guid/path without explicit _ref marker
+            var guid = GetString(refDict, "guid") ?? GetString(refDict, "assetGuid");
+            if (!string.IsNullOrEmpty(guid))
+            {
+                return ResolveAssetByGuid(guid, targetType);
+            }
+
+            var assetPath = GetString(refDict, "assetPath") ?? GetString(refDict, "path");
+            if (!string.IsNullOrEmpty(assetPath))
+            {
+                return ResolveAssetPath(assetPath, targetType);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Resolves a component from a GameObject using optional component type overrides and indices.
+        /// </summary>
+        /// <param name="gameObject">GameObject that should host the component.</param>
+        /// <param name="targetType">Expected component type on the property.</param>
+        /// <param name="refDict">Dictionary describing the component reference.</param>
+        /// <returns>The resolved component.</returns>
+        private static Component ResolveComponentOnGameObject(GameObject gameObject, Type targetType, Dictionary<string, object> refDict)
+        {
+            var componentTypeName = GetString(refDict, "componentType") ?? GetString(refDict, "type");
+            var componentType = !string.IsNullOrEmpty(componentTypeName) ? ResolveType(componentTypeName) : targetType;
+
+            if (!targetType.IsAssignableFrom(componentType))
+            {
+                if (componentType.IsAssignableFrom(targetType))
+                {
+                    componentType = targetType;
+                }
+                else if (targetType != typeof(UnityEngine.Object) &&
+                         targetType != typeof(Component) &&
+                         targetType != typeof(Behaviour) &&
+                         targetType != typeof(MonoBehaviour))
+                {
+                    throw new InvalidOperationException(
+                        $"Component reference type mismatch: expected assignable to {targetType.FullName}, but received {componentType.FullName}");
+                }
+            }
+
+            Component component;
+            if (refDict.TryGetValue("componentIndex", out var indexObj) && indexObj != null)
+            {
+                var index = ConvertToInt(indexObj, "componentIndex");
+                var components = gameObject.GetComponents(componentType);
+                if (index < 0 || index >= components.Length)
+                {
+                    throw new InvalidOperationException(
+                        $"Component index {index} out of range for type {componentType.FullName} on {GetHierarchyPath(gameObject)}");
+                }
+
+                component = components[index];
+            }
+            else
+            {
+                component = gameObject.GetComponent(componentType);
+            }
+
+            if (component == null)
+            {
+                throw new InvalidOperationException(
+                    $"Component {componentType.FullName} not found on GameObject: {GetHierarchyPath(gameObject)}");
+            }
+
+            return component;
         }
 
         /// <summary>
