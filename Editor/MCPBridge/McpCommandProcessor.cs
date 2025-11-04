@@ -5006,6 +5006,18 @@ namespace MCP.Editor
         {
             var type = component.GetType();
 
+            if (string.Equals(propertyName, "gameObject.activeSelf", StringComparison.Ordinal))
+            {
+                var isActive = Convert.ToBoolean(rawValue, CultureInfo.InvariantCulture);
+                var targetGameObject = component.gameObject;
+                if (targetGameObject.activeSelf != isActive)
+                {
+                    targetGameObject.SetActive(isActive);
+                    EditorUtility.SetDirty(targetGameObject);
+                }
+                return;
+            }
+
             // Try property first
             var property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (property != null)
