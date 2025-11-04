@@ -5430,6 +5430,43 @@ namespace MCP.Editor
                 rawValue = Convert.ChangeType(l, typeof(int), CultureInfo.InvariantCulture);
             }
 
+            // Handle dictionary-to-object mapping for serializable classes/structs.
+            if (rawValue is Dictionary<string, object> objectDict &&
+                !typeof(UnityEngine.Object).IsAssignableFrom(targetType))
+            {
+                object instance;
+                try
+                {
+                    instance = Activator.CreateInstance(targetType);
+                }
+                catch (MissingMethodException ex)
+                {
+                    throw new InvalidOperationException(
+                        $"Type {targetType.FullName} requires a parameterless constructor to map dictionary values", ex);
+                }
+
+                foreach (var kvp in objectDict)
+                {
+                    var propertyInfo = targetType.GetProperty(kvp.Key, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (propertyInfo != null && propertyInfo.CanWrite)
+                    {
+                        var converted = ConvertValue(kvp.Value, propertyInfo.PropertyType);
+                        propertyInfo.SetValue(instance, converted);
+                        continue;
+                    }
+
+                    var fieldInfo = targetType.GetField(kvp.Key, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (fieldInfo != null)
+                    {
+                        var converted = ConvertValue(kvp.Value, fieldInfo.FieldType);
+                        fieldInfo.SetValue(instance, converted);
+                        continue;
+                    }
+                }
+
+                return instance;
+            }
+
             return Convert.ChangeType(rawValue, targetType, CultureInfo.InvariantCulture);
         }
 
@@ -5781,18 +5818,32 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Resolves a GameObject reference by GlobalObjectId only.
+        /// Resolves a GameObject reference using either GlobalObjectId or hierarchy path.
         /// </summary>
         private static UnityEngine.Object ResolveGameObjectReference(Dictionary<string, object> refDict, Type targetType)
         {
-            var globalObjectIdString = GetString(refDict, "globalObjectId");
+            var globalObjectIdString = GetString(refDict, "gameObjectGlobalObjectId") ?? GetString(refDict, "globalObjectId");
+            GameObject gameObject = null;
 
-            if (string.IsNullOrEmpty(globalObjectIdString))
+            if (!string.IsNullOrEmpty(globalObjectIdString))
             {
-                throw new InvalidOperationException("GameObject reference requires 'globalObjectId' parameter");
+                gameObject = ResolveGameObjectByGlobalObjectId(globalObjectIdString);
             }
 
-            var gameObject = ResolveGameObjectByGlobalObjectId(globalObjectIdString);
+            if (gameObject == null)
+            {
+                // Allow resolving by hierarchy path when a GlobalObjectId is not supplied.
+                var gameObjectPath = GetString(refDict, "gameObjectPath") ?? GetString(refDict, "path") ?? GetString(refDict, "hierarchyPath");
+                if (!string.IsNullOrEmpty(gameObjectPath))
+                {
+                    gameObject = ResolveGameObject(gameObjectPath);
+                }
+            }
+
+            if (gameObject == null)
+            {
+                throw new InvalidOperationException("GameObject reference requires 'globalObjectId' or 'path' parameter");
+            }
 
             // If target is GameObject, return directly
             if (targetType == typeof(GameObject) || targetType.IsAssignableFrom(typeof(GameObject)))
