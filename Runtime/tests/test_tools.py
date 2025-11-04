@@ -29,7 +29,7 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
             "unity.asset.crud",
             "unity.ugui.rectAdjust",
             "unity.ugui.anchorManage",
-            "unity.script.manage",
+            "unity.project.compile",
             "unity.prefab.crud",
         }
         self.assertTrue(expected_core.issubset(set(names)))
@@ -113,30 +113,6 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
                 {"gameObjectPath": "Canvas/Button", "operation": "setAnchorPreset", "preset": "center"},
             ),
             (
-                "unity.script.manage",
-                "scriptManage",
-                {"operation": "read", "assetPath": "Assets/Scripts/Foo.cs", "includeSource": True},
-            ),
-            (
-                "unity.script.manage",
-                "scriptManage",
-                {"operation": "create", "scriptPath": "Assets/Scripts/Foo.cs", "scriptType": "monoBehaviour"},
-            ),
-            (
-                "unity.script.manage",
-                "scriptManage",
-                {
-                    "operation": "update",
-                    "scriptPath": "Assets/Scripts/Foo.cs",
-                    "edits": [{"action": "replace", "match": "foo", "replacement": "bar"}],
-                },
-            ),
-            (
-                "unity.script.manage",
-                "scriptManage",
-                {"operation": "delete", "scriptPath": "Assets/Scripts/Foo.cs", "dryRun": True},
-            ),
-            (
                 "unity.prefab.crud",
                 "prefabManage",
                 {"operation": "create", "gameObjectPath": "Player", "prefabPath": "Assets/Prefabs/Player.prefab"},
@@ -169,6 +145,51 @@ class RegisterToolsTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIsInstance(call_result, mcp_types.CallToolResult)
                 self.assertFalse(call_result.isError)
                 self.assertIn(bridge_command, call_result.content[0].text)
+
+    async def test_call_tool_project_compile_handles_waiting(self) -> None:
+        arguments = {
+            "refreshAssetDatabase": False,
+            "requestScriptCompilation": True,
+            "awaitCompletion": True,
+            "timeoutSeconds": 15,
+            "ignored": "value",
+        }
+
+        with patch.object(
+            tools_module.bridge_manager, "is_connected", return_value=True
+        ), patch.object(
+            tools_module.bridge_manager,
+            "send_command",
+            new=AsyncMock(return_value={"isCompiling": False}),
+        ) as send_command, patch.object(
+            tools_module.bridge_manager,
+            "await_compilation",
+            new=AsyncMock(return_value={"success": True}),
+        ) as await_compilation:
+            request = mcp_types.CallToolRequest(
+                method="tools/call",
+                params=mcp_types.CallToolRequestParams(
+                    name="unity.project.compile",
+                    arguments=arguments,
+                ),
+            )
+
+            result = await self.call_handler(request)
+
+        send_command.assert_awaited_once_with(
+            "projectCompile",
+            {"refreshAssetDatabase": False, "requestScriptCompilation": True},
+        )
+        await_compilation.assert_awaited_once_with(15)
+
+        call_result = result.root
+        self.assertIsInstance(call_result, mcp_types.CallToolResult)
+        self.assertFalse(call_result.isError)
+        content_text = call_result.content[0].text
+        self.assertIn('"request"', content_text)
+        self.assertIn('"compilation"', content_text)
+        self.assertIn('"awaitCompletion": true', content_text)
+        self.assertIn('"timeoutSeconds": 15', content_text)
 
     async def test_call_tool_returns_error_when_bridge_disconnected(self) -> None:
         request = mcp_types.CallToolRequest(

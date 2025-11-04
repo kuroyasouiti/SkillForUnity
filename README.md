@@ -98,6 +98,8 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 - Inspect asset metadata and contents
 - Auto-refresh AssetDatabase
 
+> **Tip:** After generating or editing C# scripts, batch as many changes as you can, then run `unity.project.compile` once to refresh the AssetDatabase, trigger Unity compilation, and confirm no errors remain before continuing.
+
 ---
 
 ### High-Level Tools (Recommended for Quick Development)
@@ -490,14 +492,15 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 
 | Tool | Description | Key Operations |
 |------|-------------|----------------|
-| `unity.script.manage` | C# script management | Read, generate, patch, or delete scripts |
+| `unity.project.compile` | Trigger Unity compilation | Refresh assets, request compile, optionally await results |
 | `unity.batch.execute` | **Batch operations** | Execute multiple tools in one request |
 
-**Script Manage (`unity.script.manage`)**
-- Read existing C# files (operation=`read`) with optional member signatures and raw source
-- Generate new MonoBehaviour/ScriptableObject/class templates (operation=`create`)
-- Apply safe textual updates via ordered edits or remove scripts entirely (operations=`update`/`delete`, with dry-run support)
-- Supports GUID or asset path lookup plus namespace/method/field customization
+**Project Compile (`unity.project.compile`)**
+- Refresh the AssetDatabase before compiling (toggle with `refreshAssetDatabase`)
+- Ask Unity to start C# compilation (controlled by `requestScriptCompilation`)
+- Waits for the next compilation result by default (`awaitCompletion` defaults to `true`) so errors surface immediately
+- Batch multiple script edits before running to keep Unity recompiles to a minimum
+- Recommended immediately after creating or editing scripts so you can confirm the Editor compiles cleanly before proceeding
 
 **Batch Execute (`unity.batch.execute`)** - High Performance
 - Execute multiple operations sequentially
@@ -924,7 +927,7 @@ See detailed guide in:
 
 ### Developer Tools
 - ✅ **Batch operation execution** - Combine multiple operations
-- ✅ C# script read (structure + source)
+- ✅ Project compile trigger (refresh + error summary)
 - ✅ Context-aware assistance with scene state
 - ✅ Structured error handling and reporting
 
@@ -940,7 +943,7 @@ See detailed guide in:
 | **Navigation** | 1 tool | NavMesh (7 operations) |
 | **UI** | 3 tools | UGUI unified + specialized tools |
 | **Systems** | 5 tools | Tags/Layers, Prefabs, Settings, Render Pipeline, Input |
-| **Utilities** | 2 tools | Script read, Batch execute |
+| **Utilities** | 2 tools | Project compile, Batch execute |
 | **Total** | **23 tools** | **120+ operations** |
 
 ---

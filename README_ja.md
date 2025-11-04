@@ -96,9 +96,9 @@ MCPクライアント設定に追加（例：Claude Desktop）：
 - アセットのリネーム、複製、削除
 - アセットメタデータとコンテンツの検査
 - AssetDatabaseの自動更新
+> **ヒント:** C#スクリプトを生成・編集するときは可能な限り変更をまとめてから `unity.project.compile` を一度実行し、AssetDatabase を更新して Unity のコンパイル結果にエラーが無いか確認してください。
 
 ---
-
 ### 高レベルツール（迅速な開発に推奨）
 
 | ツール | 説明 | 主な操作 |
@@ -489,14 +489,15 @@ MCPクライアント設定に追加（例：Claude Desktop）：
 
 | ツール | 説明 | 主な操作 |
 |------|------|---------|
-| `unity.script.manage` | C#スクリプト管理 | 読み取り・テンプレ生成・部分更新・削除 |
+| `unity.project.compile` | コンパイル要求 | アセット更新とコンパイル実行・結果待機 |
 | `unity.batch.execute` | **バッチ操作** | 1リクエストで複数ツールを実行 |
 
-**スクリプト管理 (`unity.script.manage`)**
-- operation=`read` で既存C#スクリプトの構造とソース全文を取得（メンバー署名の有無を選択可）
-- operation=`create` で MonoBehaviour / ScriptableObject / C#クラスのテンプレートを生成
-- operation=`update` でテキスト置換・挿入・削除を順序付きで適用、operation=`delete` で不要スクリプトを削除(dryRun対応)
-- GUIDまたはアセットパス指定に対応し、名前空間・メソッド・フィールドを細かく指定可
+**Project Compile (`unity.project.compile`)**
+- `refreshAssetDatabase` で AssetDatabase.Refresh() を実行してエディタに最新状態を通知
+- `requestScriptCompilation` で Unity に C# コンパイルの開始を依頼
+- 既定でコンパイル完了を待機（`awaitCompletion` は `true`）し、エラーを即座に把握
+- 複数のスクリプト変更は可能な限りまとめてから実行し、再コンパイル回数を最小化
+- スクリプトを生成・編集した直後に呼び出して、コンパイルエラーが残っていないか確認するのが推奨
 
 **バッチ実行 (`unity.batch.execute`)** - 高性能
 - 複数の操作を順次実行
@@ -854,7 +855,7 @@ Assets/
 
 ### 開発者ツール
 - ✅ **バッチ操作実行** - 複数の操作を組み合わせ
-- ✅ C#スクリプトアウトラインと解析
+- ✅ コンパイル要求と結果通知
 - ✅ シーン状態によるコンテキスト対応アシスタンス
 - ✅ 構造化されたエラー処理とレポート
 

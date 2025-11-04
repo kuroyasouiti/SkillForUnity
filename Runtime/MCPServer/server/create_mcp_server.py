@@ -34,7 +34,7 @@ def create_mcp_server() -> Server:
                 "【C#スクリプト作成ルール】",
                 "- [SerializeField] private変数には、必ずpublic読み取り専用プロパティを作成",
                 "  例: [SerializeField] private int health = 100; → public int Health => health;",
-                "- 作成/更新後は必ずunity.project.compileでコンパイル実行",
+                "- 作成/更新後は可能な限り変更をまとめてから unity.project.compile で一度コンパイル実行",
                 "- コンパイルエラー発生時はエラー内容を確認して修正し、再コンパイル",
             ]
         ),
@@ -44,3 +44,4 @@ def create_mcp_server() -> Server:
     register_tools(server)
 
     return server
+
