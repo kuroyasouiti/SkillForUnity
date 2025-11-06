@@ -1189,7 +1189,11 @@ def register_tools(server: Server) -> None:
             )
 
             request_result = await bridge_manager.send_command("projectCompile", unity_args)
-            response_payload: Dict[str, Any] = {\n            "request": request_result,\n            "awaitCompletion": await_completion,\n            "timeoutSeconds": timeout_seconds,\n        }
+            response_payload: Dict[str, Any] = {
+                "request": request_result,
+                "awaitCompletion": await_completion,
+                "timeoutSeconds": timeout_seconds,
+            }
 
             if await_completion:
                 try:
