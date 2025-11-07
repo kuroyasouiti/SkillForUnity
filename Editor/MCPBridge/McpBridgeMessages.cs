@@ -66,7 +66,7 @@ namespace MCP.Editor
         public string ToolName { get; }
         public Dictionary<string, object> Payload { get; }
 
-        private McpIncomingCommand(string commandId, string toolName, Dictionary<string, object> payload)
+        public McpIncomingCommand(string commandId, string toolName, Dictionary<string, object> payload)
         {
             CommandId = commandId;
             ToolName = toolName;

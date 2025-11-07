@@ -844,8 +844,26 @@ namespace MCP.Editor
         {
             try
             {
+                // Check if this command will trigger compilation
+                bool willTriggerCompilation = IsCompilationTriggeringCommand(command);
+
+                // If compilation will be triggered, save the command for later execution
+                if (willTriggerCompilation && !_isCompiling)
+                {
+                    McpPendingCommandStorage.SavePendingCommand(command);
+                    Debug.Log($"MCP Bridge: Command {command.CommandId} ({command.ToolName}) will trigger compilation, saved for post-compile execution");
+                }
+
+                // Execute the command
                 var result = McpCommandProcessor.Execute(command);
-                Send(McpBridgeMessages.CreateCommandResult(command.CommandId, true, result));
+
+                // Send result immediately if not compiling
+                // If compiling started, the result will be sent after compilation completes
+                if (!willTriggerCompilation || !EditorApplication.isCompiling)
+                {
+                    Send(McpBridgeMessages.CreateCommandResult(command.CommandId, true, result));
+                }
+
                 MarkContextDirty();
             }
             catch (Exception ex)
@@ -853,6 +871,29 @@ namespace MCP.Editor
                 Debug.LogError($"MCP command failed ({command.ToolName}): {ex.Message}\n{ex}");
                 Send(McpBridgeMessages.CreateCommandResult(command.CommandId, false, null, ex.Message));
             }
+        }
+
+        /// <summary>
+        /// Determines if a command will trigger Unity compilation.
+        /// </summary>
+        private static bool IsCompilationTriggeringCommand(McpIncomingCommand command)
+        {
+            // Currently, only projectCompile with requestScriptCompilation=true triggers compilation
+            if (command.ToolName == "projectCompile")
+            {
+                if (command.Payload != null &&
+                    command.Payload.TryGetValue("requestScriptCompilation", out var value))
+                {
+                    if (value is bool boolValue)
+                    {
+                        return boolValue;
+                    }
+                }
+                // Default to true if not specified
+                return true;
+            }
+
+            return false;
         }
 
         private static void MaybeSendHeartbeat()
@@ -961,6 +1002,7 @@ namespace MCP.Editor
             lock (MainThreadActions)
             {
                 MainThreadActions.Enqueue(SendCompilationCompleteMessage);
+                MainThreadActions.Enqueue(ExecutePendingCommands);
             }
         }
 
@@ -979,6 +1021,55 @@ namespace MCP.Editor
             catch (Exception ex)
             {
                 Debug.LogError($"MCP Bridge: Failed to send compilation complete message: {ex.Message}\n{ex}");
+            }
+        }
+
+        /// <summary>
+        /// Executes commands that were saved before compilation started.
+        /// Called from OnCompilationFinished via the main thread queue.
+        /// </summary>
+        private static void ExecutePendingCommands()
+        {
+            if (!McpPendingCommandStorage.HasPendingCommands())
+            {
+                return;
+            }
+
+            try
+            {
+                var pendingCommands = McpPendingCommandStorage.GetAndClearPendingCommands();
+
+                if (pendingCommands.Count == 0)
+                {
+                    return;
+                }
+
+                Debug.Log($"MCP Bridge: Executing {pendingCommands.Count} pending command(s) after compilation");
+
+                foreach (var command in pendingCommands)
+                {
+                    try
+                    {
+                        // Get compilation result for this command
+                        var compilationResult = McpCommandProcessor.GetCompilationResult();
+
+                        // Send the compilation result as the command result
+                        Send(McpBridgeMessages.CreateCommandResult(command.CommandId, true, compilationResult));
+
+                        Debug.Log($"MCP Bridge: Sent result for pending command {command.CommandId} ({command.ToolName})");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"MCP Bridge: Failed to send result for pending command {command.CommandId}: {ex.Message}");
+                        Send(McpBridgeMessages.CreateCommandResult(command.CommandId, false, null, ex.Message));
+                    }
+                }
+
+                MarkContextDirty();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"MCP Bridge: Failed to execute pending commands: {ex.Message}\n{ex}");
             }
         }
 

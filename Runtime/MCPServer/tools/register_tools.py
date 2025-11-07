@@ -560,6 +560,60 @@ def register_tools(server: Server) -> None:
         ["operation"],
     )
 
+    constant_convert_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "operation": {
+                    "type": "string",
+                    "enum": ["enumToValue", "valueToEnum", "colorToRGBA", "rgbaToColor", "layerToIndex", "indexToLayer", "listEnums", "listColors", "listLayers"],
+                    "description": "Operation to perform. 'enumToValue' converts enum name to numeric value, 'valueToEnum' converts numeric value to enum name, 'colorToRGBA' converts Unity color name to RGBA values, 'rgbaToColor' converts RGBA values to nearest color name, 'layerToIndex' converts layer name to index, 'indexToLayer' converts layer index to name, 'listEnums' lists all enum values, 'listColors' lists all Unity built-in colors, 'listLayers' lists all layers.",
+                },
+                "enumType": {
+                    "type": "string",
+                    "description": "Fully qualified enum type name (e.g., 'UnityEngine.KeyCode', 'UnityEngine.FontStyle'). Required for enumToValue, valueToEnum, and listEnums operations.",
+                },
+                "enumValue": {
+                    "type": "string",
+                    "description": "Enum value name (e.g., 'Space', 'Bold'). Required for enumToValue operation.",
+                },
+                "numericValue": {
+                    "type": "integer",
+                    "description": "Numeric value. Required for valueToEnum operation.",
+                },
+                "colorName": {
+                    "type": "string",
+                    "description": "Unity built-in color name (e.g., 'red', 'green', 'blue'). Required for colorToRGBA operation.",
+                },
+                "r": {
+                    "type": "number",
+                    "description": "Red component (0-1). Required for rgbaToColor operation.",
+                },
+                "g": {
+                    "type": "number",
+                    "description": "Green component (0-1). Required for rgbaToColor operation.",
+                },
+                "b": {
+                    "type": "number",
+                    "description": "Blue component (0-1). Required for rgbaToColor operation.",
+                },
+                "a": {
+                    "type": "number",
+                    "description": "Alpha component (0-1). Optional for rgbaToColor operation, defaults to 1.0.",
+                },
+                "layerName": {
+                    "type": "string",
+                    "description": "Layer name (e.g., 'Default', 'UI'). Required for layerToIndex operation.",
+                },
+                "layerIndex": {
+                    "type": "integer",
+                    "description": "Layer index (0-31). Required for indexToLayer operation.",
+                },
+            },
+        },
+        ["operation"],
+    )
+
     hierarchy_builder_schema = _schema_with_required(
         {
             "type": "object",
@@ -1104,6 +1158,11 @@ def register_tools(server: Server) -> None:
             description="Manage Unity NavMesh navigation system. Bake/clear NavMesh, add NavMeshAgent components to GameObjects, set agent destinations, inspect NavMesh statistics, and update bake settings. Supports runtime pathfinding for AI characters.",
             inputSchema=navmesh_manage_schema,
         ),
+        types.Tool(
+            name="unity_constant_convert",
+            description="Convert between Unity constants and numeric values. Supports enum types (e.g., KeyCode.Space ↔ 32), Unity built-in colors (e.g., 'red' ↔ RGBA), and layer names/indices. Also provides listing operations for available values.",
+            inputSchema=constant_convert_schema,
+        ),
     ]
 
     tool_map = {tool.name: tool for tool in tool_definitions}
@@ -1244,6 +1303,9 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_navmesh_manage":
             return await _call_bridge_tool("navmeshManage", args)
+
+        if name == "unity_constant_convert":
+            return await _call_bridge_tool("constantConvert", args)
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 

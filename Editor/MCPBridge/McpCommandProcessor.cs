@@ -55,6 +55,7 @@ namespace MCP.Editor
                 "tilemapManage" => HandleTilemapManage(command.Payload),
                 "navmeshManage" => HandleNavMeshManage(command.Payload),
                 "projectCompile" => HandleProjectCompile(command.Payload),
+                "constantConvert" => HandleConstantConvert(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
             };
         }
@@ -6941,6 +6942,214 @@ namespace MCP.Editor
             {
                 Directory.CreateDirectory(directory);
             }
+        }
+
+        #endregion
+
+        #region Constant Conversion
+
+        /// <summary>
+        /// Handles constant conversion operations (enum, color, layer conversions).
+        /// </summary>
+        /// <param name="payload">Operation parameters including 'operation' type.</param>
+        /// <returns>Result dictionary with conversion data.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when operation is invalid or missing.</exception>
+        private static object HandleConstantConvert(Dictionary<string, object> payload)
+        {
+            var operation = GetString(payload, "operation");
+            if (string.IsNullOrEmpty(operation))
+            {
+                throw new InvalidOperationException("operation is required");
+            }
+
+            switch (operation)
+            {
+                case "enumToValue":
+                    return ConvertEnumToValue(payload);
+                case "valueToEnum":
+                    return ConvertValueToEnum(payload);
+                case "colorToRGBA":
+                    return ConvertColorToRGBA(payload);
+                case "rgbaToColor":
+                    return ConvertRGBAToColor(payload);
+                case "layerToIndex":
+                    return ConvertLayerToIndex(payload);
+                case "indexToLayer":
+                    return ConvertIndexToLayer(payload);
+                case "listEnums":
+                    return ListEnumValues(payload);
+                case "listColors":
+                    return ListConstantColors();
+                case "listLayers":
+                    return ListConstantLayers();
+                default:
+                    throw new InvalidOperationException($"Unknown operation: {operation}");
+            }
+        }
+
+        /// <summary>
+        /// Converts enum name to numeric value.
+        /// </summary>
+        private static object ConvertEnumToValue(Dictionary<string, object> payload)
+        {
+            var enumTypeName = EnsureValue(GetString(payload, "enumType"), "enumType");
+            var enumValueName = EnsureValue(GetString(payload, "enumValue"), "enumValue");
+
+            var numericValue = McpConstantConverter.EnumNameToValue(enumTypeName, enumValueName);
+
+            return new Dictionary<string, object>
+            {
+                ["enumType"] = enumTypeName,
+                ["enumValue"] = enumValueName,
+                ["numericValue"] = numericValue,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Converts numeric value to enum name.
+        /// </summary>
+        private static object ConvertValueToEnum(Dictionary<string, object> payload)
+        {
+            var enumTypeName = EnsureValue(GetString(payload, "enumType"), "enumType");
+            var numericValue = GetInt(payload, "numericValue", 0);
+
+            var enumValueName = McpConstantConverter.EnumValueToName(enumTypeName, numericValue);
+
+            return new Dictionary<string, object>
+            {
+                ["enumType"] = enumTypeName,
+                ["numericValue"] = numericValue,
+                ["enumValue"] = enumValueName,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Converts Unity color name to RGBA values.
+        /// </summary>
+        private static object ConvertColorToRGBA(Dictionary<string, object> payload)
+        {
+            var colorName = EnsureValue(GetString(payload, "colorName"), "colorName");
+
+            var rgba = McpConstantConverter.ColorNameToRGBA(colorName);
+
+            return new Dictionary<string, object>
+            {
+                ["colorName"] = colorName,
+                ["rgba"] = rgba,
+                ["r"] = rgba["r"],
+                ["g"] = rgba["g"],
+                ["b"] = rgba["b"],
+                ["a"] = rgba["a"],
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Converts RGBA values to Unity color name (nearest match).
+        /// </summary>
+        private static object ConvertRGBAToColor(Dictionary<string, object> payload)
+        {
+            var r = GetFloat(payload, "r", 0f);
+            var g = GetFloat(payload, "g", 0f);
+            var b = GetFloat(payload, "b", 0f);
+            var a = GetFloat(payload, "a", 1f);
+
+            var colorName = McpConstantConverter.RGBAToColorName(r, g, b, a);
+
+            return new Dictionary<string, object>
+            {
+                ["r"] = r,
+                ["g"] = g,
+                ["b"] = b,
+                ["a"] = a,
+                ["colorName"] = colorName ?? "unknown",
+                ["matched"] = colorName != null,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Converts layer name to layer index.
+        /// </summary>
+        private static object ConvertLayerToIndex(Dictionary<string, object> payload)
+        {
+            var layerName = EnsureValue(GetString(payload, "layerName"), "layerName");
+
+            var layerIndex = McpConstantConverter.LayerNameToIndex(layerName);
+
+            return new Dictionary<string, object>
+            {
+                ["layerName"] = layerName,
+                ["layerIndex"] = layerIndex,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Converts layer index to layer name.
+        /// </summary>
+        private static object ConvertIndexToLayer(Dictionary<string, object> payload)
+        {
+            var layerIndex = GetInt(payload, "layerIndex", 0);
+
+            var layerName = McpConstantConverter.LayerIndexToName(layerIndex);
+
+            return new Dictionary<string, object>
+            {
+                ["layerIndex"] = layerIndex,
+                ["layerName"] = layerName,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Lists all values for a given enum type.
+        /// </summary>
+        private static object ListEnumValues(Dictionary<string, object> payload)
+        {
+            var enumTypeName = EnsureValue(GetString(payload, "enumType"), "enumType");
+
+            var enumValues = McpConstantConverter.ListEnumValues(enumTypeName);
+
+            return new Dictionary<string, object>
+            {
+                ["enumType"] = enumTypeName,
+                ["values"] = enumValues,
+                ["count"] = enumValues.Count,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Lists all Unity built-in color names.
+        /// </summary>
+        private static object ListConstantColors()
+        {
+            var colorNames = McpConstantConverter.ListColorNames();
+
+            return new Dictionary<string, object>
+            {
+                ["colors"] = colorNames,
+                ["count"] = colorNames.Count,
+                ["success"] = true
+            };
+        }
+
+        /// <summary>
+        /// Lists all layer names and their indices (for constant conversion).
+        /// </summary>
+        private static object ListConstantLayers()
+        {
+            var layers = McpConstantConverter.ListLayers();
+
+            return new Dictionary<string, object>
+            {
+                ["layers"] = layers,
+                ["count"] = layers.Count,
+                ["success"] = true
+            };
         }
 
         #endregion
