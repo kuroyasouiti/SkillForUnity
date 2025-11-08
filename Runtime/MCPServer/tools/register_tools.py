@@ -163,8 +163,8 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "update", "delete", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
-                    "description": "Operation to perform. Use 'inspect' to read asset details including importer settings. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern.",
+                    "enum": ["updateImporter", "delete", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
+                    "description": "Operation to perform. 'updateImporter' modifies asset importer settings only (file content changes must be done via Claude Code's file tools). Use 'inspect' to read asset details including importer settings. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern. NOTE: This tool does NOT create or modify file contents - use Claude Code's Write/Edit tools for file operations.",
                 },
                 "assetPath": {
                     "type": "string",
@@ -178,18 +178,10 @@ def register_tools(server: Server) -> None:
                     "type": "string",
                     "description": "Target path for rename or duplicate operations.",
                 },
-                "content": {
-                    "type": "string",
-                    "description": "File content for create and update operations. For text-based assets (scripts, JSON, XML, etc.).",
-                },
                 "propertyChanges": {
                     "type": "object",
                     "additionalProperties": True,
-                    "description": "Property/value pairs to apply to the asset's importer settings. For example, TextureImporter properties (textureType, isReadable, filterMode), ModelImporter properties (importNormals, importTangents), etc. Changes are applied via AssetImporter reflection.",
-                },
-                "overwrite": {
-                    "type": "boolean",
-                    "description": "If true, allows overwriting existing assets. Default is true.",
+                    "description": "Property/value pairs to apply to the asset's importer settings (for updateImporter operation). For example, TextureImporter properties (textureType, isReadable, filterMode), ModelImporter properties (importNormals, importTangents), etc. Changes are applied via AssetImporter reflection.",
                 },
                 "pattern": {
                     "type": "string",
@@ -1098,7 +1090,7 @@ def register_tools(server: Server) -> None:
         ),
         types.Tool(
             name="unity_asset_crud",
-            description="Create, update, rename, duplicate, delete, or inspect Assets/ files. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple assets (e.g., pattern='Assets/Scripts/*.cs' to find all C# scripts). IMPORTANT: DO NOT use this tool for creating or updating C# scripts - use unity_script_batch_manage instead, which handles compilation properly.",
+            description="Manage Unity asset importer settings, and perform asset operations (rename, duplicate, delete, inspect). This tool does NOT create or modify file contents - use Claude Code's Write/Edit tools for file operations. Use 'updateImporter' to change asset import settings (texture type, model import options, etc.). Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations. IMPORTANT: For C# scripts, use unity_script_batch_manage instead.",
             inputSchema=asset_manage_schema,
         ),
         types.Tool(

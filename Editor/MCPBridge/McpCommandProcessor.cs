@@ -877,7 +877,8 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Handles asset management operations (create, update, delete, rename, duplicate, inspect).
+        /// Handles asset management operations (updateImporter, delete, rename, duplicate, inspect).
+        /// Note: This does NOT handle file content creation/modification - use Claude Code's file tools for that.
         /// </summary>
         /// <param name="payload">Operation parameters including 'operation' and asset-specific settings.</param>
         /// <returns>Result dictionary with asset information.</returns>
@@ -886,8 +887,7 @@ namespace MCP.Editor
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
             return operation switch
             {
-                "create" => CreateAsset(payload),
-                "update" => UpdateAsset(payload),
+                "updateImporter" => UpdateAssetImporter(payload),
                 "delete" => DeleteAsset(payload),
                 "rename" => RenameAsset(payload),
                 "duplicate" => DuplicateAsset(payload),
@@ -899,52 +899,22 @@ namespace MCP.Editor
             };
         }
 
-        private static object CreateAsset(Dictionary<string, object> payload)
-        {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
-
-            // Support both 'content' (new) and 'contents' (legacy) parameters
-            var content = GetString(payload, "content") ?? GetString(payload, "contents") ?? string.Empty;
-
-            EnsureDirectoryExists(path);
-            File.WriteAllText(path, content, Encoding.UTF8);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-
-            // Apply property changes to importer if specified
-            if (payload.TryGetValue("propertyChanges", out var propertyObj) && propertyObj is Dictionary<string, object> propertyChanges)
-            {
-                ApplyAssetImporterProperties(path, propertyChanges);
-            }
-
-            return DescribeAsset(path);
-        }
-
-        private static object UpdateAsset(Dictionary<string, object> payload)
+        private static object UpdateAssetImporter(Dictionary<string, object> payload)
         {
             var path = ResolveAssetPathFromPayload(payload);
 
-            // Support both 'content' (new) and 'contents' (legacy) parameters
-            var content = GetString(payload, "content") ?? GetString(payload, "contents");
-            var overwrite = GetBool(payload, "overwrite", true);
-
-            if (!File.Exists(path) && !overwrite)
+            if (!File.Exists(path) && !Directory.Exists(path))
             {
                 throw new InvalidOperationException($"Asset does not exist: {path}");
             }
 
-            // Update file content if provided
-            if (content != null)
+            // Apply property changes to importer
+            if (!payload.TryGetValue("propertyChanges", out var propertyObj) || !(propertyObj is Dictionary<string, object> propertyChanges))
             {
-                EnsureDirectoryExists(path);
-                File.WriteAllText(path, content, Encoding.UTF8);
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                throw new InvalidOperationException("propertyChanges is required for updateImporter operation");
             }
 
-            // Apply property changes to importer if specified
-            if (payload.TryGetValue("propertyChanges", out var propertyObj) && propertyObj is Dictionary<string, object> propertyChanges)
-            {
-                ApplyAssetImporterProperties(path, propertyChanges);
-            }
+            ApplyAssetImporterProperties(path, propertyChanges);
 
             return DescribeAsset(path);
         }
@@ -7353,11 +7323,12 @@ namespace MCP.Editor
         /// </summary>
         private static bool IsScriptRelatedTool(string toolName, Dictionary<string, object> toolPayload)
         {
-            // Check if it's assetManage with .cs files
+            // Note: assetManage no longer supports create/update operations (file operations must be done via Claude Code)
+            // Only delete operations on .cs files trigger compilation
             if (toolName == "assetManage")
             {
                 var operation = GetString(toolPayload, "operation");
-                if (operation == "create" || operation == "update" || operation == "delete")
+                if (operation == "delete")
                 {
                     var assetPath = GetString(toolPayload, "assetPath");
                     if (!string.IsNullOrEmpty(assetPath) && assetPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
@@ -7366,8 +7337,8 @@ namespace MCP.Editor
                     }
                 }
 
-                // Check for multiple operations with patterns
-                if (operation == "createMultiple" || operation == "updateMultiple" || operation == "deleteMultiple")
+                // Check for multiple delete operations with .cs patterns
+                if (operation == "deleteMultiple")
                 {
                     var pattern = GetString(toolPayload, "pattern");
                     if (!string.IsNullOrEmpty(pattern) && pattern.Contains(".cs", StringComparison.OrdinalIgnoreCase))
