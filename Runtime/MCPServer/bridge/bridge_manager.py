@@ -20,6 +20,7 @@ from .messages import (
     BridgeHelloMessage,
     BridgeHeartbeatMessage,
     BridgeNotificationMessage,
+    BridgeRestartedMessage,
     ServerMessage,
     UnityContextPayload,
 )
@@ -206,6 +207,8 @@ class BridgeManager:
             self._handle_command_result(message)
         elif message_type == "compilation:complete":
             self._handle_compilation_complete(message)
+        elif message_type == "bridge:restarted":
+            self._handle_bridge_restarted(message)
         else:
             logger.warning("Received unsupported bridge message: %s", message_type)
 
@@ -276,6 +279,19 @@ class BridgeManager:
         for future in waiters:
             if not future.done():
                 future.set_result(result)
+
+    def _handle_bridge_restarted(self, message: BridgeRestartedMessage) -> None:
+        """Handle bridge:restarted message from Unity bridge."""
+        reason = message.get("reason", "unknown")
+        session_id = message.get("sessionId")
+        logger.info(
+            "Unity bridge restarted (reason=%s, sessionId=%s)",
+            reason,
+            session_id,
+        )
+        # Update session ID if it changed
+        if session_id:
+            self._session_id = session_id
 
     def _emit(self, event: str, *args) -> None:
         for callback in list(self._listeners.get(event, [])):

@@ -55,6 +55,7 @@ namespace MCP.Editor
         private static string _sessionId = Guid.NewGuid().ToString();
         private static McpConnectionState _state = McpConnectionState.Disconnected;
         private static bool _isCompilingOrReloading = false;
+        private static bool _shouldSendRestartedSignal = false;
 
         public static event Action<McpConnectionState> StateChanged;
 
@@ -90,8 +91,9 @@ namespace MCP.Editor
 
                 if (wasConnectedBeforeCompile)
                 {
-                    Debug.Log("MCP Bridge: Reconnecting after compilation...");
+                    Debug.Log("MCP Bridge: Reconnecting after compilation/reload...");
                     EditorPrefs.DeleteKey(WasConnectedBeforeCompileKey);
+                    _shouldSendRestartedSignal = true;
                     Connect();
                 }
                 else if (McpBridgeSettings.Instance.AutoConnectOnLoad)
@@ -678,6 +680,15 @@ namespace MCP.Editor
                     _state = McpConnectionState.Connected;
                     StateChanged?.Invoke(_state);
                     Send(McpBridgeMessages.CreateHelloPayload(_sessionId, McpBridgeSettings.Instance.BridgeToken));
+
+                    // Send restart signal if this is a reconnection after compilation/reload
+                    if (_shouldSendRestartedSignal)
+                    {
+                        _shouldSendRestartedSignal = false;
+                        Send(McpBridgeMessages.CreateBridgeRestarted("compilation_or_reload"));
+                        Debug.Log("MCP Bridge: Sent bridge restart signal after compilation/reload.");
+                    }
+
                     MarkContextDirty();
                     PushContext();
                     Debug.Log("MCP Bridge: Client connected successfully.");
