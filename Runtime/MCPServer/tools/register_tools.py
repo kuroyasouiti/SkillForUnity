@@ -164,21 +164,32 @@ def register_tools(server: Server) -> None:
                 "operation": {
                     "type": "string",
                     "enum": ["create", "update", "delete", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
-                    "description": "Operation to perform. Use 'inspect' to read asset details. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern.",
+                    "description": "Operation to perform. Use 'inspect' to read asset details including importer settings. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern.",
                 },
                 "assetPath": {
                     "type": "string",
                     "description": "Path under Assets/ for the target asset. Not required for multiple operations (use 'pattern' instead).",
                 },
-                "destinationPath": {"type": "string"},
-                "contents": {
+                "assetGuid": {
                     "type": "string",
-                    "description": "File contents for create and update operations.",
+                    "description": "Optional GUID string to uniquely identify the asset (e.g., 'abc123def456789'). If provided, this takes priority over assetPath. Use this for precise asset identification.",
                 },
-                "overwrite": {"type": "boolean"},
-                "metadata": {
+                "destinationPath": {
+                    "type": "string",
+                    "description": "Target path for rename or duplicate operations.",
+                },
+                "content": {
+                    "type": "string",
+                    "description": "File content for create and update operations. For text-based assets (scripts, JSON, XML, etc.).",
+                },
+                "propertyChanges": {
                     "type": "object",
                     "additionalProperties": True,
+                    "description": "Property/value pairs to apply to the asset's importer settings. For example, TextureImporter properties (textureType, isReadable, filterMode), ModelImporter properties (importNormals, importTangents), etc. Changes are applied via AssetImporter reflection.",
+                },
+                "overwrite": {
+                    "type": "boolean",
+                    "description": "If true, allows overwriting existing assets. Default is true.",
                 },
                 "pattern": {
                     "type": "string",
@@ -190,7 +201,7 @@ def register_tools(server: Server) -> None:
                 },
                 "includeProperties": {
                     "type": "boolean",
-                    "description": "For inspectMultiple operation: if true, includes detailed asset properties in results. Default is false.",
+                    "description": "For inspect/inspectMultiple operations: if true, includes detailed asset importer properties in results. Default is false.",
                 },
             },
         },

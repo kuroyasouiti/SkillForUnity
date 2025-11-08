@@ -902,19 +902,29 @@ namespace MCP.Editor
         private static object CreateAsset(Dictionary<string, object> payload)
         {
             var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
-            var contents = GetString(payload, "contents") ?? string.Empty;
+
+            // Support both 'content' (new) and 'contents' (legacy) parameters
+            var content = GetString(payload, "content") ?? GetString(payload, "contents") ?? string.Empty;
 
             EnsureDirectoryExists(path);
-            File.WriteAllText(path, contents, Encoding.UTF8);
+            File.WriteAllText(path, content, Encoding.UTF8);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+
+            // Apply property changes to importer if specified
+            if (payload.TryGetValue("propertyChanges", out var propertyObj) && propertyObj is Dictionary<string, object> propertyChanges)
+            {
+                ApplyAssetImporterProperties(path, propertyChanges);
+            }
 
             return DescribeAsset(path);
         }
 
         private static object UpdateAsset(Dictionary<string, object> payload)
         {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
-            var contents = GetString(payload, "contents");
+            var path = ResolveAssetPathFromPayload(payload);
+
+            // Support both 'content' (new) and 'contents' (legacy) parameters
+            var content = GetString(payload, "content") ?? GetString(payload, "contents");
             var overwrite = GetBool(payload, "overwrite", true);
 
             if (!File.Exists(path) && !overwrite)
@@ -922,16 +932,26 @@ namespace MCP.Editor
                 throw new InvalidOperationException($"Asset does not exist: {path}");
             }
 
-            EnsureDirectoryExists(path);
-            File.WriteAllText(path, contents ?? string.Empty, Encoding.UTF8);
-            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            // Update file content if provided
+            if (content != null)
+            {
+                EnsureDirectoryExists(path);
+                File.WriteAllText(path, content, Encoding.UTF8);
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            }
+
+            // Apply property changes to importer if specified
+            if (payload.TryGetValue("propertyChanges", out var propertyObj) && propertyObj is Dictionary<string, object> propertyChanges)
+            {
+                ApplyAssetImporterProperties(path, propertyChanges);
+            }
 
             return DescribeAsset(path);
         }
 
         private static object DeleteAsset(Dictionary<string, object> payload)
         {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
+            var path = ResolveAssetPathFromPayload(payload);
             if (!AssetDatabase.DeleteAsset(path))
             {
                 throw new InvalidOperationException($"Failed to delete asset: {path}");
@@ -946,7 +966,7 @@ namespace MCP.Editor
 
         private static object RenameAsset(Dictionary<string, object> payload)
         {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
+            var path = ResolveAssetPathFromPayload(payload);
             var destination = EnsureValue(GetString(payload, "destinationPath"), "destinationPath");
             var result = AssetDatabase.MoveAsset(path, destination);
             if (!string.IsNullOrEmpty(result))
@@ -960,7 +980,7 @@ namespace MCP.Editor
 
         private static object DuplicateAsset(Dictionary<string, object> payload)
         {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
+            var path = ResolveAssetPathFromPayload(payload);
             var destination = EnsureValue(GetString(payload, "destinationPath"), "destinationPath");
             EnsureDirectoryExists(destination);
             if (!AssetDatabase.CopyAsset(path, destination))
@@ -974,12 +994,13 @@ namespace MCP.Editor
 
         private static object InspectAsset(Dictionary<string, object> payload)
         {
-            var path = EnsureValue(GetString(payload, "assetPath"), "assetPath");
+            var path = ResolveAssetPathFromPayload(payload);
             if (!File.Exists(path) && !Directory.Exists(path))
             {
                 throw new InvalidOperationException($"Asset not found: {path}");
             }
 
+            var includeProperties = GetBool(payload, "includeProperties");
             var guid = AssetDatabase.AssetPathToGUID(path);
             var mainAssetType = AssetDatabase.GetMainAssetTypeAtPath(path);
             var assetObj = AssetDatabase.LoadMainAssetAtPath(path);
@@ -992,7 +1013,7 @@ namespace MCP.Editor
                 ["exists"] = assetObj != null,
             };
 
-            if (assetObj != null)
+            if (assetObj != null && includeProperties)
             {
                 var properties = new Dictionary<string, object>();
                 var assetType = assetObj.GetType();
@@ -1033,6 +1054,40 @@ namespace MCP.Editor
                 }
 
                 result["properties"] = properties;
+            }
+
+            // Include AssetImporter properties if requested
+            if (includeProperties)
+            {
+                var importer = AssetImporter.GetAtPath(path);
+                if (importer != null)
+                {
+                    var importerProperties = new Dictionary<string, object>();
+                    var importerType = importer.GetType();
+
+                    // Get all public properties
+                    var propertyInfos = importerType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+                    foreach (var prop in propertyInfos)
+                    {
+                        if (!prop.CanRead)
+                        {
+                            continue;
+                        }
+
+                        try
+                        {
+                            var value = prop.GetValue(importer);
+                            importerProperties[prop.Name] = SerializeValue(value);
+                        }
+                        catch (Exception ex)
+                        {
+                            importerProperties[prop.Name] = $"<Error: {ex.Message}>";
+                        }
+                    }
+
+                    result["importerType"] = importerType.FullName;
+                    result["importerProperties"] = importerProperties;
+                }
             }
 
             return result;
@@ -6612,6 +6667,62 @@ namespace MCP.Editor
             }
 
             return ResolveGameObject(path);
+        }
+
+        /// <summary>
+        /// Resolves an asset path from a payload dictionary, supporting both path and GUID.
+        /// </summary>
+        /// <param name="payload">The payload containing assetPath or assetGuid.</param>
+        /// <returns>The resolved asset path.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the asset cannot be resolved.</exception>
+        private static string ResolveAssetPathFromPayload(Dictionary<string, object> payload)
+        {
+            // Try GUID first (more reliable)
+            var guid = GetString(payload, "assetGuid");
+            if (!string.IsNullOrEmpty(guid))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.IsNullOrEmpty(path))
+                {
+                    throw new InvalidOperationException($"Could not resolve asset from GUID: {guid}");
+                }
+                return path;
+            }
+
+            // Fall back to assetPath
+            var assetPath = GetString(payload, "assetPath");
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                throw new InvalidOperationException("Either assetPath or assetGuid is required");
+            }
+
+            return assetPath;
+        }
+
+        /// <summary>
+        /// Applies property changes to an asset's importer settings.
+        /// </summary>
+        /// <param name="assetPath">The asset path.</param>
+        /// <param name="propertyChanges">Dictionary of property name/value pairs to apply.</param>
+        private static void ApplyAssetImporterProperties(string assetPath, Dictionary<string, object> propertyChanges)
+        {
+            if (propertyChanges == null || propertyChanges.Count == 0)
+            {
+                return;
+            }
+
+            var importer = AssetImporter.GetAtPath(assetPath);
+            if (importer == null)
+            {
+                throw new InvalidOperationException($"Could not get AssetImporter for: {assetPath}");
+            }
+
+            foreach (var kvp in propertyChanges)
+            {
+                ApplyProperty(importer, kvp.Key, kvp.Value);
+            }
+
+            importer.SaveAndReimport();
         }
 
         /// <summary>
