@@ -66,11 +66,19 @@ class BridgeCommandResultMessage(TypedDict, total=False):
     errorMessage: NotRequired[str]
 
 
+class BridgeRestartedMessage(TypedDict):
+    type: Literal["bridge:restarted"]
+    timestamp: int
+    reason: str
+    sessionId: str
+
+
 BridgeNotificationMessage = (
     BridgeHelloMessage
     | BridgeHeartbeatMessage
     | BridgeContextUpdateMessage
     | BridgeCommandResultMessage
+    | BridgeRestartedMessage
 )
 
 

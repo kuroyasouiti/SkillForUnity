@@ -58,6 +58,17 @@ namespace MCP.Editor
                 ["result"] = compilationResult,
             };
         }
+
+        public static Dictionary<string, object> CreateBridgeRestarted(string reason)
+        {
+            return new Dictionary<string, object>
+            {
+                ["type"] = "bridge:restarted",
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                ["reason"] = reason,
+                ["sessionId"] = McpBridgeService.SessionId,
+            };
+        }
     }
 
     internal sealed class McpIncomingCommand

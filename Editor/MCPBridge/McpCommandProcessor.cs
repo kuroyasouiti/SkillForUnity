@@ -54,8 +54,8 @@ namespace MCP.Editor
                 "inputSystemManage" => HandleInputSystemManage(command.Payload),
                 "tilemapManage" => HandleTilemapManage(command.Payload),
                 "navmeshManage" => HandleNavMeshManage(command.Payload),
-                "projectCompile" => HandleProjectCompile(command.Payload),
                 "constantConvert" => HandleConstantConvert(command.Payload),
+                "batchExecute" => HandleBatchExecute(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
             };
         }
@@ -6162,32 +6162,6 @@ namespace MCP.Editor
 
         #endregion
 
-        private static object HandleProjectCompile(Dictionary<string, object> payload)
-        {
-            var refreshAssetDatabase = GetBool(payload, "refreshAssetDatabase", true);
-            var requestScriptCompilation = GetBool(payload, "requestScriptCompilation", true);
-
-            if (refreshAssetDatabase)
-            {
-                AssetDatabase.Refresh();
-            }
-
-            if (requestScriptCompilation)
-            {
-                CompilationPipeline.RequestScriptCompilation();
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["assetDatabaseRefreshed"] = refreshAssetDatabase,
-                ["compilationRequested"] = requestScriptCompilation,
-                ["isCompiling"] = EditorApplication.isCompiling,
-                ["message"] = requestScriptCompilation
-                    ? "Compilation request sent to Unity Editor."
-                    : "Asset database refresh completed without requesting compilation.",
-            };
-        }
-
         #region Project Compile
 
         /// <summary>
@@ -7150,6 +7124,149 @@ namespace MCP.Editor
                 ["count"] = layers.Count,
                 ["success"] = true
             };
+        }
+
+        #endregion
+
+        #region Batch Execute
+
+        /// <summary>
+        /// Handles batch execution of multiple tool operations.
+        /// Automatically detects script changes and triggers compilation.
+        /// </summary>
+        /// <param name="payload">
+        /// Required keys:
+        /// - operations: List of operations, each with:
+        ///   - tool: Tool name (e.g., "assetManage", "gameObjectManage")
+        ///   - payload: Tool-specific payload
+        /// Optional keys:
+        /// - stopOnError: If true, stops batch on first error (default: false)
+        /// - awaitCompilation: If true, triggers compilation after script changes (default: true)
+        /// </param>
+        private static object HandleBatchExecute(Dictionary<string, object> payload)
+        {
+            var operationsList = GetList(payload, "operations");
+            if (operationsList == null || operationsList.Count == 0)
+            {
+                throw new InvalidOperationException("operations array is required and must not be empty");
+            }
+
+            var stopOnError = GetBool(payload, "stopOnError", false);
+            var results = new List<Dictionary<string, object>>();
+            var hasErrors = false;
+            var hasScriptChanges = false;
+
+            foreach (var opObj in operationsList)
+            {
+                if (!(opObj is Dictionary<string, object> opPayload))
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Invalid operation entry: must be a dictionary"
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                    continue;
+                }
+
+                try
+                {
+                    var toolName = GetString(opPayload, "tool");
+                    var toolPayload = opPayload.TryGetValue("payload", out var payloadObj) && payloadObj is Dictionary<string, object> dict
+                        ? dict
+                        : new Dictionary<string, object>();
+
+                    if (string.IsNullOrEmpty(toolName))
+                    {
+                        throw new InvalidOperationException("tool name is required for each operation");
+                    }
+
+                    // Create a command for this operation
+                    var command = new McpIncomingCommand("batch_" + Guid.NewGuid().ToString(), toolName, toolPayload);
+
+                    // Execute the tool
+                    var result = Execute(command);
+
+                    // Check if this was a script-related operation
+                    if (IsScriptRelatedTool(toolName, toolPayload))
+                    {
+                        hasScriptChanges = true;
+                    }
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = true,
+                        ["tool"] = toolName,
+                        ["result"] = result
+                    });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["tool"] = opPayload.TryGetValue("tool", out var t) ? t : "unknown",
+                        ["error"] = ex.Message
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                }
+            }
+
+            // If script changes were detected, trigger compilation
+            var compilationTriggered = false;
+            if (hasScriptChanges)
+            {
+                AssetDatabase.Refresh();
+                CompilationPipeline.RequestScriptCompilation();
+                compilationTriggered = true;
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["success"] = !hasErrors,
+                ["processedCount"] = results.Count,
+                ["totalCount"] = operationsList.Count,
+                ["results"] = results,
+                ["compilationTriggered"] = compilationTriggered,
+                ["message"] = hasErrors
+                    ? $"Batch completed with errors. Processed {results.Count}/{operationsList.Count} operations."
+                    : $"Batch completed successfully. Processed {results.Count} operations." +
+                      (compilationTriggered ? " Compilation triggered." : "")
+            };
+        }
+
+        /// <summary>
+        /// Determines if a tool operation involves script changes that require compilation.
+        /// </summary>
+        private static bool IsScriptRelatedTool(string toolName, Dictionary<string, object> toolPayload)
+        {
+            // Check if it's assetManage with .cs files
+            if (toolName == "assetManage")
+            {
+                var operation = GetString(toolPayload, "operation");
+                if (operation == "create" || operation == "update" || operation == "delete")
+                {
+                    var assetPath = GetString(toolPayload, "assetPath");
+                    if (!string.IsNullOrEmpty(assetPath) && assetPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                // Check for multiple operations with patterns
+                if (operation == "createMultiple" || operation == "updateMultiple" || operation == "deleteMultiple")
+                {
+                    var pattern = GetString(toolPayload, "pattern");
+                    if (!string.IsNullOrEmpty(pattern) && pattern.Contains(".cs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         #endregion

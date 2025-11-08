@@ -279,29 +279,6 @@ def register_tools(server: Server) -> None:
         ["gameObjectPath", "operation"],
     )
 
-    project_compile_schema: Dict[str, Any] = {
-        "type": "object",
-        "properties": {
-            "refreshAssetDatabase": {
-                "type": "boolean",
-                "description": "Whether to refresh the AssetDatabase before requesting compilation. Default true.",
-            },
-            "requestScriptCompilation": {
-                "type": "boolean",
-                "description": "Whether to request Unity to begin script compilation. Default true.",
-            },
-            "awaitCompletion": {
-                "type": "boolean",
-                "description": "Whether to wait for the next compilation result before returning. Defaults to true; leave enabled so multiple script edits compile together."
-            },
-            "timeoutSeconds": {
-                "type": "integer",
-                "description": "Maximum seconds to wait for compilation to complete when awaitCompletion is true. Default 60.",
-            },
-        },
-        "additionalProperties": False,
-    }
-
     prefab_manage_schema = _schema_with_required(
         {
             "type": "object",
@@ -612,6 +589,46 @@ def register_tools(server: Server) -> None:
             },
         },
         ["operation"],
+    )
+
+    batch_execute_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "operations": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "tool": {
+                                "type": "string",
+                                "description": "Tool name to execute (e.g., 'assetManage', 'gameObjectManage', 'componentManage'). Use the internal tool name without 'unity_' prefix.",
+                            },
+                            "payload": {
+                                "type": "object",
+                                "additionalProperties": True,
+                                "description": "Tool-specific payload/arguments.",
+                            },
+                        },
+                        "required": ["tool", "payload"],
+                    },
+                    "description": "Array of tool operations to execute in sequence. Each operation specifies a tool name and its payload.",
+                },
+                "stopOnError": {
+                    "type": "boolean",
+                    "description": "If true, stops batch execution on first error. Default is false (continues on errors).",
+                },
+                "awaitCompilation": {
+                    "type": "boolean",
+                    "description": "If true, automatically detects script changes and waits for compilation to complete. Default is true.",
+                },
+                "timeoutSeconds": {
+                    "type": "integer",
+                    "description": "Maximum seconds to wait for compilation to complete when awaitCompilation is true. Default is 60.",
+                },
+            },
+        },
+        ["operations"],
     )
 
     hierarchy_builder_schema = _schema_with_required(
@@ -1124,11 +1141,6 @@ def register_tools(server: Server) -> None:
             inputSchema=tag_layer_manage_schema,
         ),
         types.Tool(
-            name="unity_project_compile",
-            description="Refresh the AssetDatabase and request Unity to compile scripts, optionally waiting for compilation results.",
-            inputSchema=project_compile_schema,
-        ),
-        types.Tool(
             name="unity_prefab_crud",
             description="Manage Unity prefabs: create prefabs from GameObjects, update existing prefabs, inspect prefab assets, instantiate prefabs in scenes, unpack prefab instances, apply or revert instance overrides.",
             inputSchema=prefab_manage_schema,
@@ -1162,6 +1174,11 @@ def register_tools(server: Server) -> None:
             name="unity_constant_convert",
             description="Convert between Unity constants and numeric values. Supports enum types (e.g., KeyCode.Space ↔ 32), Unity built-in colors (e.g., 'red' ↔ RGBA), and layer names/indices. Also provides listing operations for available values.",
             inputSchema=constant_convert_schema,
+        ),
+        types.Tool(
+            name="unity_batch_execute",
+            description="Execute multiple Unity tool operations in a single batch. Supports any combination of tools (assetManage, gameObjectManage, componentManage, etc.). Automatically detects script changes and waits for compilation to complete. Perfect for complex multi-step operations like creating multiple GameObjects, setting up scenes, or managing assets. Each operation specifies a tool name and its payload. Operations are executed sequentially, and results are returned for each operation.",
+            inputSchema=batch_execute_schema,
         ),
     ]
 
@@ -1231,61 +1248,6 @@ def register_tools(server: Server) -> None:
         if name == "unity_tagLayer_manage":
             return await _call_bridge_tool("tagLayerManage", args)
 
-        if name == "unity_project_compile":
-            await_completion = args.get("awaitCompletion", True)
-            timeout_seconds = args.get("timeoutSeconds", 60)
-
-            unity_args = {
-                key: args[key]
-                for key in ("refreshAssetDatabase", "requestScriptCompilation")
-                if key in args
-            }
-
-            logger.info(
-                "Requesting Unity project compilation (refresh=%s, request=%s)...",
-                unity_args.get("refreshAssetDatabase", True),
-                unity_args.get("requestScriptCompilation", True),
-            )
-
-            request_result = await bridge_manager.send_command("projectCompile", unity_args)
-            response_payload: Dict[str, Any] = {
-                "request": request_result,
-                "awaitCompletion": await_completion,
-                "timeoutSeconds": timeout_seconds,
-            }
-
-            if await_completion:
-                try:
-                    logger.info(
-                        "Waiting for compilation to complete (timeout=%ss)...",
-                        timeout_seconds,
-                    )
-                    compilation_result = await bridge_manager.await_compilation(timeout_seconds)
-                    response_payload["compilation"] = compilation_result
-                    logger.info(
-                        "Compilation complete: success=%s",
-                        compilation_result.get("success"),
-                    )
-                except TimeoutError:
-                    logger.warning(
-                        "Compilation did not finish within %s seconds", timeout_seconds
-                    )
-                    response_payload["compilation"] = {
-                        "success": False,
-                        "completed": False,
-                        "timedOut": True,
-                        "message": f"Compilation did not finish within {timeout_seconds} seconds.",
-                    }
-                except Exception as exc:
-                    logger.error("Error while waiting for compilation: %s", exc)
-                    response_payload["compilation"] = {
-                        "success": False,
-                        "completed": False,
-                        "error": str(exc),
-                    }
-
-            return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
-
         if name == "unity_prefab_crud":
             return await _call_bridge_tool("prefabManage", args)
 
@@ -1306,6 +1268,69 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_constant_convert":
             return await _call_bridge_tool("constantConvert", args)
+
+        if name == "unity_batch_execute":
+            # Batch execute multiple tool operations
+            await_compilation = args.get("awaitCompilation", True)
+            timeout_seconds = args.get("timeoutSeconds", 60)
+
+            logger.info("Executing batch operations...")
+
+            # Execute the batch operations
+            batch_result = await bridge_manager.send_command("batchExecute", args)
+
+            # If awaitCompilation is enabled and compilation was triggered, wait for it
+            if await_compilation and batch_result.get("compilationTriggered", False):
+                try:
+                    logger.info(
+                        "Compilation was triggered, waiting for completion (timeout=%ss)...",
+                        timeout_seconds,
+                    )
+                    compilation_result = await bridge_manager.await_compilation(timeout_seconds)
+
+                    # Combine batch result with compilation result
+                    response_payload = {
+                        "batch": batch_result,
+                        "compilation": compilation_result,
+                    }
+
+                    logger.info(
+                        "Batch completed: success=%s, compilation_success=%s",
+                        batch_result.get("success"),
+                        compilation_result.get("success"),
+                    )
+
+                    return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+
+                except TimeoutError:
+                    logger.warning(
+                        "Compilation did not finish within %s seconds", timeout_seconds
+                    )
+                    response_payload = {
+                        "batch": batch_result,
+                        "compilation": {
+                            "success": False,
+                            "completed": False,
+                            "timedOut": True,
+                            "message": f"Compilation did not finish within {timeout_seconds} seconds.",
+                        },
+                    }
+                    return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+
+                except Exception as exc:
+                    logger.error("Error while waiting for compilation: %s", exc)
+                    response_payload = {
+                        "batch": batch_result,
+                        "compilation": {
+                            "success": False,
+                            "completed": False,
+                            "error": str(exc),
+                        },
+                    }
+                    return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+            else:
+                # No compilation needed or awaitCompilation disabled
+                return [types.TextContent(type="text", text=as_pretty_json(batch_result))]
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 
