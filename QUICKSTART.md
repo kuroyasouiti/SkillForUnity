@@ -375,9 +375,9 @@ unity_context_inspect({
 | Manage layout | `unity_ugui_layoutManage` |
 | Inspect scene | `unity_context_inspect` |
 | Script batch management | `unity_script_batch_manage` |
-| Manage components | `unity_component_crud` |
-| Manage GameObjects | `unity_gameobject_crud` |
-| Manage assets | `unity_asset_crud` |
+| Scene batch management | `unity_scene_batch_manage` |
+| GameObject batch management | `unity_gameobject_batch_manage` |
+| Component batch management | `unity_component_batch_manage` |
 | Asset batch management | `unity_asset_batch_manage` |
 
 ## 🎨 Anchor Presets for UI

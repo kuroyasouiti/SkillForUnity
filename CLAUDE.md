@@ -20,14 +20,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Most Common Commands:**
 ```python
-# Set up a new scene
-unity_scene_quickSetup({"setupType": "UI"})  # or "3D", "2D"
+# Create/manage scenes
+unity_scene_batch_manage({"scenes": [{"operation": "create", "scenePath": "Assets/Scenes/Level1.unity"}]})
 
-# Create UI elements
+# Create UI elements (use templates)
 unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
 
-# Create GameObjects
-unity_gameobject_createFromTemplate({"template": "Cube", "position": {"x": 0, "y": 1, "z": 0}})
+# Create/manage GameObjects
+unity_gameobject_batch_manage({"gameObjects": [{"operation": "create", "name": "Player"}]})
+
+# Manage components
+unity_component_batch_manage({"components": [{"operation": "add", "gameObjectPath": "Player", "componentType": "Rigidbody"}]})
 
 # Build complex hierarchies
 unity_hierarchy_builder({"hierarchy": {...}})
@@ -40,9 +43,9 @@ unity_context_inspect({"includeHierarchy": True})
 
 ### Important Guidelines
 
-1. **Always use templates when available** - Much faster than manual creation
-2. **Check context before making changes** - Use `unity_context_inspect()`
-3. **Use hierarchy builder for complex structures** - Create entire trees in one command
+1. **Always use batch operations** - All core tools (scenes, GameObjects, components, assets) use batch format for efficiency
+2. **Use templates when available** - Much faster than manual creation (hierarchy builder, UI templates)
+3. **Check context before making changes** - Use `unity_context_inspect()`
 4. **Always batch script operations** - Use `unity_script_batch_manage()` with scripts array for all script operations
 5. **Refer to the Quick Start guide** - Contains copy-paste examples for common tasks
 

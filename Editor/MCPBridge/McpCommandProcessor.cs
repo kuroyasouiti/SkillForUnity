@@ -34,10 +34,9 @@ namespace MCP.Editor
             return command.ToolName switch
             {
                 "pingUnityEditor" => HandlePing(),
-                "sceneManage" => HandleSceneManage(command.Payload),
-                "gameObjectManage" => HandleGameObjectManage(command.Payload),
-                "componentManage" => HandleComponentManage(command.Payload),
-                "assetManage" => HandleAssetManage(command.Payload),
+                "sceneBatchManage" => HandleSceneBatchManage(command.Payload),
+                "gameObjectBatchManage" => HandleGameObjectBatchManage(command.Payload),
+                "componentBatchManage" => HandleComponentBatchManage(command.Payload),
                 "assetBatchManage" => HandleAssetBatchManage(command.Payload),
                 "uguiRectAdjust" => HandleUguiRectAdjust(command.Payload),
                 "uguiAnchorManage" => HandleUguiAnchorManage(command.Payload),
@@ -1168,6 +1167,222 @@ namespace MCP.Editor
                 ["pattern"] = pattern,
                 ["count"] = results.Count,
                 ["assets"] = results,
+            };
+        }
+
+        /// <summary>
+        /// Handles batch scene management operations.
+        /// Executes multiple scene operations in sequence.
+        /// </summary>
+        /// <param name="payload">
+        /// Required keys:
+        /// - scenes: Array of scene operation dictionaries
+        /// Optional keys:
+        /// - stopOnError: If true, stops on first error (default: false)
+        /// </param>
+        private static object HandleSceneBatchManage(Dictionary<string, object> payload)
+        {
+            var scenesList = GetList(payload, "scenes");
+            if (scenesList == null || scenesList.Count == 0)
+            {
+                throw new InvalidOperationException("scenes array is required and must not be empty");
+            }
+
+            var stopOnError = GetBool(payload, "stopOnError", false);
+            var results = new List<Dictionary<string, object>>();
+            var hasErrors = false;
+
+            foreach (var sceneObj in scenesList)
+            {
+                if (!(sceneObj is Dictionary<string, object> scenePayload))
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Invalid scene entry: must be a dictionary"
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                    continue;
+                }
+
+                try
+                {
+                    var result = HandleSceneManage(scenePayload);
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = true,
+                        ["operation"] = GetString(scenePayload, "operation"),
+                        ["result"] = result
+                    });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["operation"] = GetString(scenePayload, "operation") ?? "unknown",
+                        ["error"] = ex.Message
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["success"] = !hasErrors,
+                ["processedCount"] = results.Count,
+                ["totalCount"] = scenesList.Count,
+                ["results"] = results,
+                ["message"] = hasErrors
+                    ? $"Batch completed with errors. Processed {results.Count}/{scenesList.Count} operations."
+                    : $"Batch completed successfully. Processed {results.Count} operations."
+            };
+        }
+
+        /// <summary>
+        /// Handles batch GameObject management operations.
+        /// Executes multiple GameObject operations in sequence.
+        /// </summary>
+        /// <param name="payload">
+        /// Required keys:
+        /// - gameObjects: Array of GameObject operation dictionaries
+        /// Optional keys:
+        /// - stopOnError: If true, stops on first error (default: false)
+        /// </param>
+        private static object HandleGameObjectBatchManage(Dictionary<string, object> payload)
+        {
+            var gameObjectsList = GetList(payload, "gameObjects");
+            if (gameObjectsList == null || gameObjectsList.Count == 0)
+            {
+                throw new InvalidOperationException("gameObjects array is required and must not be empty");
+            }
+
+            var stopOnError = GetBool(payload, "stopOnError", false);
+            var results = new List<Dictionary<string, object>>();
+            var hasErrors = false;
+
+            foreach (var goObj in gameObjectsList)
+            {
+                if (!(goObj is Dictionary<string, object> goPayload))
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Invalid GameObject entry: must be a dictionary"
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                    continue;
+                }
+
+                try
+                {
+                    var result = HandleGameObjectManage(goPayload);
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = true,
+                        ["operation"] = GetString(goPayload, "operation"),
+                        ["result"] = result
+                    });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["operation"] = GetString(goPayload, "operation") ?? "unknown",
+                        ["error"] = ex.Message
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["success"] = !hasErrors,
+                ["processedCount"] = results.Count,
+                ["totalCount"] = gameObjectsList.Count,
+                ["results"] = results,
+                ["message"] = hasErrors
+                    ? $"Batch completed with errors. Processed {results.Count}/{gameObjectsList.Count} operations."
+                    : $"Batch completed successfully. Processed {results.Count} operations."
+            };
+        }
+
+        /// <summary>
+        /// Handles batch component management operations.
+        /// Executes multiple component operations in sequence.
+        /// </summary>
+        /// <param name="payload">
+        /// Required keys:
+        /// - components: Array of component operation dictionaries
+        /// Optional keys:
+        /// - stopOnError: If true, stops on first error (default: false)
+        /// </param>
+        private static object HandleComponentBatchManage(Dictionary<string, object> payload)
+        {
+            var componentsList = GetList(payload, "components");
+            if (componentsList == null || componentsList.Count == 0)
+            {
+                throw new InvalidOperationException("components array is required and must not be empty");
+            }
+
+            var stopOnError = GetBool(payload, "stopOnError", false);
+            var results = new List<Dictionary<string, object>>();
+            var hasErrors = false;
+
+            foreach (var compObj in componentsList)
+            {
+                if (!(compObj is Dictionary<string, object> compPayload))
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Invalid component entry: must be a dictionary"
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                    continue;
+                }
+
+                try
+                {
+                    var result = HandleComponentManage(compPayload);
+
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = true,
+                        ["operation"] = GetString(compPayload, "operation"),
+                        ["result"] = result
+                    });
+                }
+                catch (Exception ex)
+                {
+                    results.Add(new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["operation"] = GetString(compPayload, "operation") ?? "unknown",
+                        ["error"] = ex.Message
+                    });
+                    hasErrors = true;
+                    if (stopOnError) break;
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["success"] = !hasErrors,
+                ["processedCount"] = results.Count,
+                ["totalCount"] = componentsList.Count,
+                ["results"] = results,
+                ["message"] = hasErrors
+                    ? $"Batch completed with errors. Processed {results.Count}/{componentsList.Count} operations."
+                    : $"Batch completed successfully. Processed {results.Count} operations."
             };
         }
 

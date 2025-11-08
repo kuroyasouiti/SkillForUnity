@@ -50,153 +50,156 @@ def register_tools(server: Server) -> None:
         "additionalProperties": False,
     }
 
-    scene_manage_schema = _schema_with_required(
+    scene_batch_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
-                "operation": {
-                    "type": "string",
-                    "enum": ["create", "load", "save", "delete", "duplicate"],
-                    "description": "Operation to perform.",
+                "scenes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {
+                                "type": "string",
+                                "enum": ["create", "load", "save", "delete", "duplicate"],
+                                "description": "Operation to perform.",
+                            },
+                            "scenePath": {
+                                "type": "string",
+                                "description": "Path under Assets/, e.g. Assets/Scenes/Main.unity.",
+                            },
+                            "newSceneName": {"type": "string"},
+                            "additive": {"type": "boolean"},
+                            "includeOpenScenes": {"type": "boolean"},
+                        },
+                        "required": ["operation"],
+                    },
+                    "description": "Array of scene operations to execute in sequence.",
                 },
-                "scenePath": {
-                    "type": "string",
-                    "description": "Path under Assets/, e.g. Assets/Scenes/Main.unity.",
+                "stopOnError": {
+                    "type": "boolean",
+                    "description": "If true, stops batch execution on first error. Default is false.",
                 },
-                "newSceneName": {"type": "string"},
-                "additive": {"type": "boolean"},
-                "includeOpenScenes": {"type": "boolean"},
             },
         },
-        ["operation"],
+        ["scenes"],
     )
 
-    game_object_manage_schema = _schema_with_required(
+    game_object_batch_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
-                "operation": {
-                    "type": "string",
-                    "enum": ["create", "delete", "move", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
-                    "description": "Operation to perform. Use 'inspect' to read GameObject details including all attached components. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple GameObjects matching a wildcard or regex pattern.",
+                "gameObjects": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {
+                                "type": "string",
+                                "enum": ["create", "delete", "move", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
+                                "description": "Operation to perform.",
+                            },
+                            "gameObjectPath": {
+                                "type": "string",
+                                "description": "Hierarchy path of the GameObject.",
+                            },
+                            "parentPath": {
+                                "type": "string",
+                                "description": "Target parent path for move or create operations.",
+                            },
+                            "template": {
+                                "type": "string",
+                                "description": "Prefab path or template identifier to instantiate.",
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Name for the new or renamed GameObject.",
+                            },
+                            "pattern": {
+                                "type": "string",
+                                "description": "Wildcard pattern for multiple operations.",
+                            },
+                            "useRegex": {
+                                "type": "boolean",
+                                "description": "If true, treats 'pattern' as regex.",
+                            },
+                            "includeComponents": {
+                                "type": "boolean",
+                                "description": "For inspectMultiple: include component types.",
+                            },
+                            "payload": {
+                                "type": "object",
+                                "additionalProperties": True,
+                            },
+                        },
+                        "required": ["operation"],
+                    },
+                    "description": "Array of GameObject operations to execute in sequence.",
                 },
-                "gameObjectPath": {
-                    "type": "string",
-                    "description": "Hierarchy path of the GameObject (e.g. Root/Child/Button). Not required for multiple operations (use 'pattern' instead).",
-                },
-                "parentPath": {
-                    "type": "string",
-                    "description": "Target parent path for move or create operations.",
-                },
-                "template": {
-                    "type": "string",
-                    "description": "Prefab path or template identifier to instantiate.",
-                },
-                "name": {
-                    "type": "string",
-                    "description": "Name for the new or renamed GameObject.",
-                },
-                "pattern": {
-                    "type": "string",
-                    "description": "Wildcard pattern (e.g. 'Enemy*', 'Player?') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
-                },
-                "useRegex": {
+                "stopOnError": {
                     "type": "boolean",
-                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
-                },
-                "includeComponents": {
-                    "type": "boolean",
-                    "description": "For inspectMultiple operation: if true, includes component type names in results. Default is false.",
-                },
-                "payload": {
-                    "type": "object",
-                    "additionalProperties": True,
+                    "description": "If true, stops batch execution on first error. Default is false.",
                 },
             },
         },
-        ["operation"],
+        ["gameObjects"],
     )
 
-    component_manage_schema = _schema_with_required(
+    component_batch_manage_schema = _schema_with_required(
         {
             "type": "object",
             "properties": {
-                "operation": {
-                    "type": "string",
-                    "enum": ["add", "remove", "update", "inspect", "addMultiple", "removeMultiple", "updateMultiple", "inspectMultiple"],
-                    "description": "Operation to perform. Use 'inspect' to read component state. Use 'addMultiple', 'removeMultiple', 'updateMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple GameObjects matching a wildcard or regex pattern.",
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {
+                                "type": "string",
+                                "enum": ["add", "remove", "update", "inspect", "addMultiple", "removeMultiple", "updateMultiple", "inspectMultiple"],
+                                "description": "Operation to perform.",
+                            },
+                            "gameObjectPath": {
+                                "type": "string",
+                                "description": "Hierarchy path of the GameObject.",
+                            },
+                            "gameObjectGlobalObjectId": {
+                                "type": "string",
+                                "description": "Optional GlobalObjectId string to uniquely identify the GameObject.",
+                            },
+                            "componentType": {
+                                "type": "string",
+                                "description": "Fully qualified component type (e.g. UnityEngine.UI.Text).",
+                            },
+                            "propertyChanges": {
+                                "type": "object",
+                                "additionalProperties": True,
+                                "description": "Property/value pairs to apply to the component.",
+                            },
+                            "applyDefaults": {"type": "boolean"},
+                            "pattern": {
+                                "type": "string",
+                                "description": "Wildcard pattern for multiple operations.",
+                            },
+                            "useRegex": {
+                                "type": "boolean",
+                                "description": "If true, treats 'pattern' as regex.",
+                            },
+                        },
+                        "required": ["operation", "componentType"],
+                    },
+                    "description": "Array of component operations to execute in sequence.",
                 },
-                "gameObjectPath": {
-                    "type": "string",
-                    "description": "Hierarchy path of the GameObject. Not required for multiple operations (use 'pattern' instead).",
-                },
-                "gameObjectGlobalObjectId": {
-                    "type": "string",
-                    "description": "Optional GlobalObjectId string to uniquely identify the GameObject (e.g., 'GlobalObjectId_V1-1-abc123-456-0'). If provided, this takes priority over gameObjectPath. Use this for precise GameObject identification across scene reloads.",
-                },
-                "componentType": {
-                    "type": "string",
-                    "description": "Fully qualified component type (e.g. UnityEngine.UI.Text).",
-                },
-                "propertyChanges": {
-                    "type": "object",
-                    "additionalProperties": True,
-                    "description": "Property/value pairs to apply to the component. For UnityEngine.Object properties (e.g. Mesh, Material), you can use: 1) Asset reference with GUID (recommended): {'_ref': 'asset', 'guid': 'abc123...'}, 2) Asset reference with path: {'_ref': 'asset', 'path': 'Assets/Models/Sphere.fbx'}, 3) Direct asset path string: 'Assets/Models/Sphere.fbx', or 4) Built-in resources: 'Library/unity default resources::Sphere'. When both GUID and path are provided, GUID takes priority.",
-                },
-                "applyDefaults": {"type": "boolean"},
-                "pattern": {
-                    "type": "string",
-                    "description": "Wildcard pattern (e.g. 'Enemy*', 'Player?') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
-                },
-                "useRegex": {
+                "stopOnError": {
                     "type": "boolean",
-                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
+                    "description": "If true, stops batch execution on first error. Default is false.",
                 },
             },
         },
-        ["operation", "componentType"],
+        ["components"],
     )
 
-    asset_manage_schema = _schema_with_required(
-        {
-            "type": "object",
-            "properties": {
-                "operation": {
-                    "type": "string",
-                    "enum": ["create", "update", "delete", "rename", "duplicate", "inspect", "findMultiple", "deleteMultiple", "inspectMultiple"],
-                    "description": "Operation to perform. Use 'inspect' to read asset details. Use 'findMultiple', 'deleteMultiple', or 'inspectMultiple' with 'pattern' to perform operations on multiple assets matching a wildcard or regex pattern.",
-                },
-                "assetPath": {
-                    "type": "string",
-                    "description": "Path under Assets/ for the target asset. Not required for multiple operations (use 'pattern' instead).",
-                },
-                "destinationPath": {"type": "string"},
-                "contents": {
-                    "type": "string",
-                    "description": "File contents for create and update operations.",
-                },
-                "overwrite": {"type": "boolean"},
-                "metadata": {
-                    "type": "object",
-                    "additionalProperties": True,
-                },
-                "pattern": {
-                    "type": "string",
-                    "description": "Wildcard pattern (e.g. 'Assets/Scripts/*.cs', 'Assets/Prefabs/Enemy*') or regex pattern for multiple operations. Supports * (any characters) and ? (single character).",
-                },
-                "useRegex": {
-                    "type": "boolean",
-                    "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
-                },
-                "includeProperties": {
-                    "type": "boolean",
-                    "description": "For inspectMultiple operation: if true, includes detailed asset properties in results. Default is false.",
-                },
-            },
-        },
-        ["operation"],
-    )
-
+    # Removed individual schemas - batch only now
     asset_batch_manage_schema = _schema_with_required(
         {
             "type": "object",
@@ -1127,28 +1130,23 @@ def register_tools(server: Server) -> None:
             inputSchema=ping_schema,
         ),
         types.Tool(
-            name="unity_scene_crud",
-            description="Create, load, save, delete, or duplicate Unity scenes.",
-            inputSchema=scene_manage_schema,
+            name="unity_scene_batch_manage",
+            description="Execute multiple scene operations in a single batch! Process multiple scenes with one command by providing an array of scene operations. Each operation can create, load, save, delete, or duplicate scenes. Operations are executed sequentially. Perfect for managing multiple scenes efficiently without multiple round trips.",
+            inputSchema=scene_batch_manage_schema,
         ),
         types.Tool(
-            name="unity_gameobject_crud",
-            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations (e.g., pattern='Enemy*' to find all enemies).",
-            inputSchema=game_object_manage_schema,
+            name="unity_gameobject_batch_manage",
+            description="Execute multiple GameObject operations in a single batch! Process multiple GameObjects with one command by providing an array of GameObject operations. Each operation can create, delete, move, rename, duplicate, or inspect GameObjects. Operations are executed sequentially. Perfect for managing multiple GameObjects efficiently without multiple round trips.",
+            inputSchema=game_object_batch_manage_schema,
         ),
         types.Tool(
-            name="unity_component_crud",
-            description="Add, remove, update, or inspect components on a GameObject. Supports wildcard/regex patterns with 'addMultiple', 'removeMultiple', 'updateMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple GameObjects (e.g., pattern='Player/Weapon*' to add colliders to all weapons).",
-            inputSchema=component_manage_schema,
-        ),
-        types.Tool(
-            name="unity_asset_crud",
-            description="Create, update, rename, duplicate, delete, or inspect Assets/ files. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple assets (e.g., pattern='Assets/Scripts/*.cs' to find all C# scripts). IMPORTANT: DO NOT use this tool for creating or updating C# scripts - use unity_script_batch_manage instead, which handles compilation properly.",
-            inputSchema=asset_manage_schema,
+            name="unity_component_batch_manage",
+            description="Execute multiple component operations in a single batch! Process multiple components with one command by providing an array of component operations. Each operation can add, remove, update, or inspect components. Operations are executed sequentially. Perfect for managing multiple components efficiently without multiple round trips.",
+            inputSchema=component_batch_manage_schema,
         ),
         types.Tool(
             name="unity_asset_batch_manage",
-            description="Execute multiple asset operations in a single batch! Process multiple assets with one command by providing an array of asset operations. Each operation can create, update, delete, rename, duplicate, or inspect assets. Operations are executed sequentially. Perfect for managing multiple assets efficiently without multiple round trips. Use stopOnError to control failure handling.",
+            description="Execute multiple asset operations in a single batch! Process multiple assets with one command by providing an array of asset operations. Each operation can create, update, delete, rename, duplicate, or inspect assets. Operations are executed sequentially. Perfect for managing multiple assets efficiently without multiple round trips. IMPORTANT: DO NOT use this tool for C# scripts - use dedicated script tools for compilation handling.",
             inputSchema=asset_batch_manage_schema,
         ),
         types.Tool(
@@ -1267,17 +1265,14 @@ def register_tools(server: Server) -> None:
             }
             return [types.TextContent(type="text", text=as_pretty_json(payload))]
 
-        if name == "unity_scene_crud":
-            return await _call_bridge_tool("sceneManage", args)
+        if name == "unity_scene_batch_manage":
+            return await _call_bridge_tool("sceneBatchManage", args)
 
-        if name == "unity_gameobject_crud":
-            return await _call_bridge_tool("gameObjectManage", args)
+        if name == "unity_gameobject_batch_manage":
+            return await _call_bridge_tool("gameObjectBatchManage", args)
 
-        if name == "unity_component_crud":
-            return await _call_bridge_tool("componentManage", args)
-
-        if name == "unity_asset_crud":
-            return await _call_bridge_tool("assetManage", args)
+        if name == "unity_component_batch_manage":
+            return await _call_bridge_tool("componentBatchManage", args)
 
         if name == "unity_asset_batch_manage":
             return await _call_bridge_tool("assetBatchManage", args)
