@@ -679,6 +679,19 @@ def register_tools(server: Server) -> None:
         [],
     )
 
+    await_compilation_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "timeoutSeconds": {
+                    "type": "integer",
+                    "description": "Maximum time to wait for compilation to complete in seconds. Default is 30.",
+                },
+            },
+        },
+        [],
+    )
+
     hierarchy_builder_schema = _schema_with_required(
         {
             "type": "object",
@@ -1233,6 +1246,11 @@ def register_tools(server: Server) -> None:
             description="Retrieve Unity Editor console log messages. Returns recent log output filtered by type (all/normal/warning/error). Useful for debugging compilation errors, runtime issues, and monitoring Unity's console output.",
             inputSchema=console_log_schema,
         ),
+        types.Tool(
+            name="unity_await_compilation",
+            description="Wait for Unity compilation to complete without triggering it. Use this when Unity is already compiling (e.g., after script changes detected by file watcher) and you want to wait for the compilation to finish. Returns compilation result with success status, error count, and error messages. Does NOT start compilation - only waits for ongoing compilation to finish.",
+            inputSchema=await_compilation_schema,
+        ),
     ]
 
     tool_map = {tool.name: tool for tool in tool_definitions}
@@ -1408,6 +1426,42 @@ def register_tools(server: Server) -> None:
 
             body = "\n".join(lines) if lines else (message or "")
             return [types.TextContent(type="text", text=body)]
+
+        if name == "unity_await_compilation":
+            _ensure_bridge_connected()
+            timeout_seconds = args.get("timeoutSeconds", 30)
+
+            try:
+                logger.info("Waiting for Unity compilation to complete (timeout=%ss)...", timeout_seconds)
+                compilation_result = await bridge_manager.await_compilation(timeout_seconds)
+
+                logger.info(
+                    "Compilation finished: success=%s, errors=%s",
+                    compilation_result.get("success"),
+                    compilation_result.get("errorCount", 0),
+                )
+
+                return [types.TextContent(type="text", text=as_pretty_json(compilation_result))]
+
+            except TimeoutError:
+                logger.warning("Compilation did not finish within %s seconds", timeout_seconds)
+                error_payload = {
+                    "success": False,
+                    "completed": False,
+                    "timedOut": True,
+                    "message": f"Compilation did not finish within {timeout_seconds} seconds.",
+                }
+                return [types.TextContent(type="text", text=as_pretty_json(error_payload))]
+
+            except Exception as exc:
+                logger.error("Error while waiting for compilation: %s", exc)
+                error_payload = {
+                    "success": False,
+                    "completed": False,
+                    "error": str(exc),
+                    "message": f"Failed to wait for compilation: {exc}",
+                }
+                return [types.TextContent(type="text", text=as_pretty_json(error_payload))]
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 
