@@ -7,6 +7,7 @@ from mcp.server import Server
 
 from ..bridge.bridge_manager import bridge_manager
 from ..logger import logger
+from ..services.editor_log_watcher import editor_log_watcher
 from ..utils.json_utils import as_pretty_json
 
 
@@ -108,9 +109,18 @@ def register_tools(server: Server) -> None:
                     "type": "boolean",
                     "description": "For inspectMultiple operation: if true, includes component type names in results. Default is false.",
                 },
-                "payload": {
-                    "type": "object",
-                    "additionalProperties": True,
+                "includeProperties": {
+                    "type": "boolean",
+                    "description": "For inspect operation: if false, only returns component types without properties. Default is true. Use this to improve performance when you only need component type information.",
+                },
+                "componentFilter": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "For inspect operation: optional list of component types to inspect (e.g. ['UnityEngine.Transform', 'UnityEngine.UI.Button']). If specified, only these components will be inspected. Use this to improve performance when you only need specific components.",
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "description": "For multiple operations (findMultiple, deleteMultiple, inspectMultiple): maximum number of GameObjects to process. Default is 1000. Use this to prevent timeouts when working with large numbers of objects.",
                 },
             },
         },
@@ -151,6 +161,23 @@ def register_tools(server: Server) -> None:
                 "useRegex": {
                     "type": "boolean",
                     "description": "If true, treats 'pattern' as a regular expression instead of wildcard pattern. Default is false.",
+                },
+                "includeProperties": {
+                    "type": "boolean",
+                    "description": "For inspect/inspectMultiple operations: if false, only returns component type without properties. Default is true. Use this to improve performance when you only need to check if a component exists.",
+                },
+                "propertyFilter": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "For inspect/inspectMultiple operations: optional list of property/field names to inspect (e.g. ['position', 'rotation', 'enabled']). If specified, only these properties will be inspected. Use this to improve performance when you only need specific properties.",
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "description": "For multiple operations (addMultiple, removeMultiple, updateMultiple, inspectMultiple): maximum number of GameObjects to process. Default is 1000. Use this to prevent timeouts when working with large numbers of objects.",
+                },
+                "stopOnError": {
+                    "type": "boolean",
+                    "description": "For multiple operations: if true, stops execution on first error. If false (default), continues processing remaining items and returns both successes and errors.",
                 },
             },
         },
@@ -634,6 +661,24 @@ def register_tools(server: Server) -> None:
         ["operations"],
     )
 
+    console_log_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "logType": {
+                    "type": "string",
+                    "enum": ["all", "normal", "warning", "error"],
+                    "description": "Type of log messages to retrieve. 'all' returns all messages, 'normal' returns info/debug messages, 'warning' returns warnings, 'error' returns errors.",
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of log lines to retrieve. Default is 800.",
+                },
+            },
+        },
+        [],
+    )
+
     hierarchy_builder_schema = _schema_with_required(
         {
             "type": "object",
@@ -1080,12 +1125,12 @@ def register_tools(server: Server) -> None:
         ),
         types.Tool(
             name="unity_gameobject_crud",
-            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations (e.g., pattern='Enemy*' to find all enemies).",
+            description="Modify the active scene hierarchy (create, delete, move, rename, duplicate) or inspect GameObjects. Use 'inspect' operation to read all attached components with their properties. Supports wildcard/regex patterns with 'findMultiple', 'deleteMultiple', and 'inspectMultiple' operations (e.g., pattern='Enemy*' to find all enemies). Performance tips: Use 'includeProperties=false' for faster inspect, 'componentFilter' to inspect specific components only, and 'maxResults' to limit multiple operations (default 1000).",
             inputSchema=game_object_manage_schema,
         ),
         types.Tool(
             name="unity_component_crud",
-            description="Add, remove, update, or inspect components on a GameObject. Supports wildcard/regex patterns with 'addMultiple', 'removeMultiple', 'updateMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple GameObjects (e.g., pattern='Player/Weapon*' to add colliders to all weapons).",
+            description="Add, remove, update, or inspect components on a GameObject. Supports wildcard/regex patterns with 'addMultiple', 'removeMultiple', 'updateMultiple', and 'inspectMultiple' operations to perform bulk operations on multiple GameObjects (e.g., pattern='Player/Weapon*' to add colliders to all weapons). Performance tips: Use 'includeProperties=false' for faster inspect, 'propertyFilter' to inspect specific properties only, 'maxResults' to limit multiple operations (default 1000), and 'stopOnError=false' for better error handling in batch operations.",
             inputSchema=component_manage_schema,
         ),
         types.Tool(
@@ -1182,6 +1227,11 @@ def register_tools(server: Server) -> None:
             name="unity_batch_execute",
             description="Execute multiple Unity tool operations in a single batch. Supports any combination of tools (assetManage, gameObjectManage, componentManage, etc.). Automatically detects script changes and waits for compilation to complete. Perfect for complex multi-step operations like creating multiple GameObjects, setting up scenes, or managing assets. Each operation specifies a tool name and its payload. Operations are executed sequentially, and results are returned for each operation.",
             inputSchema=batch_execute_schema,
+        ),
+        types.Tool(
+            name="unity_console_log",
+            description="Retrieve Unity Editor console log messages. Returns recent log output filtered by type (all/normal/warning/error). Useful for debugging compilation errors, runtime issues, and monitoring Unity's console output.",
+            inputSchema=console_log_schema,
         ),
     ]
 
@@ -1334,6 +1384,30 @@ def register_tools(server: Server) -> None:
             else:
                 # No compilation needed or awaitCompilation disabled
                 return [types.TextContent(type="text", text=as_pretty_json(batch_result))]
+
+        if name == "unity_console_log":
+            log_type = args.get("logType", "all")
+            limit = args.get("limit", 800)
+
+            snapshot = editor_log_watcher.get_snapshot(limit)
+
+            if log_type == "all":
+                lines = snapshot.lines
+                message = "No log events captured yet. Confirm the Unity Editor log path." if not lines else None
+            elif log_type == "normal":
+                lines = snapshot.normal_lines
+                message = "No normal log events captured yet." if not lines else None
+            elif log_type == "warning":
+                lines = snapshot.warning_lines
+                message = "No warning log events captured yet." if not lines else None
+            elif log_type == "error":
+                lines = snapshot.error_lines
+                message = "No error log events captured yet." if not lines else None
+            else:
+                return [types.TextContent(type="text", text=f"Unknown log type: {log_type}")]
+
+            body = "\n".join(lines) if lines else (message or "")
+            return [types.TextContent(type="text", text=body)]
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 
