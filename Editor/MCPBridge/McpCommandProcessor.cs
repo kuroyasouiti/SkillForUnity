@@ -7216,7 +7216,13 @@ namespace MCP.Editor
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to set property {propertyName}: {ex.Message}");
+                    var valueStr = value?.ToString() ?? "null";
+                    var valueType = value?.GetType().Name ?? "null";
+                    throw new InvalidOperationException(
+                        $"Failed to set property '{propertyName}' on {type.Name}. " +
+                        $"Target type: {prop.PropertyType.Name}, " +
+                        $"Provided value: '{valueStr}' ({valueType}). " +
+                        $"Error: {ex.Message}");
                 }
             }
 
@@ -7234,11 +7240,49 @@ namespace MCP.Editor
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidOperationException($"Failed to set field {propertyName}: {ex.Message}");
+                    var valueStr = value?.ToString() ?? "null";
+                    var valueType = value?.GetType().Name ?? "null";
+                    throw new InvalidOperationException(
+                        $"Failed to set field '{propertyName}' on {type.Name}. " +
+                        $"Target type: {field.FieldType.Name}, " +
+                        $"Provided value: '{valueStr}' ({valueType}). " +
+                        $"Error: {ex.Message}");
                 }
             }
 
-            throw new InvalidOperationException($"Property or field '{propertyName}' not found on {type.FullName}");
+            // Property/field not found - provide helpful suggestions
+            var allProperties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanWrite)
+                .Select(p => p.Name)
+                .ToList();
+            var allFields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+                .Select(f => f.Name)
+                .ToList();
+            var allMembers = allProperties.Concat(allFields).OrderBy(n => n).ToList();
+
+            var suggestions = "";
+            if (allMembers.Count > 0)
+            {
+                // Find similar names (case-insensitive)
+                var similarNames = allMembers
+                    .Where(n => n.Equals(propertyName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (similarNames.Count > 0)
+                {
+                    suggestions = $" Did you mean: {string.Join(", ", similarNames)}?";
+                }
+                else
+                {
+                    suggestions = $" Available members: {string.Join(", ", allMembers.Take(10))}";
+                    if (allMembers.Count > 10)
+                    {
+                        suggestions += $" (and {allMembers.Count - 10} more)";
+                    }
+                }
+            }
+
+            throw new InvalidOperationException($"Property or field '{propertyName}' not found on {type.FullName}.{suggestions}");
         }
 
         /// <summary>
@@ -7291,14 +7335,38 @@ namespace MCP.Editor
             }
 
             // Handle Color
-            if (targetType == typeof(Color) && value is Dictionary<string, object> colorDict)
+            if (targetType == typeof(Color))
             {
-                return new Color(
-                    GetFloat(colorDict, "r") ?? 0f,
-                    GetFloat(colorDict, "g") ?? 0f,
-                    GetFloat(colorDict, "b") ?? 0f,
-                    GetFloat(colorDict, "a") ?? 1f
-                );
+                // Dictionary format: {r:1, g:0, b:0, a:1}
+                if (value is Dictionary<string, object> colorDict)
+                {
+                    return new Color(
+                        GetFloat(colorDict, "r") ?? 0f,
+                        GetFloat(colorDict, "g") ?? 0f,
+                        GetFloat(colorDict, "b") ?? 0f,
+                        GetFloat(colorDict, "a") ?? 1f
+                    );
+                }
+
+                // String color name: "red", "blue", etc.
+                if (value is string colorName)
+                {
+                    try
+                    {
+                        var rgba = McpConstantConverter.ColorNameToRGBA(colorName);
+                        return new Color(
+                            (float)rgba["r"],
+                            (float)rgba["g"],
+                            (float)rgba["b"],
+                            (float)rgba["a"]
+                        );
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new InvalidOperationException($"Invalid color name '{colorName}': {ex.Message}. " +
+                            $"Valid colors are: {string.Join(", ", McpConstantConverter.ListColorNames())}");
+                    }
+                }
             }
 
             // Handle Rect
@@ -7317,11 +7385,76 @@ namespace MCP.Editor
             {
                 if (value is string strValue)
                 {
-                    return Enum.Parse(targetType, strValue, true);
+                    try
+                    {
+                        // Try exact match first
+                        if (Enum.IsDefined(targetType, strValue))
+                        {
+                            return Enum.Parse(targetType, strValue, false);
+                        }
+
+                        // Try case-insensitive match
+                        var names = Enum.GetNames(targetType);
+                        var matchedName = names.FirstOrDefault(n =>
+                            string.Equals(n, strValue, StringComparison.OrdinalIgnoreCase));
+
+                        if (matchedName != null)
+                        {
+                            return Enum.Parse(targetType, matchedName, false);
+                        }
+
+                        // No match found
+                        throw new InvalidOperationException(
+                            $"Enum value '{strValue}' is not valid for type {targetType.Name}. " +
+                            $"Valid values are: {string.Join(", ", names)}");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        var names = Enum.GetNames(targetType);
+                        throw new InvalidOperationException(
+                            $"Failed to parse enum value '{strValue}' for type {targetType.Name}: {ex.Message}. " +
+                            $"Valid values are: {string.Join(", ", names)}");
+                    }
                 }
+
                 if (value is int intValue)
                 {
-                    return Enum.ToObject(targetType, intValue);
+                    if (Enum.IsDefined(targetType, intValue))
+                    {
+                        return Enum.ToObject(targetType, intValue);
+                    }
+                    else
+                    {
+                        // Allow undefined values but log warning
+                        Debug.LogWarning($"Enum value {intValue} is not defined in {targetType.Name}. " +
+                            $"Valid values are: {string.Join(", ", Enum.GetValues(targetType).Cast<int>())}");
+                        return Enum.ToObject(targetType, intValue);
+                    }
+                }
+
+                // Try to convert other numeric types to int
+                if (value is long || value is short || value is byte || value is sbyte ||
+                    value is uint || value is ushort || value is ulong)
+                {
+                    try
+                    {
+                        var enumIntValue = Convert.ToInt32(value);
+                        if (Enum.IsDefined(targetType, enumIntValue))
+                        {
+                            return Enum.ToObject(targetType, enumIntValue);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"Enum value {enumIntValue} is not defined in {targetType.Name}. " +
+                                $"Valid values are: {string.Join(", ", Enum.GetValues(targetType).Cast<int>())}");
+                            return Enum.ToObject(targetType, enumIntValue);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException(
+                            $"Failed to convert {value} ({value.GetType().Name}) to enum {targetType.Name}: {ex.Message}");
+                    }
                 }
             }
 
@@ -7377,9 +7510,15 @@ namespace MCP.Editor
             {
                 return Convert.ChangeType(value, targetType);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new InvalidOperationException($"Cannot convert {value.GetType().Name} to {targetType.Name}");
+                // Provide detailed error message with conversion context
+                var valueStr = value?.ToString() ?? "null";
+                var valueType = value?.GetType().Name ?? "null";
+
+                throw new InvalidOperationException(
+                    $"Cannot convert value '{valueStr}' of type {valueType} to {targetType.Name}. " +
+                    $"Reason: {ex.Message}");
             }
         }
 
