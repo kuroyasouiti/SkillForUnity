@@ -42,6 +42,7 @@ namespace MCP.Editor
         private static readonly object SendLock = new();
         private static bool _isCompiling = false;
         private static DateTime _compilationStartTime;
+        private static DateTime _lastCompilationProgressSent = DateTime.MinValue;
 
         private static TcpListener _listener;
         private static CancellationTokenSource _listenerCts;
@@ -812,6 +813,27 @@ namespace MCP.Editor
             MaybeSendHeartbeat();
             MaybeCheckHeartbeatTimeout();
             MaybePushContext();
+            MaybeSendCompilationProgress();
+        }
+
+        /// <summary>
+        /// Sends compilation progress updates every 5 seconds during compilation.
+        /// </summary>
+        private static void MaybeSendCompilationProgress()
+        {
+            if (!_isCompiling || !IsConnected)
+            {
+                return;
+            }
+
+            var timeSinceLastProgress = DateTime.UtcNow - _lastCompilationProgressSent;
+            if (timeSinceLastProgress < TimeSpan.FromSeconds(5))
+            {
+                return;
+            }
+
+            _lastCompilationProgressSent = DateTime.UtcNow;
+            SendCompilationProgressMessage();
         }
 
         private static void ProcessMainThreadActions()
@@ -999,6 +1021,12 @@ namespace MCP.Editor
                 _isCompilingOrReloading = true;
                 EditorPrefs.SetBool(WasConnectedBeforeCompileKey, true);
                 Debug.Log("MCP Bridge: Saving connection state before compilation...");
+
+                // Send compilation started notification to clients
+                lock (MainThreadActions)
+                {
+                    MainThreadActions.Enqueue(SendCompilationStartedMessage);
+                }
             }
 
             _isCompiling = true;
@@ -1018,6 +1046,58 @@ namespace MCP.Editor
         }
 
         /// <summary>
+        /// Sends compilation started message to connected clients.
+        /// Called from OnCompilationStarted via the main thread queue.
+        /// </summary>
+        private static void SendCompilationStartedMessage()
+        {
+            try
+            {
+                var message = new Dictionary<string, object>
+                {
+                    ["type"] = "compilation:started",
+                    ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                };
+                Send(MiniJson.Serialize(message));
+                Debug.Log("MCP Bridge: Sent compilation started message");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"MCP Bridge: Failed to send compilation started message: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Sends compilation progress message to connected clients during compilation.
+        /// Called from OnEditorUpdate periodically while compiling.
+        /// </summary>
+        private static void SendCompilationProgressMessage()
+        {
+            if (!_isCompiling || !IsConnected)
+            {
+                return;
+            }
+
+            try
+            {
+                var elapsedSeconds = (DateTime.UtcNow - _compilationStartTime).TotalSeconds;
+                var message = new Dictionary<string, object>
+                {
+                    ["type"] = "compilation:progress",
+                    ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    ["elapsedSeconds"] = (int)elapsedSeconds,
+                    ["status"] = "compiling",
+                };
+                Send(MiniJson.Serialize(message));
+            }
+            catch (Exception ex)
+            {
+                // Don't spam error logs for progress messages
+                Debug.LogWarning($"MCP Bridge: Failed to send compilation progress: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Sends compilation complete message to connected clients.
         /// Called from OnCompilationFinished via the main thread queue.
         /// </summary>
@@ -1025,9 +1105,11 @@ namespace MCP.Editor
         {
             try
             {
+                var elapsedSeconds = (DateTime.UtcNow - _compilationStartTime).TotalSeconds;
                 var compilationResult = McpCommandProcessor.GetCompilationResult();
+                compilationResult["elapsedSeconds"] = (int)elapsedSeconds;
                 Send(McpBridgeMessages.CreateCompilationComplete(compilationResult));
-                Debug.Log($"MCP Bridge: Sent compilation complete message (success: {compilationResult["success"]})");
+                Debug.Log($"MCP Bridge: Sent compilation complete message (success: {compilationResult["success"]}, elapsed: {elapsedSeconds:F1}s)");
             }
             catch (Exception ex)
             {

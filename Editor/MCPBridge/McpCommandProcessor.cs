@@ -6559,46 +6559,95 @@ namespace MCP.Editor
         /// <summary>
         /// Gets compilation result by checking for compilation errors.
         /// This is called after compilation completes to check if there were any errors.
+        /// Uses CompilationPipeline API for accurate error detection.
         /// </summary>
         /// <returns>Dictionary with compilation result including success status and any errors.</returns>
         public static Dictionary<string, object> GetCompilationResult()
         {
             var errorMessages = new List<string>();
-            var logEntries = GetConsoleLogEntries();
+            var warningMessages = new List<string>();
+            var assemblyInfo = new List<string>();
 
-            foreach (var entry in logEntries)
+            // Use CompilationPipeline to get accurate compilation status
+            var assemblies = CompilationPipeline.GetAssemblies();
+            var hasCompilerErrors = false;
+
+            foreach (var assembly in assemblies)
             {
-                if (entry.ContainsKey("type") && entry["type"].ToString() == "Error" &&
-                    entry.ContainsKey("message"))
+                var compilerMessages = CompilationPipeline.GetCompileMessages();
+
+                foreach (var message in compilerMessages)
                 {
-                    var message = entry["message"].ToString();
-                    if (message.Contains("error CS") || message.Contains("CompilerError"))
+                    if (message.type == CompilerMessageType.Error)
                     {
-                        errorMessages.Add(message);
+                        hasCompilerErrors = true;
+                        var errorText = $"{message.file}({message.line},{message.column}): error {message.code}: {message.message}";
+                        errorMessages.Add(errorText);
+                    }
+                    else if (message.type == CompilerMessageType.Warning)
+                    {
+                        var warningText = $"{message.file}({message.line},{message.column}): warning {message.code}: {message.message}";
+                        warningMessages.Add(warningText);
+                    }
+                }
+
+                assemblyInfo.Add($"{assembly.name} ({assembly.sourceFiles.Length} files)");
+            }
+
+            // Fallback: If CompilationPipeline doesn't report errors, check console logs
+            // This catches runtime and other non-compiler errors
+            if (!hasCompilerErrors)
+            {
+                var logEntries = GetConsoleLogEntries(limit: 200); // Increased from 100 to 200
+
+                foreach (var entry in logEntries)
+                {
+                    if (entry.ContainsKey("type") && entry["type"].ToString() == "Error" &&
+                        entry.ContainsKey("message"))
+                    {
+                        var message = entry["message"].ToString();
+                        // More comprehensive error detection
+                        if (message.Contains("error CS") ||
+                            message.Contains("CompilerError") ||
+                            message.Contains("Build failed") ||
+                            message.Contains("compilation error", StringComparison.OrdinalIgnoreCase))
+                        {
+                            errorMessages.Add(message);
+                            hasCompilerErrors = true;
+                        }
                     }
                 }
             }
 
             var hasErrors = errorMessages.Count > 0;
-            return new Dictionary<string, object>
+            var result = new Dictionary<string, object>
             {
                 ["success"] = !hasErrors,
                 ["completed"] = true,
                 ["timedOut"] = false,
                 ["hasErrors"] = hasErrors,
+                ["hasWarnings"] = warningMessages.Count > 0,
                 ["errors"] = errorMessages,
+                ["warnings"] = warningMessages.Count > 0 ? warningMessages.Take(20).ToList() : new List<string>(),
                 ["errorCount"] = errorMessages.Count,
+                ["warningCount"] = warningMessages.Count,
+                ["assemblies"] = assemblyInfo,
                 ["message"] = hasErrors
-                    ? $"Compilation completed with {errorMessages.Count} error(s)"
-                    : "Compilation completed successfully",
+                    ? $"Compilation completed with {errorMessages.Count} error(s) and {warningMessages.Count} warning(s)"
+                    : (warningMessages.Count > 0
+                        ? $"Compilation completed successfully with {warningMessages.Count} warning(s)"
+                        : "Compilation completed successfully"),
             };
+
+            return result;
         }
 
         /// <summary>
         /// Gets console log entries for error checking.
         /// </summary>
+        /// <param name="limit">Maximum number of log entries to retrieve (default: 100)</param>
         /// <returns>List of log entry dictionaries.</returns>
-        private static List<Dictionary<string, object>> GetConsoleLogEntries()
+        private static List<Dictionary<string, object>> GetConsoleLogEntries(int limit = 100)
         {
             var logEntries = new List<Dictionary<string, object>>();
 
@@ -6632,7 +6681,7 @@ namespace MCP.Editor
                     return logEntries;
                 }
 
-                for (int i = 0; i < Math.Min(count, 100); i++) // Limit to 100 entries
+                for (int i = 0; i < Math.Min(count, limit); i++) // Use configurable limit
                 {
                     var logEntry = Activator.CreateInstance(logEntryType);
                     var parameters = new object[] { i, logEntry };

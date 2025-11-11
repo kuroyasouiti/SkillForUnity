@@ -21,12 +21,13 @@ def _ensure_bridge_connected() -> None:
 async def _call_bridge_tool(tool_name: str, payload: Dict[str, Any]) -> list[types.Content]:
     _ensure_bridge_connected()
 
-    # Unity側のタイムアウトに15秒のバッファを追加してPython側のタイムアウトを設定
+    # Unity側のタイムアウトに20秒のバッファを追加してPython側のタイムアウトを設定
     # これにより、Unity側でコンパイル完了を待つ時間が確保される
-    timeout_ms = 30_000  # デフォルト30秒
+    # デフォルトを30秒から45秒に増加（大規模プロジェクトに対応）
+    timeout_ms = 45_000  # デフォルト45秒（30秒から増加）
     if "timeoutSeconds" in payload:
         unity_timeout = payload["timeoutSeconds"]
-        timeout_ms = (unity_timeout + 15) * 1000
+        timeout_ms = (unity_timeout + 20) * 1000  # バッファを15秒から20秒に増加
 
     try:
         response = await bridge_manager.send_command(tool_name, payload, timeout_ms=timeout_ms)
@@ -685,7 +686,7 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "timeoutSeconds": {
                     "type": "integer",
-                    "description": "Maximum time to wait for compilation to complete in seconds. Default is 30.",
+                    "description": "Maximum time to wait for compilation to complete in seconds. Default is 60 (increased from 30 to accommodate large projects).",
                 },
             },
         },
@@ -1429,7 +1430,7 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_await_compilation":
             _ensure_bridge_connected()
-            timeout_seconds = args.get("timeoutSeconds", 30)
+            timeout_seconds = args.get("timeoutSeconds", 60)  # Increased from 30 to 60 seconds
 
             try:
                 logger.info("Waiting for Unity compilation to complete (timeout=%ss)...", timeout_seconds)

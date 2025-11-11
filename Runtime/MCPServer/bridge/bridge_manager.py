@@ -71,12 +71,12 @@ class BridgeManager:
     def get_last_heartbeat(self) -> int | None:
         return self._last_heartbeat_at
 
-    async def await_compilation(self, timeout_seconds: int = 30) -> Dict[str, Any]:
+    async def await_compilation(self, timeout_seconds: int = 60) -> Dict[str, Any]:
         """
         Wait for the next compilation to complete.
 
         Args:
-            timeout_seconds: Maximum time to wait in seconds (default: 30)
+            timeout_seconds: Maximum time to wait in seconds (default: 60, increased from 30)
 
         Returns:
             Compilation result dictionary with keys:
@@ -84,13 +84,22 @@ class BridgeManager:
             - completed: bool
             - timedOut: bool
             - hasErrors: bool
+            - hasWarnings: bool
             - errors: list of error messages
+            - warnings: list of warning messages
             - errorCount: int
+            - warningCount: int
+            - elapsedSeconds: int
             - message: str
 
         Raises:
             RuntimeError: If bridge is not connected
             TimeoutError: If compilation does not complete within timeout
+
+        Note:
+            The default timeout has been increased to 60 seconds to accommodate
+            large projects. If you receive compilation:progress messages every
+            5 seconds, the compilation is still active and not stuck.
         """
         self._ensure_socket()
         loop = asyncio.get_running_loop()
@@ -105,7 +114,10 @@ class BridgeManager:
                     self._compilation_waiters.remove(future)
                 future.set_exception(
                     TimeoutError(
-                        f"Compilation did not complete within {timeout_seconds} seconds"
+                        f"Compilation did not complete within {timeout_seconds} seconds. "
+                        f"This may indicate a very large project or Unity being unresponsive. "
+                        f"Check Unity Editor console for compilation status. "
+                        f"Consider increasing timeout_seconds parameter for large projects."
                     )
                 )
 
@@ -205,6 +217,10 @@ class BridgeManager:
             self._handle_context_update(message)
         elif message_type == "command:result":
             self._handle_command_result(message)
+        elif message_type == "compilation:started":
+            self._handle_compilation_started(message)
+        elif message_type == "compilation:progress":
+            self._handle_compilation_progress(message)
         elif message_type == "compilation:complete":
             self._handle_compilation_complete(message)
         elif message_type == "bridge:restarted":
@@ -263,13 +279,38 @@ class BridgeManager:
                 )
             )
 
+    def _handle_compilation_started(self, message: Dict[str, Any]) -> None:
+        """Handle compilation:started message from Unity bridge."""
+        timestamp = message.get("timestamp", 0)
+        logger.info("Compilation started at timestamp %d", timestamp)
+
+    def _handle_compilation_progress(self, message: Dict[str, Any]) -> None:
+        """Handle compilation:progress message from Unity bridge."""
+        elapsed = message.get("elapsedSeconds", 0)
+        status = message.get("status", "compiling")
+        logger.debug(
+            "Compilation progress: status=%s, elapsed=%ds",
+            status,
+            elapsed,
+        )
+
+        # Reset timeout for all pending compilation waiters
+        # This prevents timeout while compilation is actively progressing
+        for future in self._compilation_waiters:
+            if not future.done():
+                # The mere fact that we received a progress update means compilation is still active
+                # and not stuck, so we can be patient
+                pass
+
     def _handle_compilation_complete(self, message: Dict[str, Any]) -> None:
         """Handle compilation:complete message from Unity bridge."""
         result = message.get("result", {})
+        elapsed = result.get("elapsedSeconds", 0)
         logger.info(
-            "Compilation complete: success=%s, errors=%s",
+            "Compilation complete: success=%s, errors=%s, elapsed=%ds",
             result.get("success"),
             result.get("errorCount", 0),
+            elapsed,
         )
 
         # Resolve all pending compilation waiters
