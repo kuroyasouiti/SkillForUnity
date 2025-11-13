@@ -54,7 +54,7 @@ mcp:
   default_timeout_ms: 30000
   bridge:
     host: localhost
-    port: 7077
+    port: 7070
     path: /bridge
     protocol: ws
 
