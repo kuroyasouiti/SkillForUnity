@@ -1,7 +1,10 @@
 *.asset
 *.meta
 *.pyc
-Runtime/unity_mcp_server.egg-info/
-Scenes/
-Runtime/.venv
-Scripts/
+Assets/Runtime/unity_mcp_server.egg-info/
+Assets/Scenes/
+Assets/Runtime/.venv
+Assets/Scripts/
+Library/
+Packages/
+TempTest/
