@@ -34,13 +34,14 @@ prerequisites:
 
 # Skill capabilities
 capabilities:
-  tools: 30+
+  tools: 31+
   categories:
     - scene_management        # Create, load, save, delete scenes
     - gameobject_operations   # Create, move, rename, delete GameObjects
     - component_editing       # Add, update, remove components
     - ui_creation            # Create UI elements with templates
     - asset_management       # Asset file operations
+    - script_management      # C# script batch operations with compilation
     - prefab_workflow        # Prefab creation and management
     - tilemap_design         # 2D tilemap operations
     - navmesh_operations     # NavMesh baking and agents

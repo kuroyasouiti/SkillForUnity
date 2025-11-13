@@ -693,6 +693,50 @@ def register_tools(server: Server) -> None:
         [],
     )
 
+    script_batch_manage_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "scripts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "operation": {
+                                "type": "string",
+                                "enum": ["create", "update", "delete", "inspect"],
+                                "description": "Operation to perform on the script file.",
+                            },
+                            "scriptPath": {
+                                "type": "string",
+                                "description": "Path to the C# script file (e.g., 'Assets/Scripts/Player.cs'). Must end with .cs extension.",
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Script content for create/update operations. Should be valid C# code.",
+                            },
+                            "namespace": {
+                                "type": "string",
+                                "description": "Optional namespace for the script. If not specified, uses the default namespace or none.",
+                            },
+                        },
+                        "required": ["operation", "scriptPath"],
+                    },
+                    "description": "Array of script operations to perform. Each operation specifies what to do with a script file. All operations are executed atomically, then a single compilation is triggered.",
+                },
+                "stopOnError": {
+                    "type": "boolean",
+                    "description": "If true, stops execution on first error. If false (default), continues processing remaining scripts and returns both successes and errors.",
+                },
+                "timeoutSeconds": {
+                    "type": "integer",
+                    "description": "Maximum time to wait for compilation to complete in seconds. Default is 30. Increase for large projects with many scripts.",
+                },
+            },
+        },
+        ["scripts"],
+    )
+
     hierarchy_builder_schema = _schema_with_required(
         {
             "type": "object",
@@ -1289,6 +1333,11 @@ def register_tools(server: Server) -> None:
             description="Wait for Unity compilation to complete without triggering it. Use this when Unity is already compiling (e.g., after script changes detected by file watcher) and you want to wait for the compilation to finish. Returns compilation result with success status, error count, and error messages. Does NOT start compilation - only waits for ongoing compilation to finish.",
             inputSchema=await_compilation_schema,
         ),
+        types.Tool(
+            name="unity_script_batch_manage",
+            description="CRITICAL: ALWAYS use this tool for ALL C# script operations! Batch manage C# scripts with automatic compilation handling. Supports create, update, delete, and inspect operations. This is the ONLY correct way to manage scripts - using unity_asset_crud for scripts will cause compilation issues! Benefits: (1) 10-20x faster for multiple scripts by doing single compilation, (2) Atomic operations - all succeed or fail together, (3) Automatic compilation detection and waiting, (4) Proper error reporting with per-script results. IMPORTANT: Always use 'scripts' array even for single script operations. DO NOT use unity_asset_crud for .cs files!",
+            inputSchema=script_batch_manage_schema,
+        ),
     ]
 
     tool_map = {tool.name: tool for tool in tool_definitions}
@@ -1503,6 +1552,72 @@ def register_tools(server: Server) -> None:
                     "message": f"Failed to wait for compilation: {exc}",
                 }
                 return [types.TextContent(type="text", text=as_pretty_json(error_payload))]
+
+        if name == "unity_script_batch_manage":
+            _ensure_bridge_connected()
+
+            # Extract timeout with increased default for script operations
+            timeout_seconds = args.get("timeoutSeconds", 30)
+
+            try:
+                logger.info("Executing script batch operations (timeout=%ss)...", timeout_seconds)
+
+                # Execute the batch script operations
+                batch_result = await bridge_manager.send_command("scriptBatchManage", args, timeout_ms=(timeout_seconds + 20) * 1000)
+
+                # Check if compilation was triggered
+                if batch_result.get("compilationTriggered", False):
+                    logger.info("Script operations triggered compilation, waiting for completion...")
+
+                    try:
+                        compilation_result = await bridge_manager.await_compilation(timeout_seconds)
+
+                        # Combine batch result with compilation result
+                        response_payload = {
+                            "batch": batch_result,
+                            "compilation": compilation_result,
+                        }
+
+                        logger.info(
+                            "Script batch completed: success=%s, compilation_success=%s",
+                            batch_result.get("success"),
+                            compilation_result.get("success"),
+                        )
+
+                        return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+
+                    except TimeoutError:
+                        logger.warning("Compilation did not finish within %s seconds", timeout_seconds)
+                        response_payload = {
+                            "batch": batch_result,
+                            "compilation": {
+                                "success": False,
+                                "completed": False,
+                                "timedOut": True,
+                                "message": f"Compilation did not finish within {timeout_seconds} seconds.",
+                            },
+                        }
+                        return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+
+                    except Exception as exc:
+                        logger.error("Error while waiting for compilation: %s", exc)
+                        response_payload = {
+                            "batch": batch_result,
+                            "compilation": {
+                                "success": False,
+                                "completed": False,
+                                "error": str(exc),
+                            },
+                        }
+                        return [types.TextContent(type="text", text=as_pretty_json(response_payload))]
+                else:
+                    # No compilation needed (e.g., only inspect operations)
+                    logger.info("Script batch completed without triggering compilation")
+                    return [types.TextContent(type="text", text=as_pretty_json(batch_result))]
+
+            except Exception as exc:
+                logger.error("Script batch operation failed: %s", exc)
+                raise RuntimeError(f"Script batch operation failed: {exc}") from exc
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 
