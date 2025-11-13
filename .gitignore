@@ -67,4 +67,7 @@ ExportedObj/
 Assets/Runtime/.venv/
 *.pyc
 Assets/Runtime/unity_mcp_server.egg-info/
-UserSettings/Layouts/default-6000.dwlt
+UserSettings/Layouts/
+
+AGENTS.md
+CLAUDE.md
