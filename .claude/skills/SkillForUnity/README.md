@@ -1,4 +1,4 @@
-# Unity MCP Skill
+# Skill for Unity
 
 **Comprehensive Unity Editor integration through Model Context Protocol**
 
@@ -7,9 +7,9 @@
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 
-## 🎯 What is Unity MCP Skill?
+## 🎯 What is Skill for Unity?
 
-Unity MCP Skill enables AI assistants (Claude, Cursor, etc.) to interact with Unity Editor in real-time through the Model Context Protocol. Control scenes, GameObjects, components, UI, assets, and more—all through natural language commands.
+Skill for Unity enables AI assistants (Claude, Cursor, etc.) to interact with Unity Editor in real-time through the Model Context Protocol. Control scenes, GameObjects, components, UI, assets, and more—all through natural language commands.
 
 ## ✨ Key Features
 
@@ -56,7 +56,7 @@ This generates configuration files in `config/` directory. Copy the appropriate 
 ```json
 {
   "mcpServers": {
-    "unity-mcp": {
+    "skill-for-unity": {
       "command": "uv",
       "args": ["run", "--directory", "/path/to/SkillPackage", "src/main.py"],
       "env": {

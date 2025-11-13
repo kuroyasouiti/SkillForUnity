@@ -1,4 +1,4 @@
-# UnityMCP - Unity Editor Integration via Model Context Protocol
+# SkillForUnity - Unity Editor Integration via Model Context Protocol
 
 **Enable AI assistants to control Unity Editor in real-time through the Model Context Protocol.**
 
@@ -9,10 +9,10 @@
 
 ## 📦 What's New: Skill Package Structure
 
-UnityMCP has been restructured as a **Claude Agent Skill** for easier setup and distribution!
+SkillForUnity has been restructured as a **Claude Agent Skill** for easier setup and distribution!
 
 ```
-UnityMCP/
+SkillForUnity/
 ├── Assets/Editor/MCPBridge/    # Unity C# WebSocket Bridge
 └── SkillPackage/                # ⭐ Standalone MCP Skill Package
     ├── src/                     # Python MCP Server
@@ -55,7 +55,7 @@ cd SkillPackage
 ```json
 {
   "mcpServers": {
-    "unity-mcp": {
+    "skill-for-unity": {
       "command": "uv",
       "args": ["run", "--directory", "/path/to/SkillPackage", "src/main.py"],
       "env": {
@@ -174,7 +174,7 @@ See [SkillPackage/examples/](SkillPackage/examples/) for more tutorials.
 ### Project Structure
 
 ```
-UnityMCP/
+SkillForUnity/
 ├── Assets/
 │   └── Editor/
 │       └── MCPBridge/           # Unity C# Bridge
@@ -249,7 +249,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 - **Quick Start**: [SkillPackage/QUICKSTART.md](SkillPackage/QUICKSTART.md)
 - **Examples**: [SkillPackage/examples/](SkillPackage/examples/)
 - **Troubleshooting**: [SkillPackage/docs/troubleshooting.md](SkillPackage/docs/troubleshooting.md)
-- **Issues**: [GitHub Issues](https://github.com/yourusername/unity-mcp/issues)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/SkillForUnity/issues)
 
 ## 🔄 Migration from Old Structure
 

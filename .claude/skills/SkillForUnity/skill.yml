@@ -1,7 +1,7 @@
-name: unity-mcp
+name: skill-for-unity
 version: 1.0.0
 description: "Comprehensive Unity Editor integration through Model Context Protocol"
-author: "UnityMCP Team"
+author: "SkillForUnity Team"
 license: MIT
 
 # Skill entrypoint

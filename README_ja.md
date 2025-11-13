@@ -1,10 +1,10 @@
-# UnityMCP - Unity向けModel Context Protocolサーバー
+# SkillForUnity - Unity向けModel Context Protocolサーバー
 
-UnityMCPは、AIアシスタントがUnity Editorとリアルタイムで対話できる包括的なModel Context Protocol (MCP) サーバーです。シーン管理、GameObject操作、コンポーネント編集、アセット操作、2D Tilemapデザイン、NavMeshナビゲーション、UIレイアウト、Prefab、入力システムなど、広範なツールを提供します。
+SkillForUnityは、AIアシスタントがUnity Editorとリアルタイムで対話できる包括的なModel Context Protocol (MCP) サーバーです。シーン管理、GameObject操作、コンポーネント編集、アセット操作、2D Tilemapデザイン、NavMeshナビゲーション、UIレイアウト、Prefab、入力システムなど、広範なツールを提供します。
 
 ## アーキテクチャ
 
-UnityMCPは**双方向WebSocketブリッジ**アーキテクチャを使用します：
+SkillForUnityは**双方向WebSocketブリッジ**アーキテクチャを使用します：
 
 ```
 AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(WebSocket)--> Unity Editorブリッジ
@@ -20,7 +20,7 @@ AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(Web
 ### 1. Unity Editorのセットアップ
 
 1. Unityプロジェクトを開く
-2. UnityMCPパッケージをインポート
+2. SkillForUnityパッケージをインポート
 3. **Tools > MCP Assistant**を開く
 4. **Start Bridge**をクリック
 5. ブリッジがデフォルトで`ws://localhost:7077/bridge`でリッスンします
@@ -960,4 +960,4 @@ Assets/
 
 ---
 
-**UnityMCP** - Model Context Protocolによる包括的なUnity Editor自動化
+**SkillForUnity** - Model Context Protocolによる包括的なUnity Editor自動化

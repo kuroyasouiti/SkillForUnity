@@ -1,2 +1,2 @@
-SERVER_NAME = "UnityMCPExtended"
-SERVER_VERSION = "0.2.0"
+SERVER_NAME = "SkillForUnity"
+SERVER_VERSION = "1.0.0"

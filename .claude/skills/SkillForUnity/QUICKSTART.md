@@ -1,6 +1,6 @@
-# Unity MCP Skill - Quick Start Guide
+# Skill for Unity - Quick Start Guide
 
-**Get started with Unity MCP Skill in 5 minutes!**
+**Get started with Skill for Unity in 5 minutes!**
 
 ## Prerequisites
 
@@ -50,11 +50,11 @@ This will:
    - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
    - Linux: `~/.config/Claude/claude_desktop_config.json`
 
-2. Add the Unity MCP server:
+2. Add the Skill for Unity MCP server:
 ```json
 {
   "mcpServers": {
-    "unity-mcp": {
+    "skill-for-unity": {
       "command": "uv",
       "args": [
         "run",
@@ -243,7 +243,7 @@ unity_context_inspect({
 
 ## Getting Help
 
-- 🐛 **Report Issues**: [GitHub Issues](https://github.com/yourusername/unity-mcp/issues)
+- 🐛 **Report Issues**: [GitHub Issues](https://github.com/yourusername/SkillForUnity/issues)
 - 📖 **Documentation**: [docs/troubleshooting.md](docs/troubleshooting.md)
 - 💬 **Community**: Check discussions and examples
 

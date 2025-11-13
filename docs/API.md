@@ -1,6 +1,6 @@
-# UnityMCP API Documentation
+# SkillForUnity API Documentation
 
-Complete reference for all MCP tools available in UnityMCP.
+Complete reference for all MCP tools available in SkillForUnity.
 
 ---
 
@@ -1287,7 +1287,7 @@ All tools follow a consistent error response format:
 ## Support
 
 For issues and questions:
-- GitHub Issues: [UnityMCP Repository]
+- GitHub Issues: [SkillForUnity Repository]
 - Unity Console: Check for `[MCP]` prefixed logs
 - Bridge Window: `Tools > MCP Assistant > Command Output`
 

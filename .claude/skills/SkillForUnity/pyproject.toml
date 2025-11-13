@@ -1,9 +1,9 @@
 [project]
-name = "unity-mcp-skill"
+name = "skill-for-unity"
 version = "1.0.0"
 description = "Unity Editor integration via Model Context Protocol - Claude Agent Skill"
 authors = [
-    {name = "UnityMCP Team"}
+    {name = "SkillForUnity Team"}
 ]
 readme = "README.md"
 license = {text = "MIT"}
@@ -24,13 +24,13 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/unity-mcp"
-Documentation = "https://github.com/yourusername/unity-mcp/tree/main/SkillPackage/docs"
-Repository = "https://github.com/yourusername/unity-mcp"
-Issues = "https://github.com/yourusername/unity-mcp/issues"
+Homepage = "https://github.com/yourusername/SkillForUnity"
+Documentation = "https://github.com/yourusername/SkillForUnity/tree/main/SkillPackage/docs"
+Repository = "https://github.com/yourusername/SkillForUnity"
+Issues = "https://github.com/yourusername/SkillForUnity/issues"
 
 [project.scripts]
-unity-mcp = "src.main:main"
+skill-for-unity = "src.main:main"
 
 [build-system]
 requires = ["hatchling"]
