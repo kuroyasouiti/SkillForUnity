@@ -12,9 +12,11 @@
 AssetBundles/
 UserSettings/
 sysinfo.txt
+*.meta
+__pycache__/
+ProjectSettings/
 
 # Unity Assets (keep only MCPServer and MCPBridge code)
-**/*.meta
 Assets/*
 !Assets/Runtime
 Assets/Runtime/*
