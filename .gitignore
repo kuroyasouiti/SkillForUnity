@@ -40,6 +40,9 @@ ExportedObj/
 .idea/
 .vs/
 .vscode/
+*.code-workspace
+*.DotSettings
+*.DotSettings.user
 *.csproj
 *.unityproj
 *.sln
