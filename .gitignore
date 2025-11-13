@@ -1,11 +1,64 @@
-*.asset
-*.meta
+# Unity generated folders
+[Ll]ibrary/
+[Ll]ocalPackages/
+[Tt]emp/
+[Tt]empTest/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Bb]in/
+[Ll]ogs/
+[Mm]emoryCaptures/
+AssetBundles/
+UserSettings/
+sysinfo.txt
+
+# Unity Assets (keep only MCPServer and MCPBridge code)
+**/*.meta
+Assets/*
+!Assets/Runtime
+Assets/Runtime/*
+!Assets/Runtime/MCPServer
+!Assets/Runtime/MCPServer/**
+!Assets/Editor
+Assets/Editor/*
+!Assets/Editor/MCPBridge
+!Assets/Editor/MCPBridge/**
+
+# Crash dumps and build archives
+*.stackdump
+*.memdump
+*.apk
+*.aab
+*.unitypackage
+
+# IDE and build system outputs
+ExportedObj/
+.consulo/
+.idea/
+.vs/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.sln.iml
+
+# Build caches
+.gradle/
+
+# Python and tooling artifacts
+.venv/
+Assets/Runtime/.venv/
 *.pyc
 Assets/Runtime/unity_mcp_server.egg-info/
-Assets/Scenes/
-Assets/Runtime/.venv
-Assets/Scripts/
-Library/
-Packages/
-TempTest/
-Temp/
