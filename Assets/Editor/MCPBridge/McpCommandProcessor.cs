@@ -101,6 +101,16 @@ namespace MCP.Editor
                     return DeleteScene(payload);
                 case "duplicate":
                     return DuplicateScene(payload);
+                case "listBuildSettings":
+                    return ListBuildSettings(payload);
+                case "addToBuildSettings":
+                    return AddToBuildSettings(payload);
+                case "removeFromBuildSettings":
+                    return RemoveFromBuildSettings(payload);
+                case "reorderBuildSettings":
+                    return ReorderBuildSettings(payload);
+                case "setBuildSettingsEnabled":
+                    return SetBuildSettingsEnabled(payload);
                 default:
                     throw new InvalidOperationException($"Unknown sceneManage operation: {operation}");
             }
@@ -225,6 +235,228 @@ namespace MCP.Editor
             {
                 ["source"] = scenePath,
                 ["destination"] = destination,
+            };
+        }
+
+        private static object ListBuildSettings(Dictionary<string, object> payload)
+        {
+            var scenes = EditorBuildSettings.scenes;
+            var sceneList = new List<object>();
+
+            for (int i = 0; i < scenes.Length; i++)
+            {
+                var scene = scenes[i];
+                sceneList.Add(new Dictionary<string, object>
+                {
+                    ["path"] = scene.path,
+                    ["enabled"] = scene.enabled,
+                    ["guid"] = scene.guid.ToString(),
+                    ["index"] = i
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["scenes"] = sceneList,
+                ["count"] = scenes.Length
+            };
+        }
+
+        private static object AddToBuildSettings(Dictionary<string, object> payload)
+        {
+            var scenePath = EnsureValue(GetString(payload, "scenePath"), "scenePath");
+            var enabled = GetBool(payload, "enabled", true);
+            var index = GetInt(payload, "index", -1);
+
+            // Verify scene exists
+            if (!File.Exists(scenePath))
+            {
+                throw new InvalidOperationException($"Scene not found: {scenePath}");
+            }
+
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            // Check if scene already exists
+            var existingIndex = scenes.FindIndex(s => s.path == scenePath);
+            if (existingIndex >= 0)
+            {
+                throw new InvalidOperationException($"Scene already in build settings at index {existingIndex}");
+            }
+
+            var newScene = new EditorBuildSettingsScene(scenePath, enabled);
+
+            if (index >= 0 && index <= scenes.Count)
+            {
+                scenes.Insert(index, newScene);
+            }
+            else
+            {
+                scenes.Add(newScene);
+                index = scenes.Count - 1;
+            }
+
+            EditorBuildSettings.scenes = scenes.ToArray();
+
+            return new Dictionary<string, object>
+            {
+                ["path"] = scenePath,
+                ["enabled"] = enabled,
+                ["index"] = index,
+                ["totalScenes"] = scenes.Count
+            };
+        }
+
+        private static object RemoveFromBuildSettings(Dictionary<string, object> payload)
+        {
+            var scenePath = GetString(payload, "scenePath");
+            var index = GetInt(payload, "index", -1);
+
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            if (!string.IsNullOrEmpty(scenePath))
+            {
+                // Remove by path
+                var removed = scenes.RemoveAll(s => s.path == scenePath);
+                if (removed == 0)
+                {
+                    throw new InvalidOperationException($"Scene not found in build settings: {scenePath}");
+                }
+
+                EditorBuildSettings.scenes = scenes.ToArray();
+
+                return new Dictionary<string, object>
+                {
+                    ["removed"] = scenePath,
+                    ["count"] = removed,
+                    ["totalScenes"] = scenes.Count
+                };
+            }
+            else if (index >= 0 && index < scenes.Count)
+            {
+                // Remove by index
+                var removedScene = scenes[index];
+                scenes.RemoveAt(index);
+                EditorBuildSettings.scenes = scenes.ToArray();
+
+                return new Dictionary<string, object>
+                {
+                    ["removed"] = removedScene.path,
+                    ["index"] = index,
+                    ["totalScenes"] = scenes.Count
+                };
+            }
+            else
+            {
+                throw new InvalidOperationException("Either scenePath or valid index must be provided");
+            }
+        }
+
+        private static object ReorderBuildSettings(Dictionary<string, object> payload)
+        {
+            var scenePath = GetString(payload, "scenePath");
+            var fromIndex = GetInt(payload, "fromIndex", -1);
+            var toIndex = GetInt(payload, "toIndex", -1);
+
+            if (toIndex < 0)
+            {
+                throw new InvalidOperationException("toIndex is required and must be >= 0");
+            }
+
+            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+
+            int sourceIndex = fromIndex;
+
+            if (!string.IsNullOrEmpty(scenePath))
+            {
+                // Find by path
+                sourceIndex = scenes.FindIndex(s => s.path == scenePath);
+                if (sourceIndex < 0)
+                {
+                    throw new InvalidOperationException($"Scene not found in build settings: {scenePath}");
+                }
+            }
+            else if (fromIndex >= 0 && fromIndex < scenes.Count)
+            {
+                sourceIndex = fromIndex;
+            }
+            else
+            {
+                throw new InvalidOperationException("Either scenePath or valid fromIndex must be provided");
+            }
+
+            if (toIndex < 0 || toIndex >= scenes.Count)
+            {
+                throw new InvalidOperationException($"Invalid toIndex: {toIndex} (must be 0-{scenes.Count - 1})");
+            }
+
+            if (sourceIndex == toIndex)
+            {
+                return new Dictionary<string, object>
+                {
+                    ["message"] = "Scene already at target position",
+                    ["path"] = scenes[sourceIndex].path,
+                    ["index"] = toIndex
+                };
+            }
+
+            var scene = scenes[sourceIndex];
+            scenes.RemoveAt(sourceIndex);
+            scenes.Insert(toIndex, scene);
+
+            EditorBuildSettings.scenes = scenes.ToArray();
+
+            return new Dictionary<string, object>
+            {
+                ["path"] = scene.path,
+                ["fromIndex"] = sourceIndex,
+                ["toIndex"] = toIndex,
+                ["totalScenes"] = scenes.Count
+            };
+        }
+
+        private static object SetBuildSettingsEnabled(Dictionary<string, object> payload)
+        {
+            var scenePath = GetString(payload, "scenePath");
+            var index = GetInt(payload, "index", -1);
+            var enabled = GetBool(payload, "enabled", true);
+
+            var scenes = EditorBuildSettings.scenes;
+            int targetIndex = -1;
+
+            if (!string.IsNullOrEmpty(scenePath))
+            {
+                // Find by path
+                for (int i = 0; i < scenes.Length; i++)
+                {
+                    if (scenes[i].path == scenePath)
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+
+                if (targetIndex < 0)
+                {
+                    throw new InvalidOperationException($"Scene not found in build settings: {scenePath}");
+                }
+            }
+            else if (index >= 0 && index < scenes.Length)
+            {
+                targetIndex = index;
+            }
+            else
+            {
+                throw new InvalidOperationException("Either scenePath or valid index must be provided");
+            }
+
+            scenes[targetIndex].enabled = enabled;
+            EditorBuildSettings.scenes = scenes;
+
+            return new Dictionary<string, object>
+            {
+                ["path"] = scenes[targetIndex].path,
+                ["enabled"] = enabled,
+                ["index"] = targetIndex
             };
         }
 

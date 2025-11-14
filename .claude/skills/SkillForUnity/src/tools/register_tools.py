@@ -58,16 +58,41 @@ def register_tools(server: Server) -> None:
             "properties": {
                 "operation": {
                     "type": "string",
-                    "enum": ["create", "load", "save", "delete", "duplicate"],
-                    "description": "Operation to perform.",
+                    "enum": ["create", "load", "save", "delete", "duplicate", "listBuildSettings", "addToBuildSettings", "removeFromBuildSettings", "reorderBuildSettings", "setBuildSettingsEnabled"],
+                    "description": "Operation to perform. Scene operations: create, load, save, delete, duplicate. Build settings operations: listBuildSettings (get all scenes in build), addToBuildSettings (add scene to build), removeFromBuildSettings (remove scene from build), reorderBuildSettings (change scene order), setBuildSettingsEnabled (enable/disable scene in build).",
                 },
                 "scenePath": {
                     "type": "string",
-                    "description": "Path under Assets/, e.g. Assets/Scenes/Main.unity.",
+                    "description": "Path under Assets/, e.g. Assets/Scenes/Main.unity. Required for most operations including build settings operations.",
                 },
-                "newSceneName": {"type": "string"},
-                "additive": {"type": "boolean"},
-                "includeOpenScenes": {"type": "boolean"},
+                "newSceneName": {
+                    "type": "string",
+                    "description": "New name for duplicate operation."
+                },
+                "additive": {
+                    "type": "boolean",
+                    "description": "For load/create: open scene additively without closing current scenes."
+                },
+                "includeOpenScenes": {
+                    "type": "boolean",
+                    "description": "For save: save all open scenes instead of just the active one."
+                },
+                "enabled": {
+                    "type": "boolean",
+                    "description": "For addToBuildSettings/setBuildSettingsEnabled: whether the scene should be enabled in build settings. Default: true."
+                },
+                "index": {
+                    "type": "integer",
+                    "description": "For addToBuildSettings: position to insert scene (0-based). For removeFromBuildSettings/setBuildSettingsEnabled: index of scene to modify. For reorderBuildSettings: source index (fromIndex) or target index (toIndex)."
+                },
+                "fromIndex": {
+                    "type": "integer",
+                    "description": "For reorderBuildSettings: source index to move from. Alternative to scenePath."
+                },
+                "toIndex": {
+                    "type": "integer",
+                    "description": "For reorderBuildSettings: target index to move to. Required."
+                },
             },
         },
         ["operation"],
@@ -1210,7 +1235,7 @@ def register_tools(server: Server) -> None:
         ),
         types.Tool(
             name="unity_scene_crud",
-            description="Create, load, save, delete, or duplicate Unity scenes.",
+            description="Create, load, save, delete, or duplicate Unity scenes. Also manages build settings: list scenes in build, add/remove scenes from build, reorder scenes, and enable/disable scenes in build settings.",
             inputSchema=scene_manage_schema,
         ),
         types.Tool(
