@@ -23,6 +23,21 @@ namespace MCP.Editor
 
         private static string GetEmbeddedSkillZipPath()
         {
+            // Find this script's location and look for SkillForUnity.zip in the same directory
+            var guids = AssetDatabase.FindAssets("ServerInstallerUtility t:Script");
+            if (guids.Length > 0)
+            {
+                var scriptPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+                var scriptDir = Path.GetDirectoryName(scriptPath);
+                var zipPath = Path.Combine(scriptDir, "SkillForUnity.zip");
+
+                if (File.Exists(zipPath))
+                {
+                    return zipPath;
+                }
+            }
+
+            // Fallback to hardcoded path (for backward compatibility)
             var assetsPath = Application.dataPath;
             if (string.IsNullOrEmpty(assetsPath))
             {
