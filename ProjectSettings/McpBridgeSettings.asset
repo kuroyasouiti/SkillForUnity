@@ -17,4 +17,4 @@ MonoBehaviour:
   bridgeToken: 
   autoConnectOnLoad: 0
   contextPushIntervalSeconds: 5
-  serverInstallPath: 
+  serverInstallPath: C:\Users\garuf\.claude\skills\SkillForUnity.zip\MCPServer

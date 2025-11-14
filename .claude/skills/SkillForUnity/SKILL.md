@@ -1,3 +1,9 @@
+---
+name: skill-for-unity
+description: Comprehensive Unity Editor integration through Model Context Protocol
+license: MIT
+---
+
 # SkillForUnity - Unity Editor Integration via MCP
 
 **Control Unity Editor directly from AI assistants through the Model Context Protocol.**

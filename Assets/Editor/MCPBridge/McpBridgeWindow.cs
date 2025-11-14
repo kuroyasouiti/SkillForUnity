@@ -217,7 +217,7 @@ namespace MCP.Editor
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUI.BeginChangeCheck();
-                var path = EditorGUILayout.TextField("Install Path", settings.ServerInstallPath);
+                var path = EditorGUILayout.TextField("Install Destination", settings.ServerInstallPath);
                 if (EditorGUI.EndChangeCheck())
                 {
                     settings.ServerInstallPath = path;
@@ -225,98 +225,134 @@ namespace MCP.Editor
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("Browse...", GUILayout.Width(110f)))
+                    if (GUILayout.Button("Local (.claude/skills)", GUILayout.Width(150f)))
                     {
-                        var selected = EditorUtility.OpenFolderPanel("Select MCP Server Directory", settings.ServerInstallPath, string.Empty);
-                        if (!string.IsNullOrEmpty(selected))
+                        var localPath = ServerInstallerUtility.GetLocalSkillsPath();
+                        if (!string.IsNullOrEmpty(localPath))
                         {
-                            settings.ServerInstallPath = selected;
+                            settings.ServerInstallPath = localPath;
                         }
                     }
 
-                    if (GUILayout.Button("Use Default", GUILayout.Width(110f)))
+                    if (GUILayout.Button("Global (~/.claude/skills)", GUILayout.Width(150f)))
                     {
-                        settings.UseDefaultServerInstallPath();
+                        var globalPath = ServerInstallerUtility.GetGlobalSkillsPath();
+                        if (!string.IsNullOrEmpty(globalPath))
+                        {
+                            settings.ServerInstallPath = globalPath;
+                        }
                     }
                 }
 
                 EditorGUILayout.SelectableLabel(settings.ServerInstallPath, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
 
-                if (!Directory.Exists(settings.ServerInstallPath))
+                // Check skill package status
+                if (string.IsNullOrEmpty(ServerInstallerUtility.SkillZipPath))
                 {
-                    EditorGUILayout.HelpBox("Server install directory does not exist. Install the template or choose a valid path.", MessageType.Warning);
+                    EditorGUILayout.HelpBox("Skill package (SkillForUnity.zip) not found. Build the skill package first.", MessageType.Warning);
                 }
-                else if (!ServerInstallerUtility.HasPyProject(settings.ServerInstallPath))
+                else
                 {
-                    EditorGUILayout.HelpBox("pyproject.toml not found. Install the template or ensure the Python server project exists at this path.", MessageType.Warning);
+                    var zipInfo = new FileInfo(ServerInstallerUtility.SkillZipPath);
+                    EditorGUILayout.HelpBox($"Found: {zipInfo.Name} ({zipInfo.Length / 1024} KB)", MessageType.Info);
+                }
+
+                // Check if already installed
+                if (File.Exists(settings.ServerInstallPath))
+                {
+                    var installedInfo = new FileInfo(settings.ServerInstallPath);
+                    EditorGUILayout.HelpBox($"Already installed: {installedInfo.LastWriteTime}", MessageType.Info);
                 }
             }
 
             GUI.enabled = !_commandRunning;
-            if (GUILayout.Button("Setup Server Template"))
+
+            using (new EditorGUILayout.HorizontalScope())
             {
-                SetupServer(settings);
+                if (GUILayout.Button("Install Skill Package"))
+                {
+                    InstallSkillPackage(settings);
+                }
+
+                if (GUILayout.Button("Uninstall"))
+                {
+                    UninstallServer(settings);
+                }
             }
 
-            if (GUILayout.Button("Uninstall Server"))
+            if (GUILayout.Button("Show Skill Package Info"))
             {
-                UninstallServer(settings);
+                AppendLog(ServerInstallerUtility.GetSkillZipInfo());
             }
 
-            if (GUILayout.Button("Verify Server (python -m compileall)"))
-            {
-                RunServerCommand("python -m compileall mcp_server", "Verify server", settings.ServerInstallPath);
-            }
             GUI.enabled = true;
         }
 
         private void DrawQuickRegistration(McpBridgeSettings settings)
         {
-            EditorGUILayout.HelpBox("Register or remove the MCP server from external clients using their CLI tools.", MessageType.Info);
-            GUI.enabled = !_commandRunning;
+            EditorGUILayout.HelpBox("Skill packages are automatically detected by Claude Code when placed in .claude/skills/ or ~/.claude/skills/", MessageType.Info);
 
-            if (!ServerInstallerUtility.HasPyProject(settings.ServerInstallPath))
+            if (string.IsNullOrEmpty(ServerInstallerUtility.SkillZipPath))
             {
-                EditorGUILayout.HelpBox("Python server project not detected. Run \"Setup Server\" before registering clients.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Skill package not found. Build the skill package first.", MessageType.Warning);
+                return;
+            }
+
+            if (!File.Exists(settings.ServerInstallPath))
+            {
+                EditorGUILayout.HelpBox("Skill package not installed yet. Click 'Install Skill Package' button above.", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.HelpBox("Skill package installed! Restart Claude Code to use the SkillForUnity skill.", MessageType.Info);
+
+            // Manual copy commands for reference
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Manual Installation Commands:", EditorStyles.boldLabel);
+
+            var skillZipPath = ServerInstallerUtility.SkillZipPath;
+            if (string.IsNullOrEmpty(skillZipPath))
+            {
                 GUI.enabled = true;
                 return;
             }
 
-            var hasUv = ProcessHelper.TryGetExecutablePath("uv", out var uvPath);
-            if (!hasUv)
+            // Show manual copy commands
+            var localPath = ServerInstallerUtility.GetLocalSkillsPath();
+            var globalPath = ServerInstallerUtility.GetGlobalSkillsPath();
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.HelpBox("uv executable not found on PATH. Commands will call \"uv\" and may fail if it is not installed.", MessageType.Warning);
+                EditorGUILayout.LabelField("Windows (PowerShell):", EditorStyles.boldLabel);
+
+                if (!string.IsNullOrEmpty(localPath))
+                {
+                    var localCmd = $"copy \"{skillZipPath}\" \"{localPath}\"";
+                    EditorGUILayout.SelectableLabel(localCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                }
+
+                if (!string.IsNullOrEmpty(globalPath))
+                {
+                    var globalCmd = $"copy \"{skillZipPath}\" \"{globalPath}\"";
+                    EditorGUILayout.SelectableLabel(globalCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                }
             }
-            else
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.SelectableLabel($"uv: {uvPath}", EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
-            }
+                EditorGUILayout.LabelField("macOS / Linux:", EditorStyles.boldLabel);
 
-            var uvInvocation = hasUv ? uvPath : "uv";
-            var quotedUvInvocation = QuoteForCli(uvInvocation);
+                if (!string.IsNullOrEmpty(localPath))
+                {
+                    var localCmd = $"cp \"{skillZipPath}\" \"{localPath}\"";
+                    EditorGUILayout.SelectableLabel(localCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                }
 
-            var installDirectory = settings.ServerInstallPath;
-            var normalizedInstallDirectory = string.IsNullOrWhiteSpace(installDirectory)
-                ? string.Empty
-                : installDirectory;
-
-            var directoryOption = string.IsNullOrEmpty(normalizedInstallDirectory)
-                ? string.Empty
-                : $" --directory \"{normalizedInstallDirectory}\"";
-
-            var serverCommand = $"{quotedUvInvocation} run {directoryOption} main.py";
-
-            var entries = new[]
-            {
-                new CliRegistration("Claude Code", "claude", $"mcp add unity-mcp -- {serverCommand}", "mcp remove unity-mcp"),
-                new CliRegistration("Codex CLI", "codex", $"mcp add unity-mcp {serverCommand}", "mcp remove unity-mcp"),
-                new CliRegistration("Gemini CLI", "gemini", $"mcp add unity-mcp {serverCommand}", "mcp remove unity-mcp"),
-                new CliRegistration("Cursor CLI", "cursor", $"mcp add unity-mcp {serverCommand}", "mcp remove unity-mcp"),
-            };
-
-            foreach (var entry in entries)
-            {
-                DrawCliRow(entry);
+                if (!string.IsNullOrEmpty(globalPath))
+                {
+                    var globalCmd = $"cp \"{skillZipPath}\" \"{globalPath}\"";
+                    EditorGUILayout.SelectableLabel(globalCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                }
             }
 
             GUI.enabled = true;
@@ -357,7 +393,7 @@ namespace MCP.Editor
             }
         }
 
-        private void SetupServer(McpBridgeSettings settings)
+        private void InstallSkillPackage(McpBridgeSettings settings)
         {
             if (_commandRunning)
             {
@@ -365,43 +401,46 @@ namespace MCP.Editor
                 return;
             }
 
-            var path = settings.ServerInstallPath;
-            try
+            var destinationPath = settings.ServerInstallPath;
+            if (string.IsNullOrWhiteSpace(destinationPath))
             {
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                    AppendLog($"Created install directory: {path}");
-                }
-            }
-            catch (Exception ex)
-            {
-                var message = $"Failed to create install directory: {ex.Message}";
-                AppendLog(message);
-                Debug.LogError(message);
+                AppendLog("Install destination is empty. Please select a destination path.");
                 return;
             }
 
-            var needsTemplate = !ServerInstallerUtility.HasPyProject(path);
-            if (needsTemplate)
+            // Check if already installed
+            if (File.Exists(destinationPath))
             {
-                AppendLog("Installing server template...");
-                var success = ServerInstallerUtility.InstallTemplate(path, out var message);
-                AppendLog(message);
-                if (!success)
+                var overwrite = EditorUtility.DisplayDialog(
+                    "Overwrite Existing Package",
+                    $"A skill package already exists at:\n{destinationPath}\n\nDo you want to overwrite it?",
+                    "Overwrite",
+                    "Cancel"
+                );
+
+                if (!overwrite)
                 {
-                    Debug.LogWarning(message);
+                    AppendLog("Installation cancelled.");
                     return;
                 }
+            }
 
+            AppendLog($"Installing skill package to: {destinationPath}");
+            var success = ServerInstallerUtility.InstallSkillPackage(destinationPath, out var message);
+            AppendLog(message);
+
+            if (success)
+            {
                 Debug.Log(message);
+                AppendLog("\nInstallation complete!");
+                AppendLog("To use the skill in Claude Code:");
+                AppendLog("1. Restart Claude Code if it's running");
+                AppendLog("2. The SkillForUnity skill will be automatically available");
             }
             else
             {
-                AppendLog("Server template detected. Skipping template installation.");
+                Debug.LogWarning(message);
             }
-
-            AppendLog("Server setup complete. Manage Python dependencies manually if required.");
         }
 
         private void UninstallServer(McpBridgeSettings settings)
@@ -419,27 +458,27 @@ namespace MCP.Editor
                 return;
             }
 
-            if (!Directory.Exists(path))
+            if (!File.Exists(path) && !Directory.Exists(path))
             {
-                AppendLog($"Install directory not found: {path}");
+                AppendLog($"Install path not found: {path}");
                 return;
             }
 
-            var looksLikeServer = ServerInstallerUtility.HasPyProject(path);
-            var title = "Uninstall MCP Server";
-            var prompt = looksLikeServer
-                ? $"This will delete the MCP server installation at:\n{path}\nContinue?"
-                : $"The install directory does not contain a pyproject.toml.\nDelete the directory anyway?\n{path}";
+            var title = "Uninstall Skill Package";
+            var prompt = $"This will delete the skill package at:\n{path}\n\nContinue?";
+
             if (!EditorUtility.DisplayDialog(title, prompt, "Uninstall", "Cancel"))
             {
                 return;
             }
 
-            var success = ServerInstallerUtility.TryUninstall(path, out var uninstallMessage, force: !looksLikeServer);
+            var success = ServerInstallerUtility.TryUninstall(path, out var uninstallMessage, force: true);
             AppendLog(uninstallMessage);
+
             if (success)
             {
                 Debug.Log(uninstallMessage);
+                AppendLog("\nUninstallation complete!");
             }
             else
             {

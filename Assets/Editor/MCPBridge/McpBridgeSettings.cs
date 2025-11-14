@@ -89,16 +89,22 @@ namespace MCP.Editor
         {
             get
             {
-#if UNITY_EDITOR_WIN
-                var basePath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                return Path.Combine(basePath, "UnityMCP", ServerInstallFolderName);
-#elif UNITY_EDITOR_OSX
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                return Path.Combine(home, "Library", "Application Support", "UnityMCP", ServerInstallFolderName);
-#else
-                var home = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-                return Path.Combine(home, ".unitymcp", ServerInstallFolderName);
-#endif
+                // Default to local .claude/skills path
+                var localPath = ServerInstallerUtility.GetLocalSkillsPath();
+                if (!string.IsNullOrEmpty(localPath))
+                {
+                    return localPath;
+                }
+
+                // Fallback to global ~/.claude/skills path
+                var globalPath = ServerInstallerUtility.GetGlobalSkillsPath();
+                if (!string.IsNullOrEmpty(globalPath))
+                {
+                    return globalPath;
+                }
+
+                // Final fallback (should not happen)
+                return Path.Combine(Application.dataPath, "..", ".claude", "skills", "SkillForUnity.zip");
             }
         }
 
