@@ -135,14 +135,13 @@ def register_tools(server: Server) -> None:
                     "type": "boolean",
                     "description": "For inspectMultiple operation: if true, includes component type names in results. Default is false.",
                 },
-                "includeProperties": {
+                "includeChildren": {
                     "type": "boolean",
-                    "description": "For inspect operation: if false, only returns component types without properties. Default is true. Use this to improve performance when you only need component type information.",
+                    "description": "For inspect operation: if true, includes child GameObjects in results. Default is true. Set to false to only get information about the GameObject itself.",
                 },
-                "componentFilter": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "For inspect operation: optional list of component types to inspect (e.g. ['UnityEngine.Transform', 'UnityEngine.UI.Button']). If specified, only these components will be inspected. Use this to improve performance when you only need specific components.",
+                "maxDepth": {
+                    "type": "integer",
+                    "description": "For inspect operation: maximum depth of child hierarchy to return. Default is 1 (direct children only). Set to 2 for grandchildren, 3 for great-grandchildren, etc. Set to 0 to disable child collection regardless of includeChildren.",
                 },
                 "maxResults": {
                     "type": "integer",

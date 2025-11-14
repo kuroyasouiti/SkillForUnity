@@ -1,4 +1,6 @@
-# Unity generated folders
+# ================================================================
+# Unity Generated Files and Folders
+# ================================================================
 [Ll]ibrary/
 [Ll]ocalPackages/
 [Tt]emp/
@@ -11,41 +13,55 @@
 [Mm]emoryCaptures/
 AssetBundles/
 UserSettings/
+UserSettings/Layouts/
+
+# Unity crash and debug files
 sysinfo.txt
-*.meta
-__pycache__/
-ProjectSettings/
-
-# Unity Assets (keep only MCPBridge code, MCPServer moved to SkillPackage)
-Assets/*
-!Assets/Editor
-Assets/Editor/*
-!Assets/Editor/MCPBridge
-!Assets/Editor/MCPBridge/**
-
-# Crash dumps and build archives
 *.stackdump
 *.memdump
+
+# ================================================================
+# Unity Assets (Selective Include)
+# ================================================================
+# Keep only MCPBridge code in Assets
+Assets/*
+!Assets/Editor/
+Assets/Editor/*
+!Assets/Editor/MCPBridge/
+!Assets/Editor/MCPBridge.meta
+
+# Editor-specific exclusions
+Assets/Editor/MCPBridge/SkillPackager.cs
+Assets/Editor/MCPBridge/SkillPackager.cs.meta
+
+# ================================================================
+# Build Outputs
+# ================================================================
 *.apk
 *.aab
 *.unitypackage
 
-# IDE and build system outputs
-ExportedObj/
-.consulo/
-.idea/
+# ================================================================
+# IDE Files
+# ================================================================
+# Visual Studio / Rider
 .vs/
-.vscode/
-*.code-workspace
-*.DotSettings
-*.DotSettings.user
+.idea/
 *.csproj
-*.unityproj
 *.sln
 *.suo
 *.tmp
 *.user
 *.userprefs
+*.DotSettings
+*.DotSettings.user
+*.sln.iml
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# MonoDevelop / Unity Debug
 *.pidb
 *.booproj
 *.svd
@@ -53,20 +69,32 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
-*.sln.iml
 
-# Build caches
+# Other IDEs
+.consulo/
+ExportedObj/
+
+# ================================================================
+# Build Systems
+# ================================================================
 .gradle/
 
-# Python and tooling artifacts
-.venv/
-Assets/Runtime/.venv/
+# ================================================================
+# Python
+# ================================================================
 *.pyc
-Assets/Runtime/unity_mcp_server.egg-info/
-UserSettings/Layouts/
 
-CLAUDE.md
-Packages/
+# ================================================================
+# Claude Code / SkillForUnity
+# ================================================================
+# Skill source is copied from src/tools during build
+.claude/skills/SkillForUnity/src/tools/
+
+# Local settings (user-specific)
 .claude/settings.local.json
-Assets/Editor/MCPBridge/SkillPackager.cs
-Assets/Editor/MCPBridge/SkillPackager.cs.meta
+
+# ================================================================
+# OS-specific
+# ================================================================
+.DS_Store
+Thumbs.db

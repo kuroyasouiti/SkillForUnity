@@ -623,117 +623,82 @@ namespace MCP.Editor
         private static object InspectGameObject(Dictionary<string, object> payload)
         {
             var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
+
+            // Check if children should be included (default: true)
+            var includeChildren = true;
+            if (payload.TryGetValue("includeChildren", out var includeChildrenObj))
+            {
+                includeChildren = Convert.ToBoolean(includeChildrenObj);
+            }
+
+            // Get max depth for child hierarchy (default: 1 = direct children only)
+            var maxDepth = GetInt(payload, "maxDepth", defaultValue: 1);
+
+            // Get component type names (not full component details - use componentManage for that)
             var components = go.GetComponents<Component>();
-            var componentsList = new List<Dictionary<string, object>>();
+            var componentTypeNames = components
+                .Where(c => c != null)
+                .Select(c => c.GetType().FullName)
+                .ToList();
 
-            // Check if properties should be included (default: true)
-            var includeProperties = true;
-            if (payload.TryGetValue("includeProperties", out var includePropObj))
+            var result = new Dictionary<string, object>
             {
-                includeProperties = Convert.ToBoolean(includePropObj);
+                ["gameObjectPath"] = GetHierarchyPath(go),
+                ["name"] = go.name,
+                ["active"] = go.activeSelf,
+                ["activeInHierarchy"] = go.activeInHierarchy,
+                ["tag"] = go.tag,
+                ["layer"] = go.layer,
+                ["layerName"] = LayerMask.LayerToName(go.layer),
+                ["static"] = go.isStatic,
+                ["componentTypes"] = componentTypeNames,
+                ["componentCount"] = componentTypeNames.Count,
+                ["childCount"] = go.transform.childCount,
+            };
+
+            // Include children if requested
+            if (includeChildren && go.transform.childCount > 0)
+            {
+                var children = CollectChildren(go.transform, maxDepth, currentDepth: 0);
+                result["children"] = children;
             }
 
-            // Get component filter if specified
-            HashSet<string> componentFilter = null;
-            if (payload.TryGetValue("componentFilter", out var filterObj) && filterObj is List<object> filterList)
+            return result;
+        }
+
+        private static List<Dictionary<string, object>> CollectChildren(Transform parent, int maxDepth, int currentDepth)
+        {
+            var children = new List<Dictionary<string, object>>();
+
+            if (currentDepth >= maxDepth)
             {
-                componentFilter = new HashSet<string>(filterList.Select(f => f.ToString()));
+                return children;
             }
 
-            foreach (var component in components)
+            for (int i = 0; i < parent.childCount; i++)
             {
-                if (component == null)
+                var child = parent.GetChild(i);
+                var childData = new Dictionary<string, object>
                 {
-                    continue;
-                }
-
-                var componentType = component.GetType();
-                var componentTypeName = componentType.FullName;
-
-                // Skip if component filter is specified and this component doesn't match
-                if (componentFilter != null && !componentFilter.Contains(componentTypeName))
-                {
-                    continue;
-                }
-
-                var componentData = new Dictionary<string, object>
-                {
-                    ["type"] = componentTypeName,
+                    ["name"] = child.name,
+                    ["path"] = GetHierarchyPath(child.gameObject),
+                    ["active"] = child.gameObject.activeSelf,
+                    ["tag"] = child.tag,
+                    ["layer"] = child.gameObject.layer,
+                    ["layerName"] = LayerMask.LayerToName(child.gameObject.layer),
+                    ["childCount"] = child.childCount,
                 };
 
-                // Add enabled state for Behaviour components
-                if (component is Behaviour behaviour)
+                // Recursively collect grandchildren if within depth limit
+                if (child.childCount > 0 && currentDepth + 1 < maxDepth)
                 {
-                    componentData["enabled"] = behaviour.enabled;
+                    childData["children"] = CollectChildren(child, maxDepth, currentDepth + 1);
                 }
 
-                // Only include properties if requested
-                if (includeProperties)
-                {
-                    var properties = new Dictionary<string, object>();
-
-                    // Properties that cause memory leaks in edit mode (use shared versions instead)
-                    var dangerousProperties = new HashSet<string>
-                    {
-                        "mesh",      // Use sharedMesh instead
-                        "material",  // Use sharedMaterial instead
-                        "materials", // Use sharedMaterials instead
-                    };
-
-                    // Get all public properties
-                    var propertyInfos = componentType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-                    foreach (var prop in propertyInfos)
-                    {
-                        if (!prop.CanRead)
-                        {
-                            continue;
-                        }
-
-                        // Skip dangerous properties that cause memory leaks
-                        if (dangerousProperties.Contains(prop.Name))
-                        {
-                            properties[prop.Name] = $"<Skipped:{prop.Name}:UseSharedVersion>";
-                            continue;
-                        }
-
-                        try
-                        {
-                            var value = prop.GetValue(component);
-                            properties[prop.Name] = SerializeValue(value);
-                        }
-                        catch (Exception ex)
-                        {
-                            properties[prop.Name] = $"<Error: {ex.Message}>";
-                        }
-                    }
-
-                    // Get all public fields
-                    var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.Instance);
-                    foreach (var field in fieldInfos)
-                    {
-                        try
-                        {
-                            var value = field.GetValue(component);
-                            properties[field.Name] = SerializeValue(value);
-                        }
-                        catch (Exception ex)
-                        {
-                            properties[field.Name] = $"<Error: {ex.Message}>";
-                        }
-                    }
-
-                    componentData["properties"] = properties;
-                }
-
-                componentsList.Add(componentData);
+                children.Add(childData);
             }
 
-            return new Dictionary<string, object>
-            {
-                ["gameObject"] = GetHierarchyPath(go),
-                ["components"] = componentsList,
-                ["count"] = componentsList.Count,
-            };
+            return children;
         }
 
         private static object FindMultipleGameObjects(Dictionary<string, object> payload)
