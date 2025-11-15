@@ -2,7 +2,7 @@
 
 Complete reference for all MCP tools available in SkillForUnity.
 
-> This Claude Skill lives under `SkillForUnity` (project root) and is bundled with the Unity package as `Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip`.
+> This Claude Skill lives under `SkillForUnity` (project root) and is bundled with the Unity package as `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`.
 
 ---
 

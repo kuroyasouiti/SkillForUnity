@@ -249,7 +249,7 @@ namespace MCP.Editor
                 // Check skill package status
                 if (string.IsNullOrEmpty(ServerInstallerUtility.SkillZipPath))
                 {
-                    EditorGUILayout.HelpBox("Skill package (SkillForUnity.zip) not found. Build the skill package first.", MessageType.Warning);
+                    EditorGUILayout.HelpBox("Skill package (SkillForUnity-MCPServer.zip) not found. Build the skill package first.", MessageType.Warning);
                 }
                 else
                 {

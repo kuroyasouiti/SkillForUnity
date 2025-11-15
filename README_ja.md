@@ -34,17 +34,17 @@ AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(Web
 
 ### 2. Claude Skillのインストール
 
-Unityパッケージには `Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip` が同梱されています。
+Unityパッケージには `Assets/SkillForUnity/SkillForUnity-MCPServer.zip` が同梱されています。
 
 **方法A: 同梱ZIPをClaude Desktopのskillsフォルダへコピー**
 
 ```bash
 # Claude SkillのZIPをコピー
-cp Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip ~/.claude/skills/
+cp Assets/SkillForUnity/SkillForUnity-MCPServer.zip ~/.claude/skills/
 
 # 展開して ~/SkillForUnity を作成
 cd ~/.claude/skills
-unzip -o SkillForUnity.zip
+unzip -o SkillForUnity-MCPServer.zip
 ```
 
 **方法B: MCPウィンドウから登録**
@@ -641,14 +641,14 @@ unity_script_batch_manage({
 SkillForUnity/
 ├── Assets/
 │   └── SkillForUnity/
+│       ├── SkillForUnity-MCPServer.zip      # Claude Skill MCPサーバーパッケージ
 │       └── Editor/
-│           └── MCPBridge/                    # Unity C#ブリッジ（Claude Skill ZIP同梱）
+│           └── MCPBridge/                    # Unity C#ブリッジ
 │               ├── McpBridgeService.cs            # WebSocketサーバー
 │               ├── McpCommandProcessor.cs         # ツール実行（4700+行）
 │               ├── McpContextCollector.cs         # コンテキスト収集
 │               ├── McpBridgeWindow.cs             # Unity Editor UI
-│               ├── McpBridgeSettings.cs           # 設定
-│               └── SkillForUnity.zip              # Claude Skillアーカイブ
+│               └── McpBridgeSettings.cs           # 設定
 │
 ├── .claude/
 │   └── skills/

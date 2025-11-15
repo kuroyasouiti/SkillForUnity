@@ -77,7 +77,7 @@ unity_component_crud({
 1. **Unity C# Bridge** (`Assets/SkillForUnity/Editor/MCPBridge/`) - WebSocket server running inside Unity Editor
 2. **Claude Skill (Python MCP Server)** (`SkillForUnity/src/`) - MCP protocol implementation that connects to the bridge
 
-The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip`. Extract it to `~/.claude/skills/SkillForUnity` (or any folder) when registering the server with Claude Desktop.
+The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`. Extract it to `~/.claude/skills/SkillForUnity` (or any folder) when registering the server with Claude Desktop.
 
 ## Architecture
 
