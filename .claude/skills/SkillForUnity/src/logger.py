@@ -13,7 +13,7 @@ if not hasattr(logging, "TRACE"):
         if self.isEnabledFor(TRACE_LEVEL):
             self._log(TRACE_LEVEL, message, args, **kwargs)
 
-    setattr(logging.Logger, "trace", trace)  # type: ignore[attr-defined]
+    logging.Logger.trace = trace  # type: ignore[attr-defined]
 
 
 _LEVEL_MAP = {

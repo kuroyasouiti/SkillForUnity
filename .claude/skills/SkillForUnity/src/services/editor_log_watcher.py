@@ -4,7 +4,6 @@ import asyncio
 import contextlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from config.env import env
 from logger import logger
@@ -33,7 +32,7 @@ class EditorLogSnapshot:
 
 
 class EditorLogWatcher:
-    def __init__(self, explicit_path: Optional[Path] = None, poll_interval: float = 2.0):
+    def __init__(self, explicit_path: Path | None = None, poll_interval: float = 2.0):
         self._target_path = explicit_path or env.unity_editor_log_path
         self._poll_interval = poll_interval
         self._buffer: list[str] = []

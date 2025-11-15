@@ -4,26 +4,28 @@ import asyncio
 import contextlib
 import json
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict
+from typing import Any
 from uuid import uuid4
 
 from websockets.asyncio.client import ClientConnection
 from websockets.exceptions import ConnectionClosed
 from websockets.protocol import State as ConnectionState
 
-from config.env import env
-from logger import logger
 from bridge.messages import (
     BridgeCommandResultMessage,
     BridgeContextUpdateMessage,
-    BridgeHelloMessage,
     BridgeHeartbeatMessage,
+    BridgeHelloMessage,
     BridgeNotificationMessage,
     BridgeRestartedMessage,
     ServerMessage,
     UnityContextPayload,
 )
+from config.env import env
+from logger import logger
+
 
 @dataclass
 class PendingCommand:
@@ -38,8 +40,8 @@ class BridgeManager:
         self._session_id: str | None = None
         self._last_heartbeat_at: int | None = None
         self._context: UnityContextPayload | None = None
-        self._pending_commands: Dict[str, PendingCommand] = {}
-        self._compilation_waiters: list[asyncio.Future[Dict[str, Any]]] = []
+        self._pending_commands: dict[str, PendingCommand] = {}
+        self._compilation_waiters: list[asyncio.Future[dict[str, Any]]] = []
         self._listeners: dict[str, list[Callable[..., None]]] = {
             "connected": [],
             "disconnected": [],
@@ -71,7 +73,7 @@ class BridgeManager:
     def get_last_heartbeat(self) -> int | None:
         return self._last_heartbeat_at
 
-    async def await_compilation(self, timeout_seconds: int = 60) -> Dict[str, Any]:
+    async def await_compilation(self, timeout_seconds: int = 60) -> dict[str, Any]:
         """
         Wait for the next compilation to complete.
 
@@ -104,7 +106,7 @@ class BridgeManager:
         self._ensure_socket()
         loop = asyncio.get_running_loop()
 
-        future: asyncio.Future[Dict[str, Any]] = loop.create_future()
+        future: asyncio.Future[dict[str, Any]] = loop.create_future()
         self._compilation_waiters.append(future)
 
         def on_timeout() -> None:
@@ -185,7 +187,7 @@ class BridgeManager:
                 await self._handle_disconnect(socket)
                 raise RuntimeError("Unity bridge is not connected") from None
 
-    async def _receive_loop(self, socket: WebSocketClientProtocol) -> None:
+    async def _receive_loop(self, socket: ClientConnection) -> None:
         logger.info("Unity bridge socket listener started")
         try:
             async for raw in socket:
@@ -279,12 +281,12 @@ class BridgeManager:
                 )
             )
 
-    def _handle_compilation_started(self, message: Dict[str, Any]) -> None:
+    def _handle_compilation_started(self, message: dict[str, Any]) -> None:
         """Handle compilation:started message from Unity bridge."""
         timestamp = message.get("timestamp", 0)
         logger.info("Compilation started at timestamp %d", timestamp)
 
-    def _handle_compilation_progress(self, message: Dict[str, Any]) -> None:
+    def _handle_compilation_progress(self, message: dict[str, Any]) -> None:
         """Handle compilation:progress message from Unity bridge."""
         elapsed = message.get("elapsedSeconds", 0)
         status = message.get("status", "compiling")
@@ -302,7 +304,7 @@ class BridgeManager:
                 # and not stuck, so we can be patient
                 pass
 
-    def _handle_compilation_complete(self, message: Dict[str, Any]) -> None:
+    def _handle_compilation_complete(self, message: dict[str, Any]) -> None:
         """Handle compilation:complete message from Unity bridge."""
         result = message.get("result", {})
         elapsed = result.get("elapsedSeconds", 0)

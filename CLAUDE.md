@@ -508,6 +508,138 @@ The component management tool now supports setting UnityEvent listeners (Button.
 - Listeners are added as **persistent listeners** (saved in the scene)
 - Use `"clearListeners": true` to remove all existing listeners before adding new ones
 
+### Working with SerializeField Private Fields (NEW!)
+
+The component management tool now fully supports accessing and modifying **private fields with the [SerializeField] attribute**!
+
+**What's Supported:**
+- ✅ Reading SerializeField private fields during inspection
+- ✅ Writing SerializeField private fields (primitives, vectors, assets, etc.)
+- ✅ Property filters work with SerializeField field names
+- ✅ Error messages include SerializeField fields in suggestions
+- ✅ Batch operations on SerializeField fields
+
+**Example Script:**
+```csharp
+public class PlayerController : MonoBehaviour
+{
+    // Private fields with SerializeField - NOW ACCESSIBLE via MCP!
+    [SerializeField] private int maxHealth = 100;
+    [SerializeField] private float moveSpeed = 5.0f;
+    [SerializeField] private GameObject weaponPrefab;
+    [SerializeField] private Material playerMaterial;
+    [SerializeField] private Vector3 spawnPosition;
+
+    // Public fields - always accessible
+    public int currentHealth = 100;
+
+    // Private without SerializeField - NOT accessible (as intended)
+    private int secretValue = 42;
+}
+```
+
+**Reading SerializeField Fields:**
+```python
+# Inspect component - SerializeField fields are included
+result = unity_component_crud({
+    "operation": "inspect",
+    "gameObjectPath": "Player",
+    "componentType": "PlayerController",
+    "includeProperties": True
+})
+
+# result["properties"] includes:
+# - maxHealth (SerializeField private)
+# - moveSpeed (SerializeField private)
+# - weaponPrefab (SerializeField private)
+# - currentHealth (public)
+# Does NOT include: secretValue (private without SerializeField)
+```
+
+**Updating SerializeField Primitive Values:**
+```python
+unity_component_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "componentType": "PlayerController",
+    "propertyChanges": {
+        "maxHealth": 200,          # SerializeField private int
+        "moveSpeed": 10.0,         # SerializeField private float
+        "spawnPosition": {"x": 10, "y": 5, "z": 0}  # SerializeField private Vector3
+    }
+})
+```
+
+**Updating SerializeField Asset References:**
+```python
+# Using GUID (recommended)
+unity_component_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "componentType": "PlayerController",
+    "propertyChanges": {
+        "weaponPrefab": {
+            "_ref": "asset",
+            "guid": "abc123def456789"
+        },
+        "playerMaterial": {
+            "_ref": "asset",
+            "guid": "xyz789abc123"
+        }
+    }
+})
+
+# Using asset path
+unity_component_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "componentType": "PlayerController",
+    "propertyChanges": {
+        "weaponPrefab": {
+            "_ref": "asset",
+            "path": "Assets/Prefabs/Sword.prefab"
+        },
+        "playerMaterial": {
+            "_ref": "asset",
+            "path": "Assets/Materials/PlayerMat.mat"
+        }
+    }
+})
+```
+
+**Property Filter with SerializeField:**
+```python
+# Get only specific SerializeField fields (fast!)
+result = unity_component_crud({
+    "operation": "inspect",
+    "gameObjectPath": "Player",
+    "componentType": "PlayerController",
+    "propertyFilter": ["maxHealth", "moveSpeed"]  # Both are SerializeField private
+})
+```
+
+**Batch Operations with SerializeField:**
+```python
+# Update SerializeField on multiple GameObjects
+unity_component_crud({
+    "operation": "updateMultiple",
+    "pattern": "Enemy*",
+    "componentType": "EnemyController",
+    "propertyChanges": {
+        "maxHealth": 150,      # SerializeField private
+        "attackDamage": 25.0   # SerializeField private
+    },
+    "maxResults": 100
+})
+```
+
+**Important Notes:**
+- Only fields with `[SerializeField]` attribute are accessible (not all private fields)
+- This follows Unity's serialization rules - if Unity can serialize it, MCP can access it
+- Works with all Unity-serializable types: primitives, vectors, colors, Object references, etc.
+- Private fields WITHOUT `[SerializeField]` remain inaccessible (by design)
+- No performance impact - attribute check is minimal
+
 ### Updating RectTransform Properties
 
 **IMPORTANT:** RectTransform properties can be updated using **TWO METHODS** with the same results:

@@ -14,7 +14,7 @@ class HierarchyNode(TypedDict, total=False):
     name: str
     type: Literal["GameObject", "PrefabInstance", "UIElement", "Unknown"]
     components: list[ComponentSummary]
-    children: list["HierarchyNode"]
+    children: list[HierarchyNode]
 
 
 class UnityObjectReference(TypedDict, total=False):

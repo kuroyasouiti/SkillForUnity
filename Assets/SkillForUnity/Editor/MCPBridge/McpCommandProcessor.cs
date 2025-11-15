@@ -942,8 +942,9 @@ namespace MCP.Editor
                     }
                 }
 
-                // Get all public fields
-                var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+                // Get all public fields and private fields with [SerializeField] attribute
+                var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null);
                 foreach (var field in fieldInfos)
                 {
                     // Skip if property filter is specified and this field doesn't match
@@ -1312,8 +1313,9 @@ namespace MCP.Editor
                             }
                         }
 
-                        // Get all public fields
-                        var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.Instance);
+                        // Get all public fields and private fields with [SerializeField] attribute
+                        var fieldInfos = componentType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                            .Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null);
                         foreach (var field in fieldInfos)
                         {
                             // Skip if property filter is specified and this field doesn't match
@@ -6722,8 +6724,18 @@ namespace MCP.Editor
                 }
             }
 
-            // Try field
-            var field = type.GetField(propertyName, BindingFlags.Public | BindingFlags.Instance);
+            // Try field (including private fields with [SerializeField] attribute)
+            var field = type.GetField(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null)
+            {
+                // For private fields, require SerializeField attribute
+                if (!field.IsPublic && field.GetCustomAttribute<SerializeField>() == null)
+                {
+                    // Private field without SerializeField - skip and continue to error message
+                    field = null;
+                }
+            }
+
             if (field != null)
             {
                 try
@@ -6752,7 +6764,8 @@ namespace MCP.Editor
                 .Where(p => p.CanWrite)
                 .Select(p => p.Name)
                 .ToList();
-            var allFields = type.GetFields(BindingFlags.Public | BindingFlags.Instance)
+            var allFields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(f => f.IsPublic || f.GetCustomAttribute<SerializeField>() != null)
                 .Select(f => f.Name)
                 .ToList();
             var allMembers = allProperties.Concat(allFields).OrderBy(n => n).ToList();

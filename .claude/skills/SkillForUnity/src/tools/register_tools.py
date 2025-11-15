@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 import mcp.types as types
 from mcp.server import Server
@@ -18,7 +18,7 @@ def _ensure_bridge_connected() -> None:
         )
 
 
-async def _call_bridge_tool(tool_name: str, payload: Dict[str, Any]) -> list[types.Content]:
+async def _call_bridge_tool(tool_name: str, payload: dict[str, Any]) -> list[types.Content]:
     _ensure_bridge_connected()
 
     # Unity側のタイムアウトに20秒のバッファを追加してPython側のタイムアウトを設定
@@ -38,7 +38,7 @@ async def _call_bridge_tool(tool_name: str, payload: Dict[str, Any]) -> list[typ
     return [types.TextContent(type="text", text=text)]
 
 
-def _schema_with_required(schema: Dict[str, Any], required: list[str]) -> Dict[str, Any]:
+def _schema_with_required(schema: dict[str, Any], required: list[str]) -> dict[str, Any]:
     enriched = dict(schema)
     enriched["required"] = required
     enriched["additionalProperties"] = False
@@ -46,7 +46,7 @@ def _schema_with_required(schema: Dict[str, Any], required: list[str]) -> Dict[s
 
 
 def register_tools(server: Server) -> None:
-    ping_schema: Dict[str, Any] = {
+    ping_schema: dict[str, Any] = {
         "type": "object",
         "properties": {},
         "additionalProperties": False,

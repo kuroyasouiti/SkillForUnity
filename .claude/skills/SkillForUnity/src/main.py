@@ -5,8 +5,8 @@ import asyncio
 import contextlib
 import os
 import sys
-from pathlib import Path
 from json import JSONDecodeError
+from pathlib import Path
 from typing import Any
 
 import uvicorn
