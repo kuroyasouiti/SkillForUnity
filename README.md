@@ -259,21 +259,21 @@ SkillForUnity/
 ### Install Dev Dependencies
 
 ```bash
-cd SkillForUnity
+cd .claude/skills/SkillForUnity
 uv sync --dev
 ```
 
 ### Run Tests
 
 ```bash
-cd SkillForUnity
+cd .claude/skills/SkillForUnity
 pytest
 ```
 
 ### Format Code
 
 ```bash
-cd SkillForUnity
+cd .claude/skills/SkillForUnity
 black src/
 ruff check src/
 ```

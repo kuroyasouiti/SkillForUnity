@@ -13,7 +13,7 @@ AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(Web
 ### コンポーネント
 
 1. **Unity C#ブリッジ** (`Assets/SkillForUnity/Editor/MCPBridge/`) - Unity Editor内で動作するWebSocketサーバー（Claude SkillのZIPを同梱）
-2. **Claude Skill (Python MCPサーバー)** (`SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
+2. **Claude Skill (Python MCPサーバー)** (`.claude/skills/SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
 
 ## クイックスタート
 
