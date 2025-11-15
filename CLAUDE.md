@@ -35,7 +35,7 @@ unity_hierarchy_builder({"hierarchy": {...}})
 # Check current scene (fast)
 unity_context_inspect({"includeHierarchy": True, "includeComponents": False})
 
-# Inspect GameObject with children (default: direct children only)
+# Inspect GameObject
 unity_gameobject_crud({"operation": "inspect", "gameObjectPath": "Player"})
 
 # Inspect component (fast - specific properties only)
@@ -75,7 +75,7 @@ unity_component_crud({
 **SkillForUnity** is a Model Context Protocol (MCP) server that enables AI assistants to interact with Unity Editor in real-time. It consists of two main components:
 
 1. **Unity C# Bridge** (`Assets/SkillForUnity/Editor/MCPBridge/`) - WebSocket server running inside Unity Editor
-2. **Claude Skill (Python MCP Server)** (`.claude/skills/SkillForUnity/src/`) - MCP protocol implementation that connects to the bridge
+2. **Claude Skill (Python MCP Server)** (`SkillForUnity/src/`) - MCP protocol implementation that connects to the bridge
 
 The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip`. Extract it to `~/.claude/skills/SkillForUnity` (or any folder) when registering the server with Claude Desktop.
 
@@ -101,9 +101,9 @@ AI Client (Claude Code/Cursor) <--(MCP)--> Python Server <--(WebSocket)--> Unity
 | **McpBridgeService.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | WebSocket listener with custom HTTP handshake, manages client lifecycle |
 | **McpCommandProcessor.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | Executes tool commands (scene/GameObject/component/asset operations) |
 | **McpContextCollector.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | Gathers Unity state (hierarchy, selection, assets, Git status) |
-| **bridge_manager.py** | `.claude/skills/SkillForUnity/src/bridge/` | Python-side WebSocket client, command routing with timeout handling |
-| **register_tools.py** | `.claude/skills/SkillForUnity/src/tools/` | MCP tool definitions and schemas |
-| **main.py** | `.claude/skills/SkillForUnity/src/` | Server entrypoint with stdio/websocket transport modes |
+| **bridge_manager.py** | `SkillForUnity/src/bridge/` | Python-side WebSocket client, command routing with timeout handling |
+| **register_tools.py** | `SkillForUnity/src/tools/` | MCP tool definitions and schemas |
+| **main.py** | `SkillForUnity/src/` | Server entrypoint with stdio/websocket transport modes |
 
 ## Development Commands
 
@@ -112,10 +112,10 @@ AI Client (Claude Code/Cursor) <--(MCP)--> Python Server <--(WebSocket)--> Unity
 **From the project root:**
 ```bash
 # Using uv (recommended)
-uv run --directory .claude/skills/SkillForUnity src/main.py
+uv run --directory SkillForUnity src/main.py
 
 # Using Python directly
-cd .claude/skills/SkillForUnity
+cd SkillForUnity
 python src/main.py --transport stdio  # For MCP clients
 python src/main.py --transport websocket  # For HTTP/WebSocket mode
 ```
@@ -1194,26 +1194,11 @@ Comprehensive tool for managing GameObjects in the scene hierarchy.
    })
    ```
 
-6. **inspect** - Inspect a GameObject and its children
+6. **inspect** - Inspect a GameObject
    ```python
-   # Full inspection (includes direct children)
    unity_gameobject_crud({
        "operation": "inspect",
        "gameObjectPath": "Player"
-   })
-
-   # Inspect with deeper hierarchy (grandchildren, great-grandchildren, etc.)
-   unity_gameobject_crud({
-       "operation": "inspect",
-       "gameObjectPath": "Player",
-       "maxDepth": 3  # Include children up to 3 levels deep
-   })
-
-   # Inspect without children (GameObject info only)
-   unity_gameobject_crud({
-       "operation": "inspect",
-       "gameObjectPath": "Player",
-       "includeChildren": False
    })
 
    # Note: For component property details, use unity_component_crud instead
@@ -1257,28 +1242,12 @@ Comprehensive tool for managing GameObjects in the scene hierarchy.
 
 **Performance Parameters:**
 
-- **`includeChildren`** (inspect only): Set to `false` to exclude child GameObjects (faster)
-- **`maxDepth`** (inspect only): Limit hierarchy depth (default: 1 = direct children only)
 - **`maxResults`** (multiple operations): Maximum objects to process (default: 1000)
 - **`includeComponents`** (inspectMultiple only): Include component type names
 
 **Performance Tips:**
 
 ```python
-# ✅ Fast: Inspect GameObject without children
-unity_gameobject_crud({
-    "operation": "inspect",
-    "gameObjectPath": "Player",
-    "includeChildren": False
-})
-
-# ✅ Fast: Inspect with shallow hierarchy
-unity_gameobject_crud({
-    "operation": "inspect",
-    "gameObjectPath": "Player",
-    "maxDepth": 1  # Direct children only (default)
-})
-
 # ❌ Slow: Full inspection of 1000+ objects
 unity_gameobject_crud({
     "operation": "inspectMultiple",
@@ -1875,7 +1844,7 @@ The prefab management tool provides comprehensive operations for working with Un
 
 **Unit Tests:**
 - C# tests: `Assets/SkillForUnity/Editor/MCPBridge/Tests/McpCommandProcessorTests.cs`
-- Python tests: `.claude/skills/SkillForUnity/tests/test_*.py`
+- Python tests: `SkillForUnity/tests/test_*.py`
 
 ## Common Pitfalls
 

@@ -89,7 +89,7 @@ namespace MCP.Editor
         {
             get
             {
-                // Default to local .claude/skills path
+                // Default to local project root path
                 var localPath = ServerInstallerUtility.GetLocalSkillsPath();
                 if (!string.IsNullOrEmpty(localPath))
                 {
@@ -104,7 +104,7 @@ namespace MCP.Editor
                 }
 
                 // Final fallback (should not happen)
-                return Path.Combine(Application.dataPath, "..", ".claude", "skills", "SkillForUnity.zip");
+                return Path.Combine(Application.dataPath, "..", "SkillForUnity.zip");
             }
         }
 

@@ -61,18 +61,18 @@ namespace MCP.Editor
                 return null;
             }
 
-            // .claude/skills/SkillForUnity.zip を探す
-            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
-            if (File.Exists(skillZipPath))
-            {
-                return skillZipPath;
-            }
-
-            // 見つからない場合、プロジェクトルートを検索
+            // SkillForUnity.zip をプロジェクトルートで探す
             var rootZipPath = Path.Combine(projectRoot, "SkillForUnity.zip");
             if (File.Exists(rootZipPath))
             {
                 return rootZipPath;
+            }
+
+            // 見つからない場合、レガシーパス .claude/skills/SkillForUnity.zip を検索
+            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
+            if (File.Exists(skillZipPath))
+            {
+                return skillZipPath;
             }
 
             return null;
@@ -220,7 +220,7 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Get the default installation path for the local .claude/skills directory
+        /// Get the default installation path for the local project directory
         /// </summary>
         public static string GetLocalSkillsPath()
         {
@@ -230,7 +230,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
+            return Path.Combine(projectRoot, "SkillForUnity.zip");
         }
 
         /// <summary>

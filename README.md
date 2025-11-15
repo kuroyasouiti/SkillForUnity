@@ -14,7 +14,7 @@ SkillForUnity has been restructured as a **Claude Agent Skill** for easier setup
 ```
 SkillForUnity/
 ├── Assets/SkillForUnity/Editor/MCPBridge/    # Unity C# WebSocket Bridge + bundled Claude Skill zip
-└── .claude/skills/SkillForUnity/             # ⭐ Claude Skill source (Python MCP server, docs, tools)
+└── SkillForUnity/                            # ⭐ Claude Skill source (Python MCP server, docs, tools)
     ├── src/                     # Python MCP Server
     ├── setup/                   # Installation scripts
     ├── examples/                # Practical tutorials
@@ -68,7 +68,7 @@ Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json`):
   "mcpServers": {
     "skill-for-unity": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/.claude/skills/SkillForUnity", "src/main.py"],
+      "args": ["run", "--directory", "/path/to/SkillForUnity", "src/main.py"],
       "env": {
         "MCP_SERVER_TRANSPORT": "stdio",
         "MCP_LOG_LEVEL": "info"
@@ -98,21 +98,21 @@ The AI should call `unity_ping()` and show Unity version information.
 
 ### For Users
 
-- **[Claude Skill QUICKSTART](.claude/skills/SkillForUnity/QUICKSTART.md)** - Get started in 5 minutes
-- **[Claude Skill README](.claude/skills/SkillForUnity/README.md)** - Complete skill documentation
-- **[Claude Skill examples](.claude/skills/SkillForUnity/examples/)** - Practical tutorials and walkthroughs
+- **[Claude Skill QUICKSTART](SkillForUnity/QUICKSTART.md)** - Get started in 5 minutes
+- **[Claude Skill README](SkillForUnity/README.md)** - Complete skill documentation
+- **[Claude Skill examples](SkillForUnity/examples/)** - Practical tutorials and walkthroughs
 
 ### For Developers
 
-- **[Claude Skill docs](.claude/skills/SkillForUnity/docs/)** - API reference and guides
+- **[Claude Skill docs](SkillForUnity/docs/)** - API reference and guides
 - **[CLAUDE.md](CLAUDE.md)** - Instructions for Claude Code integration
-- **[Best Practices guide](.claude/skills/SkillForUnity/docs/guides/best-practices.md)** - Repository guidelines and tips
+- **[Best Practices guide](SkillForUnity/docs/guides/best-practices.md)** - Repository guidelines and tips
 
 ## 🏗️ Architecture
 
 ```
 AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity C# Bridge
-                                      (.claude/skills/SkillForUnity/src/)   (Assets/SkillForUnity/Editor/)
+                                      (SkillForUnity/src/)   (Assets/SkillForUnity/Editor/)
 ```
 
 ### Components
@@ -120,10 +120,10 @@ AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity 
 | Component | Location | Description |
 |-----------|----------|-------------|
 | **Unity C# Bridge** | `Assets/SkillForUnity/Editor/MCPBridge/` | WebSocket server running inside Unity Editor |
-| **Python MCP Server** | `.claude/skills/SkillForUnity/src/` | MCP protocol implementation |
-| **Setup Scripts** | `.claude/skills/SkillForUnity/setup/` | Installation and configuration helpers |
-| **Examples** | `.claude/skills/SkillForUnity/examples/` | Practical tutorials and guides |
-| **Documentation** | `.claude/skills/SkillForUnity/docs/` | API reference and best practices |
+| **Python MCP Server** | `SkillForUnity/src/` | MCP protocol implementation |
+| **Setup Scripts** | `SkillForUnity/setup/` | Installation and configuration helpers |
+| **Examples** | `SkillForUnity/examples/` | Practical tutorials and guides |
+| **Documentation** | `SkillForUnity/docs/` | API reference and best practices |
 
 ## ✨ Features
 
@@ -219,7 +219,7 @@ unity_batch_execute({
 })
 ```
 
-See [.claude/skills/SkillForUnity/examples/](.claude/skills/SkillForUnity/examples/) for more tutorials.
+See [SkillForUnity/examples/](SkillForUnity/examples/) for more tutorials.
 
 ## 🛠️ Development
 
@@ -259,21 +259,21 @@ SkillForUnity/
 ### Install Dev Dependencies
 
 ```bash
-cd .claude/skills/SkillForUnity
+cd SkillForUnity
 uv sync --dev
 ```
 
 ### Run Tests
 
 ```bash
-cd .claude/skills/SkillForUnity
+cd SkillForUnity
 pytest
 ```
 
 ### Format Code
 
 ```bash
-cd .claude/skills/SkillForUnity
+cd SkillForUnity
 black src/
 ruff check src/
 ```
@@ -288,7 +288,7 @@ Contributions are welcome! Please:
 4. Add tests and documentation
 5. Submit a pull request
 
-See [.claude/skills/SkillForUnity/docs/guides/best-practices.md](.claude/skills/SkillForUnity/docs/guides/best-practices.md) for coding guidelines.
+See [SkillForUnity/docs/guides/best-practices.md](SkillForUnity/docs/guides/best-practices.md) for coding guidelines.
 
 ## 📄 License
 
@@ -302,9 +302,9 @@ MIT License - see [MIT License](https://opensource.org/licenses/MIT) for details
 
 ## 🆘 Support
 
-- **Quick Start**: [.claude/skills/SkillForUnity/QUICKSTART.md](.claude/skills/SkillForUnity/QUICKSTART.md)
-- **Examples**: [.claude/skills/SkillForUnity/examples/](.claude/skills/SkillForUnity/examples/)
-- **Troubleshooting**: [.claude/skills/SkillForUnity/docs/troubleshooting.md](.claude/skills/SkillForUnity/docs/troubleshooting.md)
+- **Quick Start**: [SkillForUnity/QUICKSTART.md](SkillForUnity/QUICKSTART.md)
+- **Examples**: [SkillForUnity/examples/](SkillForUnity/examples/)
+- **Troubleshooting**: [SkillForUnity/docs/troubleshooting.md](SkillForUnity/docs/troubleshooting.md)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/SkillForUnity/issues)
 
 ## 🔄 Migration from Old Structure

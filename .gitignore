@@ -89,7 +89,7 @@ ExportedObj/
 # Claude Code / SkillForUnity
 # ================================================================
 # Skill source is copied from src/tools during build
-.claude/skills/SkillForUnity/src/tools/
+SkillForUnity/src/tools/
 
 # Local settings (user-specific)
 .claude/settings.local.json
@@ -99,4 +99,3 @@ ExportedObj/
 # ================================================================
 .DS_Store
 Thumbs.db
-.claude/skills/SkillForUnity.zip

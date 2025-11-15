@@ -621,16 +621,6 @@ namespace MCP.Editor
         {
             var go = ResolveGameObject(EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath"));
 
-            // Check if children should be included (default: true)
-            var includeChildren = true;
-            if (payload.TryGetValue("includeChildren", out var includeChildrenObj))
-            {
-                includeChildren = Convert.ToBoolean(includeChildrenObj);
-            }
-
-            // Get max depth for child hierarchy (default: 1 = direct children only)
-            var maxDepth = GetInt(payload, "maxDepth", defaultValue: 1);
-
             // Get component type names (not full component details - use componentManage for that)
             var components = go.GetComponents<Component>();
             var componentTypeNames = components
@@ -653,49 +643,7 @@ namespace MCP.Editor
                 ["childCount"] = go.transform.childCount,
             };
 
-            // Include children if requested
-            if (includeChildren && go.transform.childCount > 0)
-            {
-                var children = CollectChildren(go.transform, maxDepth, currentDepth: 0);
-                result["children"] = children;
-            }
-
             return result;
-        }
-
-        private static List<Dictionary<string, object>> CollectChildren(Transform parent, int maxDepth, int currentDepth)
-        {
-            var children = new List<Dictionary<string, object>>();
-
-            if (currentDepth >= maxDepth)
-            {
-                return children;
-            }
-
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                var child = parent.GetChild(i);
-                var childData = new Dictionary<string, object>
-                {
-                    ["name"] = child.name,
-                    ["path"] = GetHierarchyPath(child.gameObject),
-                    ["active"] = child.gameObject.activeSelf,
-                    ["tag"] = child.tag,
-                    ["layer"] = child.gameObject.layer,
-                    ["layerName"] = LayerMask.LayerToName(child.gameObject.layer),
-                    ["childCount"] = child.childCount,
-                };
-
-                // Recursively collect grandchildren if within depth limit
-                if (child.childCount > 0 && currentDepth + 1 < maxDepth)
-                {
-                    childData["children"] = CollectChildren(child, maxDepth, currentDepth + 1);
-                }
-
-                children.Add(childData);
-            }
-
-            return children;
         }
 
         private static object FindMultipleGameObjects(Dictionary<string, object> payload)

@@ -13,7 +13,7 @@ AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(Web
 ### コンポーネント
 
 1. **Unity C#ブリッジ** (`Assets/SkillForUnity/Editor/MCPBridge/`) - Unity Editor内で動作するWebSocketサーバー（Claude SkillのZIPを同梱）
-2. **Claude Skill (Python MCPサーバー)** (`.claude/skills/SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
+2. **Claude Skill (Python MCPサーバー)** (`SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
 
 ## クイックスタート
 
@@ -42,7 +42,7 @@ Unityパッケージには `Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.
 # Claude SkillのZIPをコピー
 cp Assets/SkillForUnity/Editor/MCPBridge/SkillForUnity.zip ~/.claude/skills/
 
-# 展開して ~/.claude/skills/SkillForUnity を作成
+# 展開して ~/SkillForUnity を作成
 cd ~/.claude/skills
 unzip -o SkillForUnity.zip
 ```
@@ -61,7 +61,7 @@ Claude Desktopの設定ファイル（`~/.claude/claude_desktop_config.json`）�
   "mcpServers": {
     "skill-for-unity": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/.claude/skills/SkillForUnity", "src/main.py"],
+      "args": ["run", "--directory", "/path/to/SkillForUnity", "src/main.py"],
       "env": {
         "MCP_SERVER_TRANSPORT": "stdio",
         "MCP_LOG_LEVEL": "info"
@@ -670,9 +670,9 @@ SkillForUnity/
 
 詳細なガイドは以下を参照:
 - [CLAUDE.md](CLAUDE.md) - 完全な開発ドキュメント
-- [Tilemapツールリファレンス](.claude/skills/SkillForUnity/docs/TOOLS_REFERENCE.md#24-unity_tilemap_manage) - TileMapツールリファレンス
-- [NavMeshツールリファレンス](.claude/skills/SkillForUnity/docs/TOOLS_REFERENCE.md#25-unity_navmesh_manage) - NavMeshツールリファレンス
-- [TOOL_SELECTION_GUIDE.md](.claude/skills/SkillForUnity/docs/TOOL_SELECTION_GUIDE.md) - バッチ操作やワークフローのまとめ
+- [Tilemapツールリファレンス](SkillForUnity/docs/TOOLS_REFERENCE.md#24-unity_tilemap_manage) - TileMapツールリファレンス
+- [NavMeshツールリファレンス](SkillForUnity/docs/TOOLS_REFERENCE.md#25-unity_navmesh_manage) - NavMeshツールリファレンス
+- [TOOL_SELECTION_GUIDE.md](SkillForUnity/docs/TOOL_SELECTION_GUIDE.md) - バッチ操作やワークフローのまとめ
 
 ---
 
@@ -781,9 +781,9 @@ SkillForUnity/
 ## ドキュメント
 
 - **メインドキュメント**: [CLAUDE.md](CLAUDE.md)
-- **TileMapガイド**: [Tilemapツールリファレンス](.claude/skills/SkillForUnity/docs/TOOLS_REFERENCE.md#24-unity_tilemap_manage)
-- **NavMeshガイド**: [NavMeshツールリファレンス](.claude/skills/SkillForUnity/docs/TOOLS_REFERENCE.md#25-unity_navmesh_manage)
-- **バッチ処理例**: [TOOL_SELECTION_GUIDE.md](.claude/skills/SkillForUnity/docs/TOOL_SELECTION_GUIDE.md)
+- **TileMapガイド**: [Tilemapツールリファレンス](SkillForUnity/docs/TOOLS_REFERENCE.md#24-unity_tilemap_manage)
+- **NavMeshガイド**: [NavMeshツールリファレンス](SkillForUnity/docs/TOOLS_REFERENCE.md#25-unity_navmesh_manage)
+- **バッチ処理例**: [TOOL_SELECTION_GUIDE.md](SkillForUnity/docs/TOOL_SELECTION_GUIDE.md)
 - **このファイル**: 完全なツールリファレンスとクイックスタート
 
 ---
@@ -802,7 +802,7 @@ MIT License - [MIT License](https://opensource.org/licenses/MIT)
 問題、質問、機能リクエストについて:
 1. Unity Consoleでエラーメッセージを確認
 2. [CLAUDE.md](CLAUDE.md)のドキュメントを確認
-3. [TOOL_SELECTION_GUIDE.md](.claude/skills/SkillForUnity/docs/TOOL_SELECTION_GUIDE.md)でバッチ操作のワークフローを確認
+3. [TOOL_SELECTION_GUIDE.md](SkillForUnity/docs/TOOL_SELECTION_GUIDE.md)でバッチ操作のワークフローを確認
 4. プロジェクトリポジトリにissueを作成
 
 ---
