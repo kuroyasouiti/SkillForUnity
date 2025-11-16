@@ -54,6 +54,7 @@ namespace MCP.Editor
                 "renderPipelineManage" => HandleRenderPipelineManage(command.Payload),
                 "constantConvert" => HandleConstantConvert(command.Payload),
                 "batchExecute" => HandleBatchExecute(command.Payload),
+                "designPatternGenerate" => HandleDesignPatternGenerate(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
             };
         }
@@ -7426,6 +7427,86 @@ namespace MCP.Editor
             }
 
             return false;
+        }
+
+        #endregion
+
+        #region Design Pattern Generation
+
+        /// <summary>
+        /// Handles design pattern code generation.
+        /// </summary>
+        /// <param name="payload">Operation parameters including pattern type, class name, namespace, and options.</param>
+        /// <returns>Result dictionary with generated code and file path.</returns>
+        private static object HandleDesignPatternGenerate(Dictionary<string, object> payload)
+        {
+            var patternType = GetString(payload, "patternType");
+            var className = GetString(payload, "className");
+            var namespaceName = GetString(payload, "namespace", null);
+            var scriptPath = GetString(payload, "scriptPath");
+            var options = payload.ContainsKey("options") && payload["options"] is Dictionary<string, object> opts
+                ? opts
+                : new Dictionary<string, object>();
+
+            if (string.IsNullOrEmpty(patternType))
+            {
+                throw new InvalidOperationException("patternType is required");
+            }
+
+            if (string.IsNullOrEmpty(className))
+            {
+                throw new InvalidOperationException("className is required");
+            }
+
+            if (string.IsNullOrEmpty(scriptPath))
+            {
+                throw new InvalidOperationException("scriptPath is required");
+            }
+
+            // Validate script path
+            if (!scriptPath.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("scriptPath must start with 'Assets/'");
+            }
+
+            if (!scriptPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("scriptPath must end with '.cs'");
+            }
+
+            // Generate the code
+            string code;
+            try
+            {
+                code = PatternTemplates.GeneratePattern(patternType, className, namespaceName, options);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Failed to generate pattern code: {ex.Message}", ex);
+            }
+
+            // Create directory if it doesn't exist
+            string directory = Path.GetDirectoryName(scriptPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Write the file
+            File.WriteAllText(scriptPath, code);
+
+            // Refresh AssetDatabase
+            AssetDatabase.Refresh();
+
+            return new Dictionary<string, object>
+            {
+                ["success"] = true,
+                ["scriptPath"] = scriptPath,
+                ["patternType"] = patternType,
+                ["className"] = className,
+                ["code"] = code,
+                ["message"] = $"Successfully generated {patternType} pattern for class {className}"
+            };
         }
 
         #endregion

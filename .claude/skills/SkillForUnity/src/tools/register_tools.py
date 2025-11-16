@@ -1142,6 +1142,69 @@ def register_tools(server: Server) -> None:
         [],
     )
 
+    design_pattern_generate_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "patternType": {
+                    "type": "string",
+                    "enum": ["singleton", "objectpool", "statemachine", "observer", "command", "factory", "servicelocator"],
+                    "description": "Type of design pattern to generate. Available patterns: singleton (single instance management), objectpool (object reuse pattern), statemachine (state management), observer (event system), command (action abstraction with undo/redo), factory (object creation pattern), servicelocator (global service access).",
+                },
+                "className": {
+                    "type": "string",
+                    "description": "Name of the class to generate (e.g., 'GameManager', 'EnemyPool', 'PlayerStateMachine').",
+                },
+                "scriptPath": {
+                    "type": "string",
+                    "description": "Full path to the C# script file to create (must start with 'Assets/' and end with '.cs'). Example: 'Assets/Scripts/GameManager.cs'",
+                },
+                "namespace": {
+                    "type": "string",
+                    "description": "Optional C# namespace for the generated class (e.g., 'MyGame.Managers'). If not specified, no namespace will be used.",
+                },
+                "options": {
+                    "type": "object",
+                    "description": "Pattern-specific options to customize the generated code.",
+                    "properties": {
+                        # Singleton options
+                        "persistent": {
+                            "type": "boolean",
+                            "description": "For Singleton: If true, uses DontDestroyOnLoad to persist across scenes. Default: false.",
+                        },
+                        "threadSafe": {
+                            "type": "boolean",
+                            "description": "For Singleton: If true, uses thread-safe lazy initialization. Default: true.",
+                        },
+                        "monoBehaviour": {
+                            "type": "boolean",
+                            "description": "For Singleton: If true, inherits from MonoBehaviour. If false, creates a plain C# singleton. Default: true.",
+                        },
+                        # ObjectPool options
+                        "pooledType": {
+                            "type": "string",
+                            "description": "For ObjectPool: Type of object to pool (e.g., 'GameObject', 'Bullet', 'Enemy'). Default: 'GameObject'.",
+                        },
+                        "defaultCapacity": {
+                            "type": "string",
+                            "description": "For ObjectPool: Initial pool capacity. Default: '10'.",
+                        },
+                        "maxSize": {
+                            "type": "string",
+                            "description": "For ObjectPool: Maximum pool size. Default: '100'.",
+                        },
+                        # Factory options
+                        "productType": {
+                            "type": "string",
+                            "description": "For Factory: Type of products to create (e.g., 'GameObject', 'Enemy', 'Weapon'). Default: 'GameObject'.",
+                        },
+                    },
+                },
+            },
+        },
+        ["patternType", "className", "scriptPath"],
+    )
+
     tool_definitions = [
         types.Tool(
             name="unity_ping",
@@ -1262,6 +1325,11 @@ def register_tools(server: Server) -> None:
             name="unity_script_batch_manage",
             description="CRITICAL: ALWAYS use this tool for ALL C# script operations! Batch manage C# scripts with automatic compilation handling. Supports create, update, delete, and inspect operations. This is the ONLY correct way to manage scripts - using unity_asset_crud for scripts will cause compilation issues! Benefits: (1) 10-20x faster for multiple scripts by doing single compilation, (2) Atomic operations - all succeed or fail together, (3) Automatic compilation detection and waiting, (4) Proper error reporting with per-script results. IMPORTANT: Always use 'scripts' array even for single script operations. DO NOT use unity_asset_crud for .cs files!",
             inputSchema=script_batch_manage_schema,
+        ),
+        types.Tool(
+            name="unity_designPattern_generate",
+            description="Generate C# code for common Unity design patterns! Instantly create production-ready implementations of: Singleton (single instance management with optional persistence), ObjectPool (efficient object reuse), StateMachine (state management with transitions), Observer (event system), Command (action abstraction with undo/redo), Factory (object creation pattern), and ServiceLocator (global service access). Each pattern comes with complete, commented code ready to use. Perfect for quickly implementing best practices in your Unity project!",
+            inputSchema=design_pattern_generate_schema,
         ),
     ]
 
@@ -1534,6 +1602,9 @@ def register_tools(server: Server) -> None:
             except Exception as exc:
                 logger.error("Script batch operation failed: %s", exc)
                 raise RuntimeError(f"Script batch operation failed: {exc}") from exc
+
+        if name == "unity_designPattern_generate":
+            return await _call_bridge_tool("designPatternGenerate", args)
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 

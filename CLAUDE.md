@@ -1901,6 +1901,331 @@ unity_script_batch_manage({
 - If compilation fails, the response includes compilation errors
 - NEVER use `unity_asset_crud` for C# scripts - it bypasses compilation handling
 
+### Design Pattern Generation (`unity_designPattern_generate`)
+
+The design pattern generation tool provides instant creation of production-ready C# implementations for common Unity design patterns. Instead of writing boilerplate code manually, generate complete, commented, and ready-to-use pattern implementations in seconds!
+
+**Supported Patterns:**
+
+1. **Singleton** - Single instance management with optional persistence
+2. **ObjectPool** - Efficient object reuse pattern for performance
+3. **StateMachine** - State management with clean transitions
+4. **Observer** - Event system for decoupled communication
+5. **Command** - Action abstraction with undo/redo support
+6. **Factory** - Object creation pattern with prefab management
+7. **ServiceLocator** - Global service access pattern
+
+**Basic Usage:**
+
+```python
+unity_designPattern_generate({
+    "patternType": "singleton",
+    "className": "GameManager",
+    "scriptPath": "Assets/Scripts/GameManager.cs"
+})
+```
+
+**Pattern Examples:**
+
+#### 1. Singleton Pattern
+
+Perfect for managers that should have only one instance across the entire game.
+
+```python
+# Basic Singleton
+unity_designPattern_generate({
+    "patternType": "singleton",
+    "className": "GameManager",
+    "scriptPath": "Assets/Scripts/GameManager.cs",
+    "options": {
+        "persistent": True,      # Persists across scenes with DontDestroyOnLoad
+        "threadSafe": True,      # Thread-safe initialization
+        "monoBehaviour": True    # Inherits from MonoBehaviour
+    }
+})
+
+# Plain C# Singleton (non-MonoBehaviour)
+unity_designPattern_generate({
+    "patternType": "singleton",
+    "className": "ConfigManager",
+    "scriptPath": "Assets/Scripts/ConfigManager.cs",
+    "namespace": "MyGame.Core",
+    "options": {
+        "monoBehaviour": False   # Plain C# class
+    }
+})
+```
+
+**Generated Features:**
+- Thread-safe lazy initialization
+- Automatic instance creation
+- DontDestroyOnLoad support for persistence
+- Awake() protection against duplicates
+
+#### 2. ObjectPool Pattern
+
+Optimize performance by reusing objects instead of constantly creating/destroying them.
+
+```python
+unity_designPattern_generate({
+    "patternType": "objectpool",
+    "className": "BulletPool",
+    "scriptPath": "Assets/Scripts/BulletPool.cs",
+    "options": {
+        "pooledType": "GameObject",  # Type of object to pool
+        "defaultCapacity": "50",     # Initial pool size
+        "maxSize": "200"             # Maximum pool size
+    }
+})
+```
+
+**Generated Features:**
+- Unity's ObjectPool<T> integration
+- Automatic object creation/destruction callbacks
+- Configurable capacity and max size
+- Get/Release/Clear methods
+
+**Usage Example:**
+```csharp
+// Get from pool
+GameObject bullet = bulletPool.Get();
+
+// Return to pool when done
+bulletPool.Release(bullet);
+```
+
+#### 3. StateMachine Pattern
+
+Clean state management with enter/exit/update lifecycle.
+
+```python
+unity_designPattern_generate({
+    "patternType": "statemachine",
+    "className": "PlayerStateMachine",
+    "scriptPath": "Assets/Scripts/PlayerStateMachine.cs",
+    "namespace": "MyGame.Player"
+})
+```
+
+**Generated Features:**
+- IState interface with Enter/Execute/Exit
+- State registration and switching
+- Example states (Idle, Move)
+- Type-safe state transitions
+
+**Usage Example:**
+```csharp
+// Register states
+stateMachine.RegisterState(new IdleState());
+stateMachine.RegisterState(new MoveState());
+
+// Change state
+stateMachine.ChangeState<MoveState>();
+```
+
+#### 4. Observer Pattern (Event System)
+
+Decoupled event-driven communication between game components.
+
+```python
+unity_designPattern_generate({
+    "patternType": "observer",
+    "className": "EventManager",
+    "scriptPath": "Assets/Scripts/EventManager.cs"
+})
+```
+
+**Generated Features:**
+- Singleton event manager
+- Generic event subscription/publishing
+- String-based event names
+- Support for typed and parameterless events
+
+**Usage Example:**
+```csharp
+// Subscribe to event
+EventManager.Instance.Subscribe<int>("ScoreChanged", OnScoreChanged);
+
+// Publish event
+EventManager.Instance.Publish("ScoreChanged", newScore);
+
+// Unsubscribe
+EventManager.Instance.Unsubscribe<int>("ScoreChanged", OnScoreChanged);
+```
+
+#### 5. Command Pattern
+
+Action abstraction with built-in undo/redo support - perfect for games with rewind mechanics or level editors.
+
+```python
+unity_designPattern_generate({
+    "patternType": "command",
+    "className": "CommandManager",
+    "scriptPath": "Assets/Scripts/CommandManager.cs"
+})
+```
+
+**Generated Features:**
+- ICommand interface with Execute/Undo
+- Command history stack
+- Undo/Redo functionality
+- Example MoveCommand implementation
+
+**Usage Example:**
+```csharp
+// Execute command
+var moveCmd = new MoveCommand(player.transform, newPosition);
+commandManager.ExecuteCommand(moveCmd);
+
+// Undo last action
+commandManager.Undo();
+
+// Redo
+commandManager.Redo();
+```
+
+#### 6. Factory Pattern
+
+Centralized object creation with prefab management.
+
+```python
+unity_designPattern_generate({
+    "patternType": "factory",
+    "className": "EnemyFactory",
+    "scriptPath": "Assets/Scripts/EnemyFactory.cs",
+    "options": {
+        "productType": "GameObject"
+    }
+})
+```
+
+**Generated Features:**
+- Product ID to prefab mapping
+- Inspector-friendly prefab list
+- Type-safe product creation
+- Position/rotation overloads
+
+**Usage Example:**
+```csharp
+// Create enemy by ID
+GameObject enemy = factory.CreateProduct("zombie");
+
+// Create with position/rotation
+GameObject boss = factory.CreateProduct("boss", spawnPos, spawnRot);
+
+// Create with component access
+Enemy enemyComponent = factory.CreateProduct<Enemy>("skeleton");
+```
+
+#### 7. ServiceLocator Pattern
+
+Global service access for cross-cutting concerns (audio, input, analytics, etc.).
+
+```python
+unity_designPattern_generate({
+    "patternType": "servicelocator",
+    "className": "ServiceLocator",
+    "scriptPath": "Assets/Scripts/ServiceLocator.cs"
+})
+```
+
+**Generated Features:**
+- Singleton service registry
+- Type-safe service registration/retrieval
+- Service existence checks
+- Example IAudioService interface
+
+**Usage Example:**
+```csharp
+// Register service
+ServiceLocator.Instance.RegisterService<IAudioService>(new AudioService());
+
+// Get service
+IAudioService audio = ServiceLocator.Instance.GetService<IAudioService>();
+audio.PlaySound("explosion");
+
+// Check if service exists
+if (ServiceLocator.Instance.HasService<IAnalytics>()) {
+    // Use analytics
+}
+```
+
+**Advanced Usage with Namespaces:**
+
+Organize your code with namespaces:
+
+```python
+unity_designPattern_generate({
+    "patternType": "singleton",
+    "className": "AudioManager",
+    "scriptPath": "Assets/Scripts/Managers/AudioManager.cs",
+    "namespace": "MyGame.Managers",
+    "options": {
+        "persistent": True,
+        "monoBehaviour": True
+    }
+})
+```
+
+**Combining Patterns:**
+
+Create multiple related patterns in one go:
+
+```python
+# Create event system and command manager together
+unity_script_batch_manage({
+    "scripts": [
+        {
+            "operation": "create",
+            "scriptPath": "Assets/Scripts/EventManager.cs",
+            "content": generate_observer_pattern("EventManager")
+        },
+        {
+            "operation": "create",
+            "scriptPath": "Assets/Scripts/CommandManager.cs",
+            "content": generate_command_pattern("CommandManager")
+        }
+    ]
+})
+```
+
+**Best Practices:**
+
+1. **Use Singleton for Managers** - GameManager, AudioManager, InputManager
+2. **Use ObjectPool for Frequently Spawned Objects** - Bullets, particles, enemies
+3. **Use StateMachine for Complex Behavior** - Player states, AI states, UI states
+4. **Use Observer for Decoupled Events** - Score changes, game events, achievements
+5. **Use Command for Undoable Actions** - Level editors, gameplay rewind mechanics
+6. **Use Factory for Runtime Object Creation** - Enemy spawners, item generation
+7. **Use ServiceLocator for Cross-Cutting Concerns** - Audio, analytics, localization
+
+**Performance Notes:**
+
+- All patterns are optimized for Unity's lifecycle
+- MonoBehaviour patterns use proper initialization (Awake, Start)
+- ObjectPool uses Unity's built-in ObjectPool<T> for best performance
+- Singleton patterns include thread-safety for multithreaded scenarios
+
+**Return Value:**
+
+```python
+{
+    "success": True,
+    "scriptPath": "Assets/Scripts/GameManager.cs",
+    "patternType": "singleton",
+    "className": "GameManager",
+    "code": "using UnityEngine;...",  # Full generated code
+    "message": "Successfully generated singleton pattern for class GameManager"
+}
+```
+
+**Important Notes:**
+- Generated code is production-ready with comments
+- All patterns follow Unity best practices
+- Code includes example usage in comments
+- Automatic compilation is triggered after generation
+- Edit generated code to customize for your specific needs
+
 ### Prefab Management (`unity.prefab.crud`)
 
 The prefab management tool provides comprehensive operations for working with Unity prefabs:
