@@ -55,6 +55,7 @@ namespace MCP.Editor
                 "constantConvert" => HandleConstantConvert(command.Payload),
                 "batchExecute" => HandleBatchExecute(command.Payload),
                 "designPatternGenerate" => HandleDesignPatternGenerate(command.Payload),
+                "scriptBatchManage" => HandleScriptBatchManage(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
             };
         }
@@ -87,31 +88,57 @@ namespace MCP.Editor
                 throw new InvalidOperationException("operation is required");
             }
 
+            // Check if compilation is in progress and wait if necessary (except for read-only operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "listBuildSettings")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("sceneManage", maxWaitSeconds: 30f);
+            }
+
+            object result;
             switch (operation)
             {
                 case "create":
-                    return CreateScene(payload);
+                    result = CreateScene(payload);
+                    break;
                 case "load":
-                    return LoadScene(payload);
+                    result = LoadScene(payload);
+                    break;
                 case "save":
-                    return SaveScenes(payload);
+                    result = SaveScenes(payload);
+                    break;
                 case "delete":
-                    return DeleteScene(payload);
+                    result = DeleteScene(payload);
+                    break;
                 case "duplicate":
-                    return DuplicateScene(payload);
+                    result = DuplicateScene(payload);
+                    break;
                 case "listBuildSettings":
-                    return ListBuildSettings(payload);
+                    result = ListBuildSettings(payload);
+                    break;
                 case "addToBuildSettings":
-                    return AddToBuildSettings(payload);
+                    result = AddToBuildSettings(payload);
+                    break;
                 case "removeFromBuildSettings":
-                    return RemoveFromBuildSettings(payload);
+                    result = RemoveFromBuildSettings(payload);
+                    break;
                 case "reorderBuildSettings":
-                    return ReorderBuildSettings(payload);
+                    result = ReorderBuildSettings(payload);
+                    break;
                 case "setBuildSettingsEnabled":
-                    return SetBuildSettingsEnabled(payload);
+                    result = SetBuildSettingsEnabled(payload);
+                    break;
                 default:
                     throw new InvalidOperationException($"Unknown sceneManage operation: {operation}");
             }
+
+            // Add compilation wait info if we waited
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object CreateScene(Dictionary<string, object> payload)
@@ -467,7 +494,15 @@ namespace MCP.Editor
         private static object HandleGameObjectManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (except for read-only operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect" && operation != "findMultiple" && operation != "inspectMultiple")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("gameObjectManage", maxWaitSeconds: 30f);
+            }
+
+            var result = operation switch
             {
                 "create" => CreateGameObject(payload),
                 "delete" => DeleteGameObject(payload),
@@ -480,6 +515,14 @@ namespace MCP.Editor
                 "inspectMultiple" => InspectMultipleGameObjects(payload),
                 _ => throw new InvalidOperationException($"Unknown gameObjectManage operation: {operation}"),
             };
+
+            // Add compilation wait info if we waited
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object CreateGameObject(Dictionary<string, object> payload)
@@ -784,14 +827,27 @@ namespace MCP.Editor
         /// <summary>
         /// Handles component management operations (add, remove, update, inspect).
         /// Uses reflection to set component properties from the payload.
+        /// Monitors compilation status and returns whether compilation was triggered.
         /// </summary>
         /// <param name="payload">Operation parameters including 'operation', 'gameObjectPath', 'componentType', and optional 'propertyChanges'.</param>
-        /// <returns>Result dictionary with component type and GameObject path.</returns>
+        /// <returns>Result dictionary with component type, GameObject path, and compilation status.</returns>
         /// <exception cref="InvalidOperationException">Thrown when GameObject or component type is not found.</exception>
         private static object HandleComponentManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (only for non-inspect operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect" && operation != "inspectMultiple")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("componentManage", maxWaitSeconds: 30f);
+            }
+
+            // Record compilation state before operation
+            var wasCompiling = EditorApplication.isCompiling;
+
+            // Execute the operation
+            var result = operation switch
             {
                 "add" => AddComponent(payload),
                 "remove" => RemoveComponent(payload),
@@ -803,6 +859,36 @@ namespace MCP.Editor
                 "inspectMultiple" => InspectMultipleComponents(payload),
                 _ => throw new InvalidOperationException($"Unknown componentManage operation: {operation}"),
             };
+
+            // Detect if compilation was triggered (only for operations that modify state)
+            var compilationTriggered = false;
+            if (operation != "inspect" && operation != "inspectMultiple")
+            {
+                compilationTriggered = DetectCompilationStart(wasCompiling, maxWaitSeconds: 1.0f);
+            }
+
+            // Add compilation status to result
+            if (result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationTriggered"] = compilationTriggered;
+                if (compilationWaitInfo != null)
+                {
+                    resultDict["compilationWait"] = compilationWaitInfo;
+                }
+                return resultDict;
+            }
+
+            // If result is not a dictionary, wrap it
+            var wrappedResult = new Dictionary<string, object>
+            {
+                ["result"] = result,
+                ["compilationTriggered"] = compilationTriggered
+            };
+            if (compilationWaitInfo != null)
+            {
+                wrappedResult["compilationWait"] = compilationWaitInfo;
+            }
+            return wrappedResult;
         }
 
         private static object AddComponent(Dictionary<string, object> payload)
@@ -1717,6 +1803,9 @@ namespace MCP.Editor
 
         private static object HandleUguiRectAdjust(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("uguiRectAdjust", maxWaitSeconds: 30f);
+
             try
             {
                 var path = EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath");
@@ -1774,7 +1863,7 @@ namespace MCP.Editor
                 EditorUtility.SetDirty(rectTransform);
                 Debug.Log($"[uguiRectAdjust] Completed successfully");
 
-                return new Dictionary<string, object>
+                var result = new Dictionary<string, object>
                 {
                     ["before"] = before,
                     ["after"] = new Dictionary<string, object>
@@ -1792,6 +1881,14 @@ namespace MCP.Editor
                     },
                     ["scaleFactor"] = scaleFactor,
                 };
+
+                // Add compilation wait info if we waited
+                if (compilationWaitInfo != null)
+                {
+                    result["compilationWait"] = compilationWaitInfo;
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -3742,6 +3839,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with created GameObject paths.</returns>
         private static object HandleHierarchyBuilder(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("hierarchyBuilder", maxWaitSeconds: 30f);
+
             try
             {
                 var hierarchyDict = payload["hierarchy"] as Dictionary<string, object>;
@@ -3908,6 +4008,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with created objects.</returns>
         private static object HandleSceneQuickSetup(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("sceneQuickSetup", maxWaitSeconds: 30f);
+
             try
             {
                 var setupType = GetString(payload, "setupType");
@@ -7304,6 +7407,9 @@ namespace MCP.Editor
         /// </param>
         private static object HandleBatchExecute(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("batchExecute", maxWaitSeconds: 30f);
+
             var operationsList = GetList(payload, "operations");
             if (operationsList == null || operationsList.Count == 0)
             {
@@ -7373,16 +7479,17 @@ namespace MCP.Editor
                 }
             }
 
-            // If script changes were detected, trigger compilation
+            // If script changes were detected, refresh and check if compilation starts
             var compilationTriggered = false;
             if (hasScriptChanges)
             {
+                var wasCompiling = EditorApplication.isCompiling;
                 AssetDatabase.Refresh();
-                CompilationPipeline.RequestScriptCompilation();
-                compilationTriggered = true;
+                // Detect if compilation actually started
+                compilationTriggered = DetectCompilationStart(wasCompiling, maxWaitSeconds: 1.5f);
             }
 
-            return new Dictionary<string, object>
+            var resultDict = new Dictionary<string, object>
             {
                 ["success"] = !hasErrors,
                 ["processedCount"] = results.Count,
@@ -7394,6 +7501,14 @@ namespace MCP.Editor
                     : $"Batch completed successfully. Processed {results.Count} operations." +
                       (compilationTriggered ? " Compilation triggered." : "")
             };
+
+            // Add compilation wait info if we waited
+            if (compilationWaitInfo != null)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return resultDict;
         }
 
         /// <summary>
@@ -7506,6 +7621,322 @@ namespace MCP.Editor
                 ["className"] = className,
                 ["code"] = code,
                 ["message"] = $"Successfully generated {patternType} pattern for class {className}"
+            };
+        }
+
+        /// <summary>
+        /// Handles batch script operations (create, update, delete, inspect).
+        /// Monitors compilation status and returns whether compilation was triggered.
+        /// </summary>
+        /// <param name="payload">Operation parameters including scripts array and timeout settings.</param>
+        /// <returns>Result dictionary with operation results and compilation status.</returns>
+        private static object HandleScriptBatchManage(Dictionary<string, object> payload)
+        {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("scriptBatchManage", maxWaitSeconds: 30f);
+
+            var scripts = GetList(payload, "scripts");
+            var stopOnError = GetBool(payload, "stopOnError", false);
+            var timeoutSeconds = GetInt(payload, "timeoutSeconds", 30);
+
+            var results = new List<Dictionary<string, object>>();
+            var errors = new List<Dictionary<string, object>>();
+            var totalCount = scripts.Count;
+            var successCount = 0;
+            var errorCount = 0;
+
+            // Record state before operations
+            var wasCompiling = EditorApplication.isCompiling;
+
+            // Execute all script operations
+            foreach (var scriptObj in scripts)
+            {
+                if (!(scriptObj is Dictionary<string, object> scriptPayload))
+                {
+                    errors.Add(new Dictionary<string, object>
+                    {
+                        ["error"] = "Invalid script object format",
+                        ["scriptPath"] = "unknown"
+                    });
+                    errorCount++;
+                    continue;
+                }
+
+                var operation = GetString(scriptPayload, "operation");
+                var scriptPath = GetString(scriptPayload, "scriptPath");
+
+                try
+                {
+                    Dictionary<string, object> operationResult = null;
+
+                    switch (operation.ToLowerInvariant())
+                    {
+                        case "create":
+                            operationResult = CreateScript(scriptPayload);
+                            break;
+                        case "update":
+                            operationResult = UpdateScript(scriptPayload);
+                            break;
+                        case "delete":
+                            operationResult = DeleteScript(scriptPayload);
+                            break;
+                        case "inspect":
+                            operationResult = InspectScript(scriptPayload);
+                            break;
+                        default:
+                            throw new InvalidOperationException($"Unsupported operation: {operation}");
+                    }
+
+                    operationResult["scriptPath"] = scriptPath;
+                    operationResult["operation"] = operation;
+                    results.Add(operationResult);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    var errorInfo = new Dictionary<string, object>
+                    {
+                        ["scriptPath"] = scriptPath,
+                        ["operation"] = operation,
+                        ["error"] = ex.Message
+                    };
+                    errors.Add(errorInfo);
+                    errorCount++;
+
+                    if (stopOnError)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // Refresh asset database after all operations
+            if (successCount > 0)
+            {
+                AssetDatabase.Refresh();
+            }
+
+            // Wait briefly to detect if compilation started
+            var compilationTriggered = DetectCompilationStart(wasCompiling, maxWaitSeconds: 1.5f);
+
+            var resultDict = new Dictionary<string, object>
+            {
+                ["totalCount"] = totalCount,
+                ["successCount"] = successCount,
+                ["errorCount"] = errorCount,
+                ["results"] = results,
+                ["errors"] = errors,
+                ["compilationTriggered"] = compilationTriggered
+            };
+
+            // Add compilation wait info if we waited
+            if (compilationWaitInfo != null)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return resultDict;
+        }
+
+        /// <summary>
+        /// Detects if compilation has started after script operations.
+        /// Waits for a short period and checks if EditorApplication.isCompiling becomes true.
+        /// </summary>
+        /// <param name="wasCompilingBefore">Whether compilation was already running before operations.</param>
+        /// <param name="maxWaitSeconds">Maximum time to wait for compilation to start.</param>
+        /// <returns>True if compilation started, false otherwise.</returns>
+        private static bool DetectCompilationStart(bool wasCompilingBefore, float maxWaitSeconds = 1.5f)
+        {
+            // If already compiling, compilation was triggered
+            if (wasCompilingBefore)
+            {
+                return true;
+            }
+
+            // Wait and check if compilation starts
+            var startTime = EditorApplication.timeSinceStartup;
+            var checkInterval = 0.1f; // Check every 100ms
+
+            while ((EditorApplication.timeSinceStartup - startTime) < maxWaitSeconds)
+            {
+                if (EditorApplication.isCompiling)
+                {
+                    Debug.Log("MCP Bridge: Compilation detected after script operations");
+                    return true;
+                }
+
+                // Small delay before next check
+                System.Threading.Thread.Sleep((int)(checkInterval * 1000));
+            }
+
+            Debug.Log("MCP Bridge: No compilation detected after script operations");
+            return false;
+        }
+
+        /// <summary>
+        /// Waits for ongoing compilation to complete.
+        /// Returns immediately if not compiling.
+        /// </summary>
+        /// <param name="maxWaitSeconds">Maximum time to wait for compilation to complete.</param>
+        /// <returns>True if compilation completed successfully, false if timeout or still compiling.</returns>
+        private static bool WaitForCompilationComplete(float maxWaitSeconds = 30f)
+        {
+            if (!EditorApplication.isCompiling)
+            {
+                return true; // Not compiling, return immediately
+            }
+
+            Debug.Log($"MCP Bridge: Waiting for ongoing compilation to complete (max {maxWaitSeconds}s)...");
+            var startTime = EditorApplication.timeSinceStartup;
+            var checkInterval = 0.2f; // Check every 200ms
+
+            while ((EditorApplication.timeSinceStartup - startTime) < maxWaitSeconds)
+            {
+                if (!EditorApplication.isCompiling)
+                {
+                    var elapsedSeconds = EditorApplication.timeSinceStartup - startTime;
+                    Debug.Log($"MCP Bridge: Compilation completed after {elapsedSeconds:F1}s");
+                    return true;
+                }
+
+                // Small delay before next check
+                System.Threading.Thread.Sleep((int)(checkInterval * 1000));
+            }
+
+            Debug.LogWarning($"MCP Bridge: Compilation did not complete within {maxWaitSeconds}s");
+            return false;
+        }
+
+        /// <summary>
+        /// Ensures no compilation is in progress before executing a tool operation.
+        /// If compilation is in progress, waits for it to complete.
+        /// </summary>
+        /// <param name="toolName">Name of the tool being executed (for logging).</param>
+        /// <param name="maxWaitSeconds">Maximum time to wait for compilation to complete.</param>
+        /// <returns>Dictionary with status information if waiting occurred, null if no wait was needed.</returns>
+        private static Dictionary<string, object> EnsureNoCompilationInProgress(string toolName, float maxWaitSeconds = 30f)
+        {
+            if (!EditorApplication.isCompiling)
+            {
+                return null; // No compilation in progress
+            }
+
+            Debug.Log($"MCP Bridge: Tool '{toolName}' called during compilation, waiting for completion...");
+            var startTime = EditorApplication.timeSinceStartup;
+            var completed = WaitForCompilationComplete(maxWaitSeconds);
+            var elapsedSeconds = EditorApplication.timeSinceStartup - startTime;
+
+            return new Dictionary<string, object>
+            {
+                ["waitedForCompilation"] = true,
+                ["compilationCompleted"] = completed,
+                ["waitTimeSeconds"] = (float)Math.Round(elapsedSeconds, 2),
+                ["message"] = completed
+                    ? $"Waited {elapsedSeconds:F1}s for ongoing compilation to complete"
+                    : $"Compilation did not complete within {maxWaitSeconds}s"
+            };
+        }
+
+        /// <summary>
+        /// Creates a new C# script file.
+        /// </summary>
+        private static Dictionary<string, object> CreateScript(Dictionary<string, object> payload)
+        {
+            var scriptPath = GetString(payload, "scriptPath");
+            var content = GetString(payload, "content");
+
+            if (!scriptPath.EndsWith(".cs"))
+            {
+                throw new InvalidOperationException("Script path must end with .cs extension");
+            }
+
+            if (!scriptPath.StartsWith("Assets/"))
+            {
+                throw new InvalidOperationException("Script path must start with 'Assets/'");
+            }
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(scriptPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Create the script file
+            File.WriteAllText(scriptPath, content);
+
+            return new Dictionary<string, object>
+            {
+                ["status"] = "created",
+                ["path"] = scriptPath
+            };
+        }
+
+        /// <summary>
+        /// Updates an existing C# script file.
+        /// </summary>
+        private static Dictionary<string, object> UpdateScript(Dictionary<string, object> payload)
+        {
+            var scriptPath = GetString(payload, "scriptPath");
+            var content = GetString(payload, "content");
+
+            if (!File.Exists(scriptPath))
+            {
+                throw new InvalidOperationException($"Script file not found: {scriptPath}");
+            }
+
+            File.WriteAllText(scriptPath, content);
+
+            return new Dictionary<string, object>
+            {
+                ["status"] = "updated",
+                ["path"] = scriptPath
+            };
+        }
+
+        /// <summary>
+        /// Deletes a C# script file.
+        /// </summary>
+        private static Dictionary<string, object> DeleteScript(Dictionary<string, object> payload)
+        {
+            var scriptPath = GetString(payload, "scriptPath");
+
+            if (!File.Exists(scriptPath))
+            {
+                throw new InvalidOperationException($"Script file not found: {scriptPath}");
+            }
+
+            AssetDatabase.DeleteAsset(scriptPath);
+
+            return new Dictionary<string, object>
+            {
+                ["status"] = "deleted",
+                ["path"] = scriptPath
+            };
+        }
+
+        /// <summary>
+        /// Inspects a C# script file.
+        /// </summary>
+        private static Dictionary<string, object> InspectScript(Dictionary<string, object> payload)
+        {
+            var scriptPath = GetString(payload, "scriptPath");
+
+            if (!File.Exists(scriptPath))
+            {
+                throw new InvalidOperationException($"Script file not found: {scriptPath}");
+            }
+
+            var content = File.ReadAllText(scriptPath);
+            var fileInfo = new FileInfo(scriptPath);
+
+            return new Dictionary<string, object>
+            {
+                ["status"] = "inspected",
+                ["path"] = scriptPath,
+                ["content"] = content,
+                ["size"] = fileInfo.Length,
+                ["lastModified"] = fileInfo.LastWriteTime.ToString("o")
             };
         }
 
