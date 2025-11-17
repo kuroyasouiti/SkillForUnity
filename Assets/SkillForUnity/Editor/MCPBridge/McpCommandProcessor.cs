@@ -1449,7 +1449,15 @@ namespace MCP.Editor
         private static object HandleAssetManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (except for read-only operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect" && operation != "findMultiple" && operation != "inspectMultiple")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("assetManage", maxWaitSeconds: 30f);
+            }
+
+            var result = operation switch
             {
                 "updateImporter" => UpdateAssetImporter(payload),
                 "delete" => DeleteAsset(payload),
@@ -1461,6 +1469,14 @@ namespace MCP.Editor
                 "inspectMultiple" => InspectMultipleAssets(payload),
                 _ => throw new InvalidOperationException($"Unknown assetManage operation: {operation}"),
             };
+
+            // Add compilation wait info if we waited
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object UpdateAssetImporter(Dictionary<string, object> payload)
@@ -1906,6 +1922,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with before/after anchor and position data.</returns>
         private static object HandleUguiAnchorManage(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("uguiAnchorManage", maxWaitSeconds: 30f);
+
             try
             {
                 var path = EnsureValue(GetString(payload, "gameObjectPath"), "gameObjectPath");
@@ -2252,9 +2271,16 @@ namespace MCP.Editor
         /// <returns>Result dictionary with operation-specific data.</returns>
         private static object HandleUguiManage(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary (except for inspect operations)
+            var operation = GetString(payload, "operation");
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("uguiManage", maxWaitSeconds: 30f);
+            }
+
             try
             {
-                var operation = GetString(payload, "operation");
                 if (string.IsNullOrEmpty(operation))
                 {
                     throw new InvalidOperationException("operation is required");
@@ -2584,6 +2610,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with created GameObject information.</returns>
         private static object HandleUguiCreateFromTemplate(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("uguiCreateFromTemplate", maxWaitSeconds: 30f);
+
             try
             {
                 var template = GetString(payload, "template");
@@ -3131,6 +3160,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with operation-specific data.</returns>
         private static object HandleUguiLayoutManage(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("uguiLayoutManage", maxWaitSeconds: 30f);
+
             try
             {
                 var operation = GetString(payload, "operation");
@@ -4206,6 +4238,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with created GameObject information.</returns>
         private static object HandleGameObjectCreateFromTemplate(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("gameObjectCreateFromTemplate", maxWaitSeconds: 30f);
+
             try
             {
                 var template = GetString(payload, "template");
@@ -4506,35 +4541,38 @@ namespace MCP.Editor
                     throw new InvalidOperationException("operation is required");
                 }
 
+                // Check if compilation is in progress and wait if necessary (skip for read-only operations)
+                Dictionary<string, object> compilationWaitInfo = null;
+                if (operation != "getTag" && operation != "getLayer" && operation != "listTags" && operation != "listLayers")
+                {
+                    compilationWaitInfo = EnsureNoCompilationInProgress("tagLayerManage", maxWaitSeconds: 30f);
+                }
+
                 Debug.Log($"[tagLayerManage] Processing operation: {operation}");
 
-                switch (operation)
+                object result = operation switch
                 {
-                    case "setTag":
-                        return SetTag(payload);
-                    case "getTag":
-                        return GetTag(payload);
-                    case "setLayer":
-                        return SetLayer(payload);
-                    case "getLayer":
-                        return GetLayer(payload);
-                    case "setLayerRecursive":
-                        return SetLayerRecursive(payload);
-                    case "listTags":
-                        return ListTags();
-                    case "addTag":
-                        return AddTag(payload);
-                    case "removeTag":
-                        return RemoveTag(payload);
-                    case "listLayers":
-                        return ListLayers();
-                    case "addLayer":
-                        return AddLayer(payload);
-                    case "removeLayer":
-                        return RemoveLayer(payload);
-                    default:
-                        throw new InvalidOperationException($"Unknown tagLayerManage operation: {operation}");
+                    "setTag" => SetTag(payload),
+                    "getTag" => GetTag(payload),
+                    "setLayer" => SetLayer(payload),
+                    "getLayer" => GetLayer(payload),
+                    "setLayerRecursive" => SetLayerRecursive(payload),
+                    "listTags" => ListTags(),
+                    "addTag" => AddTag(payload),
+                    "removeTag" => RemoveTag(payload),
+                    "listLayers" => ListLayers(),
+                    "addLayer" => AddLayer(payload),
+                    "removeLayer" => RemoveLayer(payload),
+                    _ => throw new InvalidOperationException($"Unknown tagLayerManage operation: {operation}"),
+                };
+
+                // Add compilation wait info to result if present
+                if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+                {
+                    resultDict["compilationWait"] = compilationWaitInfo;
                 }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -5018,7 +5056,15 @@ namespace MCP.Editor
         private static object HandlePrefabManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (except for inspect operation)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("prefabManage", maxWaitSeconds: 30f);
+            }
+
+            var result = operation switch
             {
                 "create" => CreatePrefab(payload),
                 "update" => UpdatePrefab(payload),
@@ -5029,6 +5075,14 @@ namespace MCP.Editor
                 "revertOverrides" => RevertPrefabOverrides(payload),
                 _ => throw new InvalidOperationException($"Unknown prefabManage operation: {operation}"),
             };
+
+            // Add compilation wait info to result if present
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object CreatePrefab(Dictionary<string, object> payload)
@@ -5252,13 +5306,29 @@ namespace MCP.Editor
         private static object HandleProjectSettingsManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (skip for read-only operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "read" && operation != "list")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("projectSettingsManage", maxWaitSeconds: 30f);
+            }
+
+            object result = operation switch
             {
                 "read" => ReadProjectSettings(payload),
                 "write" => WriteProjectSettings(payload),
                 "list" => ListProjectSettings(payload),
                 _ => throw new InvalidOperationException($"Unknown projectSettingsManage operation: {operation}"),
             };
+
+            // Add compilation wait info to result if present
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object ReadProjectSettings(Dictionary<string, object> payload)
@@ -5828,7 +5898,15 @@ namespace MCP.Editor
         private static object HandleRenderPipelineManage(Dictionary<string, object> payload)
         {
             var operation = EnsureValue(GetString(payload, "operation"), "operation");
-            return operation switch
+
+            // Check if compilation is in progress and wait if necessary (skip for read-only operations)
+            Dictionary<string, object> compilationWaitInfo = null;
+            if (operation != "inspect" && operation != "getSettings")
+            {
+                compilationWaitInfo = EnsureNoCompilationInProgress("renderPipelineManage", maxWaitSeconds: 30f);
+            }
+
+            object result = operation switch
             {
                 "inspect" => InspectRenderPipeline(),
                 "setAsset" => SetRenderPipelineAsset(payload),
@@ -5836,6 +5914,14 @@ namespace MCP.Editor
                 "updateSettings" => UpdateRenderPipelineSettings(payload),
                 _ => throw new InvalidOperationException($"Unknown renderPipelineManage operation: {operation}"),
             };
+
+            // Add compilation wait info to result if present
+            if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
+            {
+                resultDict["compilationWait"] = compilationWaitInfo;
+            }
+
+            return result;
         }
 
         private static object InspectRenderPipeline()
@@ -7555,6 +7641,9 @@ namespace MCP.Editor
         /// <returns>Result dictionary with generated code and file path.</returns>
         private static object HandleDesignPatternGenerate(Dictionary<string, object> payload)
         {
+            // Check if compilation is in progress and wait if necessary
+            var compilationWaitInfo = EnsureNoCompilationInProgress("designPatternGenerate", maxWaitSeconds: 30f);
+
             var patternType = GetString(payload, "patternType");
             var className = GetString(payload, "className");
             var namespaceName = GetString(payload, "namespace");
