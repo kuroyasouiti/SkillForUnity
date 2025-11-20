@@ -174,50 +174,58 @@ unity_tagLayer_manage({
 
 ## Step 5: Create Enemies
 
-Create multiple enemy NPCs using batch operations:
+Create multiple enemy NPCs using template customization:
 
 ```python
-# Create enemy hierarchy with components
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Enemies": {
-            "children": {
-                "Enemy1": {
-                    "components": ["UnityEngine.CapsuleCollider", "UnityEngine.Rigidbody"],
-                    "properties": {
-                        "position": {"x": 5, "y": 1, "z": 5}
-                    }
-                },
-                "Enemy2": {
-                    "components": ["UnityEngine.CapsuleCollider", "UnityEngine.Rigidbody"],
-                    "properties": {
-                        "position": {"x": -5, "y": 1, "z": 5}
-                    }
-                },
-                "Enemy3": {
-                    "components": ["UnityEngine.CapsuleCollider", "UnityEngine.Rigidbody"],
-                    "properties": {
-                        "position": {"x": 5, "y": 1, "z": -5}
-                    }
-                },
-                "Enemy4": {
-                    "components": ["UnityEngine.CapsuleCollider", "UnityEngine.Rigidbody"],
-                    "properties": {
-                        "position": {"x": -5, "y": 1, "z": -5}
-                    }
-                }
-            }
-        }
-    }
+# Create enemies container
+unity_gameobject_crud({
+    "operation": "create",
+    "name": "Enemies"
 })
 
-# Set all enemies to use red color (using batch update)
-unity_component_crud({
-    "operation": "addMultiple",
-    "pattern": "Enemies/Enemy*",
-    "componentType": "UnityEngine.MeshRenderer",
-    "maxResults": 10
-})
+# Create multiple enemies with components
+enemy_positions = [
+    {"name": "Enemy1", "x": 5, "y": 1, "z": 5},
+    {"name": "Enemy2", "x": -5, "y": 1, "z": 5},
+    {"name": "Enemy3", "x": 5, "y": 1, "z": -5},
+    {"name": "Enemy4", "x": -5, "y": 1, "z": -5}
+]
+
+for enemy_data in enemy_positions:
+    # Create enemy using template
+    unity_gameobject_createFromTemplate({
+        "template": "Capsule",
+        "name": enemy_data["name"],
+        "parentPath": "Enemies"
+    })
+
+    # Customize with components and position
+    unity_template_manage({
+        "operation": "customize",
+        "gameObjectPath": f"Enemies/{enemy_data['name']}",
+        "components": [
+            {
+                "type": "UnityEngine.CapsuleCollider"
+            },
+            {
+                "type": "UnityEngine.Rigidbody",
+                "properties": {
+                    "mass": 2.0,
+                    "useGravity": True
+                }
+            }
+        ]
+    })
+
+    # Set position
+    unity_component_crud({
+        "operation": "update",
+        "gameObjectPath": f"Enemies/{enemy_data['name']}",
+        "componentType": "UnityEngine.Transform",
+        "propertyChanges": {
+            "position": {"x": enemy_data["x"], "y": enemy_data["y"], "z": enemy_data["z"]}
+        }
+    })
 ```
 
 ## Step 6: Create Collectibles
@@ -288,43 +296,38 @@ unity_gameobject_crud({
     "name": "Obstacles"
 })
 
-# Create walls using hierarchy builder
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Obstacles": {
-            "children": {
-                "WallNorth": {
-                    "components": ["UnityEngine.BoxCollider"],
-                    "properties": {
-                        "position": {"x": 0, "y": 1, "z": 10},
-                        "scale": {"x": 20, "y": 2, "z": 0.5}
-                    }
-                },
-                "WallSouth": {
-                    "components": ["UnityEngine.BoxCollider"],
-                    "properties": {
-                        "position": {"x": 0, "y": 1, "z": -10},
-                        "scale": {"x": 20, "y": 2, "z": 0.5}
-                    }
-                },
-                "WallEast": {
-                    "components": ["UnityEngine.BoxCollider"],
-                    "properties": {
-                        "position": {"x": 10, "y": 1, "z": 0},
-                        "scale": {"x": 0.5, "y": 2, "z": 20}
-                    }
-                },
-                "WallWest": {
-                    "components": ["UnityEngine.BoxCollider"],
-                    "properties": {
-                        "position": {"x": -10, "y": 1, "z": 0},
-                        "scale": {"x": 0.5, "y": 2, "z": 20}
-                    }
-                }
-            }
+# Create walls with positions and colliders
+walls = [
+    {"name": "WallNorth", "position": {"x": 0, "y": 1, "z": 10}, "scale": {"x": 20, "y": 2, "z": 0.5}},
+    {"name": "WallSouth", "position": {"x": 0, "y": 1, "z": -10}, "scale": {"x": 20, "y": 2, "z": 0.5}},
+    {"name": "WallEast", "position": {"x": 10, "y": 1, "z": 0}, "scale": {"x": 0.5, "y": 2, "z": 20}},
+    {"name": "WallWest", "position": {"x": -10, "y": 1, "z": 0}, "scale": {"x": 0.5, "y": 2, "z": 20}}
+]
+
+for wall in walls:
+    # Create wall cube
+    unity_gameobject_createFromTemplate({
+        "template": "Cube",
+        "name": wall["name"],
+        "parentPath": "Obstacles"
+    })
+
+    # Set transform and add collider
+    unity_component_crud({
+        "operation": "update",
+        "gameObjectPath": f"Obstacles/{wall['name']}",
+        "componentType": "UnityEngine.Transform",
+        "propertyChanges": {
+            "position": wall["position"],
+            "scale": wall["scale"]
         }
-    }
-})
+    })
+
+    unity_component_crud({
+        "operation": "add",
+        "gameObjectPath": f"Obstacles/{wall['name']}",
+        "componentType": "UnityEngine.BoxCollider"
+    })
 ```
 
 ## Step 8: Inspect the Final Scene
@@ -333,10 +336,10 @@ Check the complete scene hierarchy:
 
 ```python
 # Get a complete overview of the scene
-unity_context_inspect({
+unity_scene_crud({
+    "operation": "inspect",
     "includeHierarchy": True,
-    "includeComponents": True,
-    "maxDepth": 3
+    "includeComponents": True
 })
 ```
 
@@ -367,7 +370,7 @@ When creating large levels:
 - Use `includeProperties=false` when inspecting to speed up queries
 - Use `maxResults` parameter to limit batch operations
 - Use component batch operations (`addMultiple`, `updateMultiple`) for efficiency
-- Use hierarchy builder for complex nested structures
+- Use template customization for creating GameObjects with multiple components in one operation
 
 ## Common Issues
 

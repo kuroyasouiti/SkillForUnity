@@ -290,9 +290,11 @@ if not result["compilation"]["success"]:
     print("Compilation failed!")
     print(f"Errors: {result['compilation']['errorCount']}")
 
-    # Get detailed error messages
-    logs = unity_console_log({"logType": "error", "limit": 100})
-    print(logs)
+    # Error messages are included in the compilation result
+    if result["compilation"]["errorMessages"]:
+        print("Error details:")
+        for msg in result["compilation"]["errorMessages"]:
+            print(f"  {msg}")
 ```
 
 ## Common Workflows

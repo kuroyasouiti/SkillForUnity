@@ -24,52 +24,56 @@ First, create an enemy GameObject that we'll convert to a prefab:
 # Set up 3D scene
 unity_scene_quickSetup({"setupType": "3D"})
 
-# Create the enemy GameObject with all necessary components
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Enemy_Template": {
-            "components": [
-                "UnityEngine.CapsuleCollider",
-                "UnityEngine.Rigidbody",
-                "UnityEngine.MeshRenderer",
-                "UnityEngine.MeshFilter"
-            ],
+# Create the enemy GameObject using template
+unity_gameobject_createFromTemplate({
+    "template": "Capsule",
+    "name": "Enemy_Template",
+    "position": {"x": 0, "y": 1, "z": 0}
+})
+
+# Customize with components and children
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Enemy_Template",
+    "components": [
+        {
+            "type": "UnityEngine.CapsuleCollider",
             "properties": {
-                "position": {"x": 0, "y": 1, "z": 0}
-            },
-            "children": {
-                "HealthBar": {
-                    "components": ["UnityEngine.Canvas"]
-                },
-                "DetectionZone": {
-                    "components": ["UnityEngine.SphereCollider"]
-                }
+                "height": 2.0,
+                "radius": 0.5
+            }
+        },
+        {
+            "type": "UnityEngine.Rigidbody",
+            "properties": {
+                "mass": 2.0,
+                "useGravity": True,
+                "constraints": 112  # Freeze rotation X, Z
             }
         }
-    }
-})
-
-# Configure the collider
-unity_component_crud({
-    "operation": "update",
-    "gameObjectPath": "Enemy_Template",
-    "componentType": "UnityEngine.CapsuleCollider",
-    "propertyChanges": {
-        "height": 2.0,
-        "radius": 0.5
-    }
-})
-
-# Configure the rigidbody
-unity_component_crud({
-    "operation": "update",
-    "gameObjectPath": "Enemy_Template",
-    "componentType": "UnityEngine.Rigidbody",
-    "propertyChanges": {
-        "mass": 2.0,
-        "useGravity": True,
-        "constraints": 112  # Freeze rotation X, Z
-    }
+    ],
+    "children": [
+        {
+            "name": "HealthBar",
+            "components": [
+                {
+                    "type": "UnityEngine.Canvas"
+                }
+            ]
+        },
+        {
+            "name": "DetectionZone",
+            "components": [
+                {
+                    "type": "UnityEngine.SphereCollider",
+                    "properties": {
+                        "isTrigger": True,
+                        "radius": 3.0
+                    }
+                }
+            ]
+        }
+    ]
 })
 ```
 

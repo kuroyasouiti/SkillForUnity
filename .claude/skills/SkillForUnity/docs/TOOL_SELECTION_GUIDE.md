@@ -2,7 +2,7 @@
 
 **How to choose the right SkillForUnity tool for your task**
 
-This guide helps you quickly identify which of the 28 available tools to use for common Unity development tasks.
+This guide helps you quickly identify which of the 26 available tools to use for common Unity development tasks.
 
 ---
 
@@ -19,14 +19,15 @@ Need to work with Unity?
 │
 ├─ Creating GameObjects?
 │  ├─ Common objects (Cube, Player, etc.)? → unity_gameobject_createFromTemplate
-│  ├─ Complex hierarchy? → unity_hierarchy_builder
+│  ├─ Complex customization? → unity_template_manage
 │  └─ Custom creation/management? → unity_gameobject_crud
 │
 ├─ Working with Components?
 │  └─ All operations → unity_component_crud
 │
 ├─ Working with UI?
-│  ├─ Creating UI elements? → unity_ugui_createFromTemplate
+│  ├─ Complete menu systems? → unity_menu_hierarchyCreate
+│  ├─ Simple UI elements? → unity_ugui_createFromTemplate
 │  ├─ Managing layouts? → unity_ugui_layoutManage
 │  ├─ RectTransform operations? → unity_ugui_manage
 │  └─ Detecting overlaps? → unity_ugui_detectOverlaps
@@ -52,8 +53,7 @@ Need to work with Unity?
 │  └─ Same tool, multiple objects? → Use tool's *Multiple operations
 │
 └─ Debugging?
-   ├─ Console logs? → unity_console_log
-   └─ Wait for compilation? → unity_await_compilation
+   └─ Wait for compilation (includes console logs)? → unity_await_compilation
 ```
 
 ---
@@ -94,18 +94,20 @@ unity_ugui_createFromTemplate({"template": "Button", "text": "Start"})
 unity_gameobject_createFromTemplate({"template": "Sphere", "position": {"x": 0, "y": 5, "z": 0}})
 ```
 
-**Best (Complex Hierarchy):** `unity_hierarchy_builder`
+**Best (Complex Customization):** `unity_template_manage`
 ```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody"],
-            "children": {
-                "Camera": {"components": ["Camera"]},
-                "Weapon": {}
-            }
-        }
-    }
+# Create base object
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Player"})
+
+# Customize with components and children
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Player",
+    "components": [{"type": "UnityEngine.Rigidbody"}],
+    "children": [
+        {"name": "Camera", "components": [{"type": "UnityEngine.Camera"}]},
+        {"name": "Weapon"}
+    ]
 })
 ```
 
@@ -337,39 +339,29 @@ unity_gameobject_crud({
 # Step 1: Setup UI scene
 unity_scene_quickSetup({"setupType": "UI"})
 
-# Step 2: Create menu structure
-unity_hierarchy_builder({
-    "hierarchy": {
-        "MenuPanel": {
-            "components": ["UnityEngine.UI.Image"],
-            "children": {
-                "Title": {"components": ["UnityEngine.UI.Text"]},
-                "ButtonList": {"components": ["UnityEngine.UI.VerticalLayoutGroup"]}
+# Step 2: Create complete hierarchical menu system with navigation
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": {
+            "text": "Game Settings",
+            "submenus": {
+                "Graphics": "Graphics Options",
+                "Audio": "Audio Settings",
+                "Controls": "Control Mapping"
             }
-        }
+        },
+        "Quit": "Exit Game"
     },
-    "parentPath": "Canvas"
-})
-
-# Step 3: Add layout to ButtonList
-unity_ugui_layoutManage({
-    "operation": "add",
-    "gameObjectPath": "Canvas/MenuPanel/ButtonList",
-    "layoutType": "VerticalLayoutGroup",
-    "spacing": 15
-})
-
-# Step 4: Create buttons (using batch)
-unity_batch_execute({
-    "operations": [
-        {"tool": "uguiCreateFromTemplate", "payload": {"template": "Button", "name": "PlayButton", "parentPath": "Canvas/MenuPanel/ButtonList", "text": "Play"}},
-        {"tool": "uguiCreateFromTemplate", "payload": {"template": "Button", "name": "SettingsButton", "parentPath": "Canvas/MenuPanel/ButtonList", "text": "Settings"}},
-        {"tool": "uguiCreateFromTemplate", "payload": {"template": "Button", "name": "QuitButton", "parentPath": "Canvas/MenuPanel/ButtonList", "text": "Quit"}}
-    ]
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MainMenuManager.cs",
+    "buttonWidth": 200,
+    "buttonHeight": 50
 })
 ```
 
-**Tools Used:** 4 tools, 5 operations
+**Tools Used:** 2 tools, 2 operations
 **Estimated Time:** ~2-3 seconds
 
 ---
@@ -380,30 +372,37 @@ unity_batch_execute({
 # Step 1: Setup 3D scene
 unity_scene_quickSetup({"setupType": "3D"})
 
-# Step 2: Create player with hierarchy
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody", "CapsuleCollider"],
-            "properties": {"position": {"x": 0, "y": 1, "z": 0}},
-            "children": {
-                "Camera": {
-                    "components": ["Camera"],
-                    "properties": {"position": {"x": 0, "y": 0.5, "z": -3}}
-                }
-            }
-        }
-    }
+# Step 2: Create player base
+unity_gameobject_createFromTemplate({
+    "template": "Player",
+    "position": {"x": 0, "y": 1, "z": 0}
 })
 
-# Step 3: Create ground
+# Step 3: Customize player with components and children
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Player",
+    "components": [
+        {"type": "UnityEngine.Rigidbody", "properties": {"mass": 2.0}},
+        {"type": "UnityEngine.CapsuleCollider"}
+    ],
+    "children": [
+        {
+            "name": "Camera",
+            "components": [{"type": "UnityEngine.Camera"}],
+            "position": {"x": 0, "y": 0.5, "z": -3}
+        }
+    ]
+})
+
+# Step 4: Create ground
 unity_gameobject_createFromTemplate({
     "template": "Plane",
     "name": "Ground",
     "scale": {"x": 10, "y": 1, "z": 10}
 })
 
-# Step 4: Create multiple obstacles (using batch)
+# Step 5: Create multiple obstacles (using batch)
 unity_batch_execute({
     "operations": [
         {"tool": "gameObjectCreateFromTemplate", "payload": {"template": "Cube", "name": "Obstacle1", "position": {"x": 3, "y": 0.5, "z": 0}}},
@@ -412,7 +411,7 @@ unity_batch_execute({
     ]
 })
 
-# Step 5: Add physics to obstacles
+# Step 6: Add physics to obstacles
 unity_component_crud({
     "operation": "addMultiple",
     "pattern": "Obstacle*",
@@ -420,7 +419,7 @@ unity_component_crud({
 })
 ```
 
-**Tools Used:** 5 tools, 6 operations
+**Tools Used:** 5 tools, 7 operations
 **Estimated Time:** ~3-4 seconds
 
 ---
@@ -479,15 +478,15 @@ unity_component_crud({
 | Method | Speed | Flexibility | Best For |
 |--------|-------|-------------|----------|
 | `unity_gameobject_createFromTemplate` | ⚡⚡⚡ Fast | 🔧 Low | Common objects (Cube, Player, Light) |
-| `unity_hierarchy_builder` | ⚡⚡ Medium | 🔧🔧🔧 High | Complex hierarchies, multi-level structures |
+| `unity_template_manage` | ⚡⚡ Medium | 🔧🔧🔧 High | Customizing objects with components and children |
 | `unity_gameobject_crud` | ⚡⚡⚡ Fast | 🔧🔧 Medium | Custom objects, manual control |
 
 ### UI Creation
 
 | Method | Speed | Flexibility | Best For |
 |--------|-------|-------------|----------|
+| `unity_menu_hierarchyCreate` | ⚡⚡⚡ Fast | 🔧🔧🔧 High | Complete menu systems with navigation |
 | `unity_ugui_createFromTemplate` | ⚡⚡⚡ Fast | 🔧 Low | Standard UI elements (Button, Text) |
-| `unity_hierarchy_builder` | ⚡⚡ Medium | 🔧🔧🔧 High | Complete UI layouts, nested panels |
 | Manual (gameobject + component) | ⚡ Slow | 🔧🔧🔧 High | Custom UI, special cases |
 
 ### Batch Operations
@@ -571,7 +570,7 @@ unity_component_crud({
 
 ---
 
-### ❌ Mistake 4: Not using hierarchy builder
+### ❌ Mistake 4: Not using template manager for customization
 **Wrong:**
 ```python
 # Many individual commands
@@ -584,16 +583,15 @@ unity_component_crud({"operation": "add", "gameObjectPath": "Player/Camera", "co
 
 **Right:**
 ```python
-# One command, entire hierarchy
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody"],
-            "children": {
-                "Camera": {"components": ["Camera"]}
-            }
-        }
-    }
+# Create base, then customize in one command
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Player"})
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Player",
+    "components": [{"type": "UnityEngine.Rigidbody"}],
+    "children": [
+        {"name": "Camera", "components": [{"type": "UnityEngine.Camera"}]}
+    ]
 })
 ```
 
@@ -646,8 +644,8 @@ Before choosing a tool, ask yourself:
 
 1. **`unity_context_inspect`** - Start here to understand the scene
 2. **`unity_scene_quickSetup`** - Quick scene initialization
-3. **`unity_gameobject_createFromTemplate`** - Create common objects
-4. **`unity_ugui_createFromTemplate`** - Create UI elements
+3. **`unity_menu_hierarchyCreate`** - Create complete menu systems
+4. **`unity_gameobject_createFromTemplate`** - Create common objects
 5. **`unity_component_crud`** - Manage all components
 
 ### Always Use These Tools
@@ -668,4 +666,4 @@ Before choosing a tool, ask yourself:
 ---
 
 **Last Updated:** 2025-01-14
-**Total Tools:** 28
+**Total Tools:** 26

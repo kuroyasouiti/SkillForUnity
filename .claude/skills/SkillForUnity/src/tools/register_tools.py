@@ -510,23 +510,6 @@ def register_tools(server: Server) -> None:
         ["operation"],
     )
 
-    console_log_schema = _schema_with_required(
-        {
-            "type": "object",
-            "properties": {
-                "logType": {
-                    "type": "string",
-                    "enum": ["all", "normal", "warning", "error"],
-                    "description": "Type of log messages to retrieve. 'all' returns all messages, 'normal' returns info/debug messages, 'warning' returns warnings, 'error' returns errors.",
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum number of log lines to retrieve. Default is 800.",
-                },
-            },
-        },
-        [],
-    )
 
     await_compilation_schema = _schema_with_required(
         {
@@ -539,23 +522,6 @@ def register_tools(server: Server) -> None:
             },
         },
         [],
-    )
-
-    hierarchy_builder_schema = _schema_with_required(
-        {
-            "type": "object",
-            "properties": {
-                "hierarchy": {
-                    "type": "object",
-                    "description": "Hierarchical structure definition using nested dictionaries. Each key is a GameObject name, and its value is a dictionary containing child GameObjects (or an empty dict {} for leaf nodes). Example: {'Player': {'Camera': {}, 'Weapon': {'Blade': {}, 'Handle': {}}}, 'Enemy': {}}",
-                },
-                "parentPath": {
-                    "type": "string",
-                    "description": "Parent GameObject path. If not specified, creates at root level.",
-                },
-            },
-        },
-        ["hierarchy"],
     )
 
     scene_quick_setup_schema = _schema_with_required(
@@ -1335,11 +1301,6 @@ def register_tools(server: Server) -> None:
             inputSchema=ugui_manage_schema,
         ),
         types.Tool(
-            name="unity_hierarchy_builder",
-            description="Build complex GameObject hierarchies from simple nested name structures in one command! Creates empty GameObjects organized in a tree structure. Perfect for quickly setting up scene organization, folder structures, or placeholder hierarchies. Use nested dictionaries where keys are GameObject names and values are child dictionaries.",
-            inputSchema=hierarchy_builder_schema,
-        ),
-        types.Tool(
             name="unity_scene_quickSetup",
             description="Instantly set up new scenes with common configurations! Choose from 3D (Camera + Light), 2D (2D Camera), UI (Canvas + EventSystem), or VR setups. Saves time by automatically creating all necessary GameObjects with proper settings.",
             inputSchema=scene_quick_setup_schema,
@@ -1390,13 +1351,8 @@ def register_tools(server: Server) -> None:
             inputSchema=constant_convert_schema,
         ),
         types.Tool(
-            name="unity_console_log",
-            description="Retrieve Unity Editor console log messages. Returns recent log output filtered by type (all/normal/warning/error). Useful for debugging compilation errors, runtime issues, and monitoring Unity's console output.",
-            inputSchema=console_log_schema,
-        ),
-        types.Tool(
             name="unity_await_compilation",
-            description="Wait for Unity compilation to complete without triggering it. Use this when Unity is already compiling (e.g., after script changes detected by file watcher) and you want to wait for the compilation to finish. Returns compilation result with success status, error count, and error messages. Does NOT start compilation - only waits for ongoing compilation to finish.",
+            description="Wait for Unity compilation to complete without triggering it. Use this when Unity is already compiling (e.g., after script changes detected by file watcher) and you want to wait for the compilation to finish. Returns compilation result with success status, error count, error messages, and console logs from the compilation period. Does NOT start compilation - only waits for ongoing compilation to finish.",
             inputSchema=await_compilation_schema,
         ),
         types.Tool(
@@ -1519,9 +1475,6 @@ def register_tools(server: Server) -> None:
         if name == "unity_ugui_manage":
             return await _call_bridge_tool("uguiManage", args)
 
-        if name == "unity_hierarchy_builder":
-            return await _call_bridge_tool("hierarchyBuilder", args)
-
         if name == "unity_scene_quickSetup":
             return await _call_bridge_tool("sceneQuickSetup", args)
 
@@ -1552,30 +1505,6 @@ def register_tools(server: Server) -> None:
         if name == "unity_constant_convert":
             return await _call_bridge_tool("constantConvert", args)
 
-        if name == "unity_console_log":
-            log_type = args.get("logType", "all")
-            limit = args.get("limit", 800)
-
-            snapshot = editor_log_watcher.get_snapshot(limit)
-
-            if log_type == "all":
-                lines = snapshot.lines
-                message = "No log events captured yet. Confirm the Unity Editor log path." if not lines else None
-            elif log_type == "normal":
-                lines = snapshot.normal_lines
-                message = "No normal log events captured yet." if not lines else None
-            elif log_type == "warning":
-                lines = snapshot.warning_lines
-                message = "No warning log events captured yet." if not lines else None
-            elif log_type == "error":
-                lines = snapshot.error_lines
-                message = "No error log events captured yet." if not lines else None
-            else:
-                return [types.TextContent(type="text", text=f"Unknown log type: {log_type}")]
-
-            body = "\n".join(lines) if lines else (message or "")
-            return [types.TextContent(type="text", text=body)]
-
         if name == "unity_await_compilation":
             _ensure_bridge_connected()
             timeout_seconds = args.get("timeoutSeconds", 60)  # Increased from 30 to 60 seconds
@@ -1590,25 +1519,56 @@ def register_tools(server: Server) -> None:
                     compilation_result.get("errorCount", 0),
                 )
 
+                # Get console logs after compilation
+                snapshot = editor_log_watcher.get_snapshot(800)
+
+                # Add console logs to the result
+                compilation_result["consoleLogs"] = {
+                    "all": snapshot.lines,
+                    "errors": snapshot.error_lines,
+                    "warnings": snapshot.warning_lines,
+                    "normal": snapshot.normal_lines,
+                }
+
                 return [types.TextContent(type="text", text=as_pretty_json(compilation_result))]
 
             except TimeoutError:
                 logger.warning("Compilation did not finish within %s seconds", timeout_seconds)
+
+                # Get console logs even on timeout
+                snapshot = editor_log_watcher.get_snapshot(800)
+
                 error_payload = {
                     "success": False,
                     "completed": False,
                     "timedOut": True,
                     "message": f"Compilation did not finish within {timeout_seconds} seconds.",
+                    "consoleLogs": {
+                        "all": snapshot.lines,
+                        "errors": snapshot.error_lines,
+                        "warnings": snapshot.warning_lines,
+                        "normal": snapshot.normal_lines,
+                    }
                 }
                 return [types.TextContent(type="text", text=as_pretty_json(error_payload))]
 
             except Exception as exc:
                 logger.error("Error while waiting for compilation: %s", exc)
+
+                # Get console logs even on error
+                snapshot = editor_log_watcher.get_snapshot(800)
+
                 error_payload = {
                     "success": False,
                     "completed": False,
                     "error": str(exc),
                     "message": f"Failed to wait for compilation: {exc}",
+                    "consoleLogs": {
+                        "all": snapshot.lines,
+                        "errors": snapshot.error_lines,
+                        "warnings": snapshot.warning_lines,
+                        "normal": snapshot.normal_lines,
+                    }
                 }
                 return [types.TextContent(type="text", text=as_pretty_json(error_payload))]
 

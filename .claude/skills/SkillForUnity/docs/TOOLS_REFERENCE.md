@@ -1,6 +1,6 @@
 # SkillForUnity Tools Reference
 
-**Complete reference for all 28 MCP tools available in SkillForUnity.**
+**Complete reference for all 26 MCP tools available in SkillForUnity.**
 
 Last Updated: 2025-01-14
 
@@ -8,7 +8,7 @@ Last Updated: 2025-01-14
 
 ## Table of Contents
 
-1. [Core Tools (5)](#core-tools)
+1. [Core Tools (3)](#core-tools)
 2. [Scene Management (2)](#scene-management)
 3. [GameObject Operations (3)](#gameobject-operations)
 4. [Component Management (1)](#component-management)
@@ -18,7 +18,7 @@ Last Updated: 2025-01-14
 8. [Advanced Features (7)](#advanced-features)
 9. [Utility Tools (1)](#utility-tools)
 
-**Total: 28 Tools**
+**Total: 26 Tools**
 
 ---
 
@@ -81,55 +81,7 @@ unity_context_inspect({
 
 ---
 
-### 3. `unity_hierarchy_builder`
-**Purpose:** Build complex GameObject hierarchies declaratively in one command
-
-**Parameters:**
-- `hierarchy` (object): Hierarchical structure definition
-  - Each key = GameObject name
-  - Value = object with `components`, `properties`, `children`
-- `parentPath` (string): Parent GameObject path (optional, defaults to root)
-
-**Example:**
-```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody", "CapsuleCollider"],
-            "properties": {
-                "position": {"x": 0, "y": 1, "z": 0}
-            },
-            "children": {
-                "Camera": {
-                    "components": ["Camera"],
-                    "properties": {
-                        "position": {"x": 0, "y": 0.5, "z": -3}
-                    }
-                },
-                "Weapon": {
-                    "components": ["BoxCollider"],
-                    "children": {
-                        "Barrel": {},
-                        "Scope": {}
-                    }
-                }
-            }
-        }
-    }
-})
-```
-
-**Returns:** Success status and created GameObject paths
-
-**Use Cases:**
-- Create complex multi-level UI layouts
-- Build scene structures with multiple GameObjects
-- Set up prefab hierarchies
-- Create entire game object trees in one command
-
----
-
-### 4. `unity_batch_execute`
+### 3. `unity_batch_execute`
 **Purpose:** Execute multiple Unity tool operations in a single batch
 
 **Parameters:**
@@ -167,32 +119,6 @@ unity_batch_execute({
 - Create complex scenes with multiple steps
 - Combine GameObject creation with component setup
 - Batch asset operations
-
----
-
-### 5. `unity_console_log`
-**Purpose:** Retrieve Unity Editor console log messages
-
-**Parameters:**
-- `logType` (string): Type of logs to retrieve (all/normal/warning/error, default: all)
-- `limit` (integer): Maximum lines to retrieve (default: 800)
-
-**Example:**
-```python
-# Get all logs
-unity_console_log({"logType": "all", "limit": 500})
-
-# Get only errors
-unity_console_log({"logType": "error"})
-```
-
-**Returns:** Console log messages filtered by type
-
-**Use Cases:**
-- Debug compilation errors
-- Monitor Unity console output
-- Check for runtime warnings
-- Troubleshoot script issues
 
 ---
 
@@ -1301,7 +1227,7 @@ _(Already documented in Advanced Features section)_
 
 | Category | Tools | Primary Use |
 |----------|-------|-------------|
-| **Core** | 5 | Connection, context, hierarchy, batch operations, logging |
+| **Core** | 3 | Connection, context, batch operations |
 | **Scene** | 2 | Scene management, quick setup |
 | **GameObject** | 3 | Create, modify, manage GameObjects |
 | **Component** | 1 | Component CRUD operations |
@@ -1359,9 +1285,9 @@ _(Already documented in Advanced Features section)_
    - Always use `unity_script_batch_manage` with scripts array
    - Even for single scripts, use the batch format
 
-3. **Use hierarchy builder for complex structures:**
-   - One command for entire trees
-   - Better than multiple individual creates
+3. **Use template manager for customization:**
+   - Add components and children in one command
+   - Better than multiple individual operations
 
 4. **Use batch execute for related operations:**
    - Combine multiple tool calls
@@ -1398,9 +1324,10 @@ _(Already documented in Advanced Features section)_
 3. `unity_gameobject_createFromTemplate` - Create common objects
 4. `unity_ugui_createFromTemplate` - Create UI elements
 5. `unity_component_crud` - Manage components
-6. `unity_hierarchy_builder` - Build complex structures
-7. `unity_script_batch_manage` - Manage C# scripts
-8. `unity_batch_execute` - Execute multiple operations
+6. `unity_menu_hierarchyCreate` - Build menu systems
+7. `unity_template_manage` - Customize objects
+8. `unity_script_batch_manage` - Manage C# scripts
+9. `unity_batch_execute` - Execute multiple operations
 
 ### Tool Aliases (Internal Names)
 
@@ -1431,5 +1358,5 @@ _(Already documented in Advanced Features section)_
 ---
 
 **Last Updated:** 2025-01-14
-**Total Tools:** 28
+**Total Tools:** 26
 **Skill Version:** 1.0.0

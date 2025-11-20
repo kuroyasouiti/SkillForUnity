@@ -100,13 +100,12 @@ Common issues and solutions when using Unity MCP Skill.
    })
    ```
 
-4. **Check Unity Console logs**
+4. **Check compilation results**
    ```python
-   # Get compilation errors
-   unity_console_log({
-       "logType": "error",
-       "limit": 100
-   })
+   # Wait for compilation and get results including errors
+   result = unity_await_compilation({"timeoutSeconds": 60})
+   if not result["success"]:
+       print(f"Compilation errors: {result['errorMessages']}")
    ```
 
 ### Error: "Compilation did not finish within timeout"
@@ -133,9 +132,16 @@ Common issues and solutions when using Unity MCP Skill.
    })
    ```
 
-3. **Check Unity Editor**
-   - Look at bottom-right corner for compilation status
-   - Check Console for errors blocking compilation
+3. **Check compilation results**
+   ```python
+   # Wait for compilation and review detailed results
+   result = unity_await_compilation({"timeoutSeconds": 120})
+   print(f"Success: {result['success']}")
+   print(f"Errors: {result['errorCount']}")
+   if result['errorMessages']:
+       for msg in result['errorMessages']:
+           print(msg)
+   ```
 
 ## GameObject/Component Issues
 
@@ -484,11 +490,12 @@ See [Performance Tips](guides/performance-tips.md) for detailed optimization str
 ### Get Detailed Error Messages
 
 ```python
-# 1. Check Unity Console
-unity_console_log({
-    "logType": "error",
-    "limit": 100
-})
+# 1. Check compilation results (includes console errors)
+result = unity_await_compilation({"timeoutSeconds": 60})
+if not result["success"]:
+    print(f"Compilation errors:")
+    for msg in result["errorMessages"]:
+        print(f"  {msg}")
 
 # 2. Get full context
 unity_context_inspect({
@@ -553,7 +560,7 @@ If issues persist:
 | "GameObject not found" | Invalid path | Use `context_inspect` to find correct path |
 | "Component type not found" | Missing namespace | Use full name: `UnityEngine.UI.Button` |
 | "Must be under a Canvas" | UI without Canvas | Use `scene_quickSetup({"setupType": "UI"})` |
-| "Compilation failed" | Script syntax error | Check `console_log` for details |
+| "Compilation failed" | Script syntax error | Check `await_compilation` results for error details |
 | "Compilation timeout" | Large project | Increase `timeoutSeconds` |
 | "Asset not found" | Wrong path | Use "Assets/" prefix, forward slashes |
 | "Operation timed out" | Too many objects | Use `maxResults` parameter |

@@ -276,29 +276,37 @@ unity_asset_crud({
 }
 ```
 
-**階層ビルダー (`unity.hierarchy.builder`)** - NEW!
-- シンプルなネスト辞書から階層構造を構築
-- 空のGameObjectをツリー構造で組織化
-- シーン組織化、フォルダ構造、プレースホルダーに最適
-- 階層作成後に必要に応じてコンポーネントを追加
+**階層メニュー作成 (`unity_menu_hierarchyCreate`)** - NEW!
+- 完全な階層メニューシステムをネストされたサブメニューとともに作成
+- ボタン、パネル、レイアウトグループを自動生成
+- State patternナビゲーションスクリプトをオプションで生成
+- キーボード/ゲームパッドナビゲーション対応
+- メインメニュー、ポーズメニュー、設定メニューに最適
 
-**例 - ゲームマネージャー階層の構築:**
+**例 - 設定メニューの作成:**
 ```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "GameManager": {
-            "UI": {
-                "ScoreText": {},
-                "HealthBar": {}
-            },
-            "Audio": {
-                "MusicSource": {},
-                "SFXSource": {}
+unity_menu_hierarchyCreate({
+    "menuName": "SettingsMenu",
+    "menuStructure": {
+        "Graphics": {
+            "text": "グラフィック設定",
+            "submenus": {
+                "Quality": "品質レベル",
+                "Resolution": "解像度"
+            }
+        },
+        "Audio": {
+            "text": "オーディオ設定",
+            "submenus": {
+                "Master": "マスター音量",
+                "Music": "音楽音量"
             }
         }
-    }
+    },
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/SettingsMenuManager.cs"
 })
-# 空のGameObjectを作成後、必要に応じてコンポーネントを追加
+# パネル、ボタン、ナビゲーションスクリプトを自動生成
 ```
 
 **シーンインスペクター (`unity_scene_crud` with `operation="inspect"`)** - UPDATED!

@@ -29,8 +29,8 @@ unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
 # Create GameObjects
 unity_gameobject_createFromTemplate({"template": "Cube", "position": {"x": 0, "y": 1, "z": 0}})
 
-# Build hierarchy structures (creates empty GameObjects)
-unity_hierarchy_builder({"hierarchy": {"Player": {"Camera": {}, "Weapon": {}}}})
+# Build menu hierarchies with navigation and buttons
+unity_menu_hierarchyCreate({"menuName": "MainMenu", "menuStructure": {"Play": "Start Game", "Quit": "Exit"}})
 
 # Inspect current scene (returns one level of hierarchy)
 unity_scene_crud({"operation": "inspect", "includeHierarchy": True, "includeComponents": False})
@@ -841,27 +841,6 @@ unity_gameobject_createFromTemplate({
 })
 ```
 
-### Building Complex Hierarchies
-
-Use the hierarchy builder for complex nested structures:
-
-```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "Camera": {},
-            "Weapon": {}
-        },
-        "Environment": {
-            "Terrain": {},
-            "Props": {}
-        }
-    }
-})
-# Creates empty GameObjects in the nested structure
-# Add components after creating the hierarchy structure
-```
-
 ## Best Practices for Claude
 
 ### 1. Always Check Context First
@@ -892,26 +871,29 @@ unity_component_crud({"operation": "add", "gameObjectPath": "Button", "component
 unity_ugui_createFromTemplate({"template": "Button", "text": "Click Me!"})
 ```
 
-### 3. Use Hierarchy Builder for Organization Structure
+### 3. Use Menu Builder for Menu Creation
 
-When creating multi-level hierarchies for organization, use hierarchy builder to create the structure first:
+When creating menu systems with buttons and navigation, use menu builder to create complete menus:
 
 ```python
-# One command creates entire hierarchy structure
-unity_hierarchy_builder({
-    "hierarchy": {
-        "MainMenu": {
-            "Title": {},
-            "ButtonContainer": {
-                "PlayButton": {},
-                "SettingsButton": {},
-                "QuitButton": {}
+# Creates complete menu with buttons, layout, and optional State pattern navigation
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": {
+            "text": "Game Settings",
+            "submenus": {
+                "Graphics": "Graphics Options",
+                "Audio": "Audio Settings"
             }
-        }
+        },
+        "Quit": "Exit Game"
     },
-    "parentPath": "Canvas"
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MenuManager.cs"
 })
-# Creates empty GameObjects, then add components as needed
+# Creates panels, buttons, layout groups, and MenuStateMachine script
 ```
 
 ### 4. Use Script Templates for Quick Generation
@@ -961,34 +943,20 @@ unity_asset_crud({
 # Step 1: Setup UI scene
 unity_scene_quickSetup({"setupType": "UI"})
 
-# Step 2: Create menu structure (empty GameObjects for organization)
-unity_hierarchy_builder({
-    "hierarchy": {
-        "MenuPanel": {
-            "Title": {},
-            "ButtonList": {}
-        }
+# Step 2: Create complete menu with menu builder
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "StartGame": "Start New Game",
+        "Options": "Game Options",
+        "Quit": "Exit Game"
     },
-    "parentPath": "Canvas"
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MainMenuManager.cs",
+    "buttonWidth": 300,
+    "buttonHeight": 60
 })
-
-# Step 3: Add UI components using templates
-unity_ugui_createFromTemplate({
-    "template": "Panel",
-    "name": "MenuPanel",
-    "parentPath": "Canvas"
-})
-
-# Step 4: Add buttons
-for button_text in ["Start Game", "Options", "Quit"]:
-    unity_ugui_createFromTemplate({
-        "template": "Button",
-        "name": f"{button_text}Button",
-        "parentPath": "Canvas/MenuPanel/ButtonList",
-        "text": button_text,
-        "width": 300,
-        "height": 60
-    })
+# Creates panels, buttons, layout groups, and navigation script in one command!
 ```
 
 ### Use Case 2: Create a Simple Game Level
@@ -1127,39 +1095,7 @@ unity_ugui_createFromTemplate({
 })
 ```
 
-#### 4. Hierarchy Builder (`unity_hierarchy_builder`)
-
-Build complex nested GameObject structures from simple name hierarchies.
-
-**Creates empty GameObjects** organized in a tree structure. Perfect for setting up scene organization, folder structures, or placeholder hierarchies.
-
-**Example:**
-```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "GameManager": {
-            "UI": {
-                "ScoreText": {},
-                "HealthBar": {}
-            },
-            "Audio": {
-                "MusicSource": {},
-                "SFXSource": {}
-            }
-        },
-        "Environment": {
-            "Terrain": {},
-            "Props": {
-                "Trees": {},
-                "Rocks": {}
-            }
-        }
-    }
-})
-# Creates empty GameObjects with the nested structure above
-```
-
-#### 5. Layout Management (`unity_ugui_layoutManage`)
+#### 4. Layout Management (`unity_ugui_layoutManage`)
 
 Manage layout components on UI GameObjects.
 
@@ -1181,7 +1117,7 @@ unity_ugui_layoutManage({
 })
 ```
 
-#### 6. Template Customization (`unity_template_manage`)
+#### 5. Template Customization (`unity_template_manage`)
 
 Transform existing GameObjects into custom templates by adding components and child objects, then optionally save them as reusable prefabs!
 
@@ -1304,7 +1240,7 @@ unity_template_manage({
 - Use `allowDuplicates: True` to add a component even if it already exists
 - Prefab paths must start with `Assets/` and end with `.prefab`
 
-#### 7. Scene Inspector (`unity_scene_crud` with `operation="inspect"`)
+#### 6. Scene Inspector (`unity_scene_crud` with `operation="inspect"`)
 
 Get comprehensive scene information including hierarchy, statistics, and context.
 
@@ -1331,7 +1267,7 @@ unity_gameobject_crud({
 })
 ```
 
-#### 8. Design Pattern Generation (`unity_designPattern_generate`)
+#### 7. Design Pattern Generation (`unity_designPattern_generate`)
 
 Generate production-ready C# implementations of common Unity design patterns. Instantly create complete, commented, and ready-to-use pattern implementations in seconds!
 
@@ -1356,7 +1292,7 @@ unity_designPattern_generate({
 
 See the detailed Design Pattern Generation section below for complete examples and all pattern options.
 
-#### 9. Hierarchical Menu Creation (`unity_menu_hierarchyCreate`)
+#### 8. Hierarchical Menu Creation (`unity_menu_hierarchyCreate`)
 
 Create complete hierarchical menu systems with nested submenus and automatic State pattern navigation. Perfect for main menus, pause menus, and settings menus with multiple levels.
 
@@ -1384,7 +1320,7 @@ unity_menu_hierarchyCreate({
 
 See the detailed Hierarchical Menu Creation section below for complete documentation.
 
-#### 10. Additional High-Level Tools
+#### 9. Additional High-Level Tools
 
 - **`unity_ugui_manage`** - Unified UGUI management for RectTransform operations (anchors, positions, etc.)
 - **`unity_ugui_rectAdjust`** - Adjust RectTransform size based on reference resolution
@@ -2193,25 +2129,32 @@ unity_constant_convert({
 
 ### Utility Tools
 
-#### Console Log (`unity_console_log`)
-
-Retrieve Unity Editor console log messages for debugging.
-
-**Example:**
-```python
-unity_console_log({
-    "logType": "error",  # all/normal/warning/error
-    "limit": 800
-})
-```
-
 #### Await Compilation (`unity_await_compilation`)
 
-Wait for Unity compilation to complete (does NOT trigger compilation, only waits).
+Wait for Unity compilation to complete (does NOT trigger compilation, only waits). Returns compilation result including success status, error count, error messages, and console logs from the compilation period.
 
 **Example:**
 ```python
 unity_await_compilation({"timeoutSeconds": 60})
+```
+
+**Return Value:**
+```python
+{
+    "success": True,
+    "completed": True,
+    "errorCount": 0,
+    "warningCount": 2,
+    "errors": [],
+    "warnings": ["Warning message 1", "Warning message 2"],
+    "elapsedSeconds": 3,
+    "consoleLogs": {
+        "all": ["All log lines..."],
+        "errors": ["Error lines only..."],
+        "warnings": ["Warning lines only..."],
+        "normal": ["Normal/info lines only..."]
+    }
+}
 ```
 
 #### Ping (`unity_ping`)
@@ -3038,32 +2981,31 @@ unity_scene_crud({"operation": "inspect", "includeHierarchy": True})
 unity_component_crud({"operation": "update", "gameObjectPath": "Player", ...})
 ```
 
-#### ❌ Mistake 3: Creating hierarchy structure manually instead of using hierarchy builder
+#### ❌ Mistake 3: Creating menu UI manually instead of using menu builder
 
 **Wrong:**
 ```python
-unity_gameobject_crud({"operation": "create", "name": "Player"})
-unity_gameobject_crud({"operation": "create", "name": "Camera", "parentPath": "Player"})
-unity_gameobject_crud({"operation": "create", "name": "Weapon", "parentPath": "Player"})
-unity_gameobject_crud({"operation": "create", "name": "Blade", "parentPath": "Player/Weapon"})
-unity_gameobject_crud({"operation": "create", "name": "Handle", "parentPath": "Player/Weapon"})
+unity_gameobject_crud({"operation": "create", "name": "MainMenu"})
+unity_gameobject_crud({"operation": "create", "name": "PlayButton", "parentPath": "Canvas/MainMenu"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Canvas/MainMenu/PlayButton", "componentType": "UnityEngine.UI.Button"})
+unity_gameobject_crud({"operation": "create", "name": "SettingsButton", "parentPath": "Canvas/MainMenu"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Canvas/MainMenu/SettingsButton", "componentType": "UnityEngine.UI.Button"})
 # ... many separate commands
 ```
 
 **Right:**
 ```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "Camera": {},
-            "Weapon": {
-                "Blade": {},
-                "Handle": {}
-            }
-        }
-    }
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": "Game Settings",
+        "Quit": "Exit Game"
+    },
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MenuManager.cs"
 })
-# Creates the entire structure in one command, then add components as needed
+# Creates complete menu with buttons, layout, and navigation in one command!
 ```
 
 #### ❌ Mistake 4: Forgetting to set up scene first

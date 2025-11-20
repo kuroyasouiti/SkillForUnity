@@ -12,7 +12,7 @@
 
 ### Tool Documentation
 - **[SKILL.md](../SKILL.md)** - Main skill documentation for AI assistants
-- **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** - Complete reference for all 28 tools
+- **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** - Complete reference for all 26 tools
 - **[TOOL_SELECTION_GUIDE.md](TOOL_SELECTION_GUIDE.md)** - How to choose the right tool
 
 ### Advanced Guides
@@ -29,7 +29,7 @@
 → Read **[QUICKSTART.md](../QUICKSTART.md)** (5 minutes)
 
 #### ...understand all available tools
-→ Read **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** (28 tools documented)
+→ Read **[TOOLS_REFERENCE.md](TOOLS_REFERENCE.md)** (26 tools documented)
 
 #### ...know which tool to use for my task
 → Read **[TOOL_SELECTION_GUIDE.md](TOOL_SELECTION_GUIDE.md)** (decision trees + workflows)
@@ -85,7 +85,7 @@ SkillForUnity provides **28 MCP tools** organized into **9 categories**:
 | **Advanced Features** | 7 | [TOOLS_REFERENCE.md#advanced-features](TOOLS_REFERENCE.md#advanced-features) |
 | **Utility Tools** | 1 | [TOOLS_REFERENCE.md#utility-tools](TOOLS_REFERENCE.md#utility-tools) |
 
-**Total: 28 Tools**
+**Total: 26 Tools**
 
 ---
 
@@ -93,26 +93,25 @@ SkillForUnity provides **28 MCP tools** organized into **9 categories**:
 
 ### Task 1: Create a 3D Game Scene
 **Time:** ~3 minutes
-**Tools Used:** 3 tools, 5 operations
+**Tools Used:** 4 tools, 6 operations
 **Guide:** [TOOL_SELECTION_GUIDE.md - Workflow 2](TOOL_SELECTION_GUIDE.md#workflow-2-create-a-game-level)
 
 1. Set up 3D scene with `unity_scene_quickSetup`
-2. Create player hierarchy with `unity_hierarchy_builder`
-3. Create ground with `unity_gameobject_createFromTemplate`
-4. Create obstacles with `unity_batch_execute`
-5. Add physics with `unity_component_crud`
+2. Create player with `unity_gameobject_createFromTemplate`
+3. Customize player with `unity_template_manage`
+4. Create ground with `unity_gameobject_createFromTemplate`
+5. Create obstacles with `unity_batch_execute`
+6. Add physics with `unity_component_crud`
 
 ---
 
 ### Task 2: Create a Main Menu UI
 **Time:** ~2 minutes
-**Tools Used:** 4 tools, 5 operations
+**Tools Used:** 2 tools, 2 operations
 **Guide:** [TOOL_SELECTION_GUIDE.md - Workflow 1](TOOL_SELECTION_GUIDE.md#workflow-1-create-a-main-menu)
 
 1. Set up UI scene with `unity_scene_quickSetup`
-2. Create menu structure with `unity_hierarchy_builder`
-3. Add layout with `unity_ugui_layoutManage`
-4. Create buttons with `unity_batch_execute`
+2. Create complete menu with `unity_menu_hierarchyCreate`
 
 ---
 
@@ -188,10 +187,11 @@ SkillForUnity provides **28 MCP tools** organized into **9 categories**:
 
 ### Intermediate (Week 1)
 1. Read [TOOL_SELECTION_GUIDE.md](TOOL_SELECTION_GUIDE.md)
-2. Use `unity_hierarchy_builder` for complex structures
-3. Use `unity_batch_execute` for multi-step operations
-4. Manage components with `unity_component_crud`
-5. Work with prefabs using `unity_prefab_crud`
+2. Use `unity_menu_hierarchyCreate` for menu systems
+3. Use `unity_template_manage` for complex object customization
+4. Use `unity_batch_execute` for multi-step operations
+5. Manage components with `unity_component_crud`
+6. Work with prefabs using `unity_prefab_crud`
 
 ### Advanced (Month 1)
 1. Read [TOOLS_REFERENCE.md](TOOLS_REFERENCE.md) completely
@@ -219,11 +219,11 @@ SkillForUnity provides **28 MCP tools** organized into **9 categories**:
 
 ### Most Powerful Tools
 
-1. **`unity_hierarchy_builder`** - Create entire GameObject trees in one command
+1. **`unity_menu_hierarchyCreate`** - Create entire menu systems with navigation
 2. **`unity_batch_execute`** - Execute any combination of tools in sequence
-3. **`unity_script_batch_manage`** - Manage multiple scripts with automatic compilation
-4. **`unity_component_crud`** - Comprehensive component management with batch operations
-5. **`unity_context_inspect`** - Complete scene understanding
+3. **`unity_template_manage`** - Customize objects with components and children
+4. **`unity_script_batch_manage`** - Manage multiple scripts with automatic compilation
+5. **`unity_component_crud`** - Comprehensive component management with batch operations
 
 ---
 
@@ -237,7 +237,7 @@ SkillForUnity provides **28 MCP tools** organized into **9 categories**:
 | GameObject not found | Use `unity_context_inspect` to see hierarchy | [TOOLS_REFERENCE.md#2-unity_context_inspect](TOOLS_REFERENCE.md#2-unity_context_inspect) |
 | Component type not found | Use fully qualified names (e.g., UnityEngine.UI.Button) | [SKILL.md#component-type-reference](../SKILL.md#component-type-reference) |
 | Operation timeout | Use `maxResults` limit, `includeProperties=false` | [TOOL_SELECTION_GUIDE.md#performance-optimization-guide](TOOL_SELECTION_GUIDE.md#performance-optimization-guide) |
-| Script compilation errors | Use `unity_console_log` to see errors | [TOOLS_REFERENCE.md#5-unity_console_log](TOOLS_REFERENCE.md#5-unity_console_log) |
+| Script compilation errors | Check errors in `unity_await_compilation` results | [TOOLS_REFERENCE.md#unity_await_compilation](TOOLS_REFERENCE.md#unity_await_compilation) |
 
 For more troubleshooting, see [troubleshooting.md](troubleshooting.md)
 
@@ -261,7 +261,7 @@ We welcome contributions to the documentation!
 ### Last Updated
 - **Date:** 2025-01-14
 - **Version:** 1.0.0
-- **Total Tools:** 28
+- **Total Tools:** 26
 
 ### Recent Changes
 - Initial comprehensive documentation

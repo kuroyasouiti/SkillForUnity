@@ -143,7 +143,7 @@ See [examples/01-basic-scene-setup.md](examples/01-basic-scene-setup.md) for ful
 |----------|-------|-------------|
 | **Quick Setup** | `scene_quickSetup` | Instant scene setup (3D, 2D, UI, VR) |
 | **Templates** | `gameobject_createFromTemplate`, `ugui_createFromTemplate` | Create from templates |
-| **Hierarchy** | `hierarchy_builder` | Build complex nested structures |
+| **Menu Systems** | `menu_hierarchyCreate` | Create complete hierarchical menu systems with navigation |
 | **Layouts** | `ugui_layoutManage` | UI layout management |
 | **Patterns** | `designPattern_generate` | Generate design pattern code |
 | **Templates** | `template_manage` | Customize GameObjects and create prefabs |

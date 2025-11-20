@@ -45,7 +45,6 @@ namespace MCP.Editor
                 "uguiCreateFromTemplate" => HandleUguiCreateFromTemplate(command.Payload),
                 "uguiLayoutManage" => HandleUguiLayoutManage(command.Payload),
                 "uguiDetectOverlaps" => HandleUguiDetectOverlaps(command.Payload),
-                "hierarchyBuilder" => HandleHierarchyBuilder(command.Payload),
                 "sceneQuickSetup" => HandleSceneQuickSetup(command.Payload),
                 "gameObjectCreateFromTemplate" => HandleGameObjectCreateFromTemplate(command.Payload),
                 "tagLayerManage" => HandleTagLayerManage(command.Payload),
@@ -3928,87 +3927,6 @@ namespace MCP.Editor
             }
 
             return null;
-        }
-
-        /// <summary>
-        /// Builds GameObject hierarchies from simple nested name structures.
-        /// Creates empty GameObjects organized in a tree structure defined by nested dictionaries.
-        /// </summary>
-        /// <param name="payload">Hierarchy definition using nested dictionaries where keys are GameObject names.</param>
-        /// <returns>Result dictionary with created GameObject paths.</returns>
-        private static object HandleHierarchyBuilder(Dictionary<string, object> payload)
-        {
-            // Check if compilation is in progress and wait if necessary
-            var compilationWaitInfo = EnsureNoCompilationInProgress("hierarchyBuilder", maxWaitSeconds: 30f);
-
-            try
-            {
-                var hierarchyDict = payload["hierarchy"] as Dictionary<string, object>;
-                if (hierarchyDict == null)
-                {
-                    throw new InvalidOperationException("hierarchy is required");
-                }
-
-                var parentPath = GetString(payload, "parentPath");
-                GameObject parent = null;
-                if (!string.IsNullOrEmpty(parentPath))
-                {
-                    parent = ResolveGameObject(parentPath);
-                }
-
-                Debug.Log($"[hierarchyBuilder] Building hierarchy with {hierarchyDict.Count} root objects");
-
-                var createdPaths = new List<string>();
-                foreach (var kvp in hierarchyDict)
-                {
-                    var goName = kvp.Key;
-                    var goSpec = kvp.Value as Dictionary<string, object>;
-                    if (goSpec != null)
-                    {
-                        var createdGo = BuildGameObjectFromSpec(goName, goSpec, parent);
-                        createdPaths.Add(GetHierarchyPath(createdGo));
-                    }
-                }
-
-                return new Dictionary<string, object>
-                {
-                    ["createdObjects"] = createdPaths,
-                    ["count"] = createdPaths.Count,
-                };
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[hierarchyBuilder] Error: {ex.Message}\n{ex.StackTrace}");
-                throw;
-            }
-        }
-
-        private static GameObject BuildGameObjectFromSpec(string name, Dictionary<string, object> spec, GameObject parent)
-        {
-            var go = new GameObject(name);
-            if (parent != null)
-            {
-                go.transform.SetParent(parent.transform, false);
-            }
-
-            // Build children recursively - all keys in spec are treated as child GameObject names
-            if (spec != null && spec.Count > 0)
-            {
-                foreach (var childKvp in spec)
-                {
-                    var childName = childKvp.Key;
-                    var childSpec = childKvp.Value as Dictionary<string, object>;
-                    // If value is not a dictionary, treat it as an empty child (no sub-children)
-                    if (childSpec == null)
-                    {
-                        childSpec = new Dictionary<string, object>();
-                    }
-                    BuildGameObjectFromSpec(childName, childSpec, go);
-                }
-            }
-
-            Undo.RegisterCreatedObjectUndo(go, $"Create {name}");
-            return go;
         }
 
         /// <summary>

@@ -77,20 +77,22 @@ unity_gameobject_createFromTemplate({
     "scale": {"x": 0.5, "y": 0.5, "z": 0.5}
 })
 
-# Build complex hierarchy
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody", "CapsuleCollider"],
-            "properties": {"position": {"x": 0, "y": 1, "z": 0}},
-            "children": {
-                "Camera": {
-                    "components": ["Camera"],
-                    "properties": {"position": {"x": 0, "y": 0.5, "z": -3}}
-                }
+# Create hierarchical menu system
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": {
+            "text": "Game Settings",
+            "submenus": {
+                "Graphics": "Graphics Options",
+                "Audio": "Audio Settings"
             }
-        }
-    }
+        },
+        "Quit": "Exit Game"
+    },
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MenuManager.cs"
 })
 ```
 
@@ -105,24 +107,27 @@ unity_ugui_createFromTemplate({
     "anchorPreset": "middle-center"
 })
 
-# Create complete UI layout
-unity_hierarchy_builder({
-    "hierarchy": {
-        "MenuPanel": {
-            "components": ["UnityEngine.UI.Image"],
-            "children": {
-                "Title": {"components": ["UnityEngine.UI.Text"]},
-                "ButtonContainer": {
-                    "components": ["UnityEngine.UI.VerticalLayoutGroup"],
-                    "children": {
-                        "PlayButton": {"components": ["UnityEngine.UI.Button", "UnityEngine.UI.Image"]},
-                        "SettingsButton": {"components": ["UnityEngine.UI.Button", "UnityEngine.UI.Image"]}
-                    }
-                }
+# Create complete menu with navigation
+unity_menu_hierarchyCreate({
+    "menuName": "GameMenu",
+    "menuStructure": {
+        "NewGame": "New Game",
+        "LoadGame": "Load Game",
+        "Options": {
+            "text": "Options",
+            "submenus": {
+                "Display": "Display Settings",
+                "Sound": "Sound Settings",
+                "Controls": "Control Settings"
             }
-        }
+        },
+        "Exit": "Exit Game"
     },
-    "parentPath": "Canvas"
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/GameMenuManager.cs",
+    "buttonWidth": 250,
+    "buttonHeight": 60,
+    "navigationMode": "both"
 })
 ```
 
@@ -248,9 +253,9 @@ unity_designPattern_generate({
    unity_context_inspect({"includeHierarchy": True, "includeComponents": False})
    ```
 
-3. **Use hierarchy builder** - Create entire structures at once
+3. **Use menu creation** - Create complete menu systems with navigation
    ```python
-   unity_hierarchy_builder({"hierarchy": {...}})  # Not multiple individual creates
+   unity_menu_hierarchyCreate({"menuName": "MainMenu", "menuStructure": {...}})  # Not manual UI creation
    ```
 
 4. **Use script templates** - Generate standard Unity script structures quickly
@@ -346,28 +351,28 @@ if test["errorCount"] == 0:
 # 1. Setup UI scene
 unity_scene_quickSetup({"setupType": "UI"})
 
-# 2. Create menu structure with hierarchy builder
-unity_hierarchy_builder({
-    "hierarchy": {
-        "MenuPanel": {
-            "components": ["UnityEngine.UI.Image"],
-            "children": {
-                "Title": {"components": ["UnityEngine.UI.Text"]},
-                "ButtonList": {"components": ["UnityEngine.UI.VerticalLayoutGroup"]}
+# 2. Create complete menu system with navigation
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": {
+            "text": "Settings",
+            "submenus": {
+                "Graphics": "Graphics Settings",
+                "Audio": "Audio Settings",
+                "Controls": "Control Settings"
             }
-        }
+        },
+        "Credits": "View Credits",
+        "Quit": "Exit Game"
     },
-    "parentPath": "Canvas"
+    "generateStateMachine": True,
+    "stateMachineScriptPath": "Assets/Scripts/MainMenuManager.cs",
+    "buttonWidth": 300,
+    "buttonHeight": 60,
+    "spacing": 15
 })
-
-# 3. Add buttons
-for button_text in ["Start", "Settings", "Quit"]:
-    unity_ugui_createFromTemplate({
-        "template": "Button",
-        "name": f"{button_text}Button",
-        "parentPath": "Canvas/MenuPanel/ButtonList",
-        "text": button_text
-    })
 ```
 
 ### Create a Game Level
@@ -422,7 +427,7 @@ The tools are organized into 10 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Core Tools** | 4 | Connection, context, hierarchy builder, logging |
+| **Core Tools** | 4 | Connection, context, menu creation, compilation |
 | **Scene Management** | 2 | Scene CRUD, quick setup templates |
 | **GameObject Operations** | 3 | GameObject CRUD, templates, tag/layer management |
 | **Component Management** | 1 | Component CRUD with batch operations |
@@ -447,7 +452,7 @@ The tools are organized into 10 categories:
 ### GameObject Operations
 - `unity_gameobject_createFromTemplate` - Create from templates
 - `unity_gameobject_crud` - Full GameObject CRUD operations
-- `unity_hierarchy_builder` - Build nested structures
+- `unity_menu_hierarchyCreate` - Create hierarchical menu systems with navigation
 
 ### Component Management
 - `unity_component_crud` - Add, update, remove, inspect components
@@ -479,8 +484,7 @@ The tools are organized into 10 categories:
 
 ### Utility
 - `unity_ping` - Test connection and get Unity version
-- `unity_console_log` - Retrieve Unity Editor console log messages
-- `unity_await_compilation` - Wait for Unity compilation to complete
+- `unity_await_compilation` - Wait for Unity compilation to complete (includes console logs in results)
 
 ## Tips for Success
 

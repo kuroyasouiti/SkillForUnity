@@ -190,35 +190,42 @@ if result["errorCount"] > 0:
         print(f"Failed on {error['gameObject']}: {error['error']}")
 ```
 
-## Hierarchy Organization
+## Complex Object Creation
 
-### Use Hierarchy Builder for Complex Structures
+### Use Template Manager for Customization
 
 ```python
-# ❌ DON'T: Create manually
+# ❌ DON'T: Create and configure manually
 unity_gameobject_crud({"operation": "create", "name": "Player"})
-unity_gameobject_crud({"operation": "create", "name": "Camera", "parentPath": "Player"})
-unity_gameobject_crud({"operation": "create", "name": "Weapon", "parentPath": "Player"})
 unity_component_crud({"operation": "add", "gameObjectPath": "Player", "componentType": "Rigidbody"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Player", "componentType": "CapsuleCollider"})
+unity_gameobject_crud({"operation": "create", "name": "Camera", "parentPath": "Player"})
+unity_component_crud({"operation": "add", "gameObjectPath": "Player/Camera", "componentType": "Camera"})
 # ... many more steps
 
-# ✅ DO: Use hierarchy builder
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody", "CapsuleCollider"],
-            "properties": {"position": {"x": 0, "y": 1, "z": 0}},
-            "children": {
-                "Camera": {
-                    "components": ["Camera"],
-                    "properties": {"position": {"x": 0, "y": 0.5, "z": -3}}
-                },
-                "Weapon": {
-                    "components": ["BoxCollider"]
-                }
-            }
+# ✅ DO: Use template manager
+# First create the base object
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Player"})
+
+# Then customize it with components and children in one command
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Player",
+    "components": [
+        {"type": "UnityEngine.Rigidbody", "properties": {"mass": 2.0}},
+        {"type": "UnityEngine.CapsuleCollider", "properties": {"radius": 0.5}}
+    ],
+    "children": [
+        {
+            "name": "Camera",
+            "components": [{"type": "UnityEngine.Camera"}],
+            "position": {"x": 0, "y": 0.5, "z": -3}
+        },
+        {
+            "name": "Weapon",
+            "components": [{"type": "UnityEngine.BoxCollider"}]
         }
-    }
+    ]
 })
 ```
 
@@ -230,8 +237,18 @@ unity_hierarchy_builder({
 # ✅ DO: Set up UI scene first
 unity_scene_quickSetup({"setupType": "UI"})
 
-# Now create UI elements
+# For simple UI elements
 unity_ugui_createFromTemplate({"template": "Button"})
+
+# For complete menu systems
+unity_menu_hierarchyCreate({
+    "menuName": "MainMenu",
+    "menuStructure": {
+        "Play": "Start Game",
+        "Settings": "Game Settings",
+        "Quit": "Exit Game"
+    }
+})
 ```
 
 ### Use Layouts for Organization

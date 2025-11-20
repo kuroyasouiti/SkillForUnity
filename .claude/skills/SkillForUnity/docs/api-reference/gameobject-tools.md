@@ -86,34 +86,42 @@ unity_gameobject_createFromTemplate({
 
 ---
 
-## unity_hierarchy_builder
+## unity_template_manage
 
-Build complex nested GameObject structures declaratively.
+Customize existing GameObjects by adding multiple components and child objects in one command.
 
 ### Example
 
 ```python
-unity_hierarchy_builder({
-    "hierarchy": {
-        "Player": {
-            "components": ["Rigidbody", "CapsuleCollider"],
-            "properties": {
-                "position": {"x": 0, "y": 1, "z": 0}
-            },
-            "children": {
-                "Camera": {
-                    "components": ["Camera"],
-                    "properties": {
-                        "position": {"x": 0, "y": 0.5, "z": -3}
-                    }
-                },
-                "Weapon": {
-                    "components": ["BoxCollider"]
-                }
-            }
+# First create the base object
+unity_gameobject_createFromTemplate({"template": "Cube", "name": "Player"})
+
+# Then customize it
+unity_template_manage({
+    "operation": "customize",
+    "gameObjectPath": "Player",
+    "components": [
+        {"type": "UnityEngine.Rigidbody", "properties": {"mass": 2.0}},
+        {"type": "UnityEngine.CapsuleCollider", "properties": {"radius": 0.5}}
+    ],
+    "children": [
+        {
+            "name": "Camera",
+            "components": [{"type": "UnityEngine.Camera"}],
+            "position": {"x": 0, "y": 0.5, "z": -3}
+        },
+        {
+            "name": "Weapon",
+            "components": [{"type": "UnityEngine.BoxCollider"}]
         }
-    },
-    "parentPath": "Characters"
+    ]
+})
+
+# Optionally convert to prefab for reuse
+unity_template_manage({
+    "operation": "convertToPrefab",
+    "gameObjectPath": "Player",
+    "prefabPath": "Assets/Prefabs/Player.prefab"
 })
 ```
 
