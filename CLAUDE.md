@@ -81,7 +81,7 @@ unity_component_crud({
 
 The Claude Skill is located at the project root in `SkillForUnity/` directory. For Claude Code integration, a junction link exists at `.claude/skills/SkillForUnity` → `SkillForUnity/` to enable automatic skill recognition.
 
-The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`. When setting up on other machines, extract it to the project root as `SkillForUnity/`, or to `~/.claude/skills/SkillForUnity` for traditional setup.
+The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity.zip`. When setting up on other machines, extract it to the project root as `SkillForUnity/`, or to `~/.claude/skills/SkillForUnity` for traditional setup.
 
 ## Architecture
 

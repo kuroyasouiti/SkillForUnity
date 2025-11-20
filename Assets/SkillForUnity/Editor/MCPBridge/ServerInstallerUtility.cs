@@ -23,14 +23,14 @@ namespace MCP.Editor
 
         private static string GetEmbeddedSkillZipPath()
         {
-            // Find this script's location and look for SkillForUnity-MCPServer.zip in the parent directory
+            // Find this script's location and look for SkillForUnity.zip in the parent directory
             var guids = AssetDatabase.FindAssets("ServerInstallerUtility t:Script");
             if (guids.Length > 0)
             {
                 var scriptPath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 var scriptDir = Path.GetDirectoryName(scriptPath);
                 var parentDir = Path.GetDirectoryName(Path.GetDirectoryName(scriptDir)); // Go up to Assets/SkillForUnity
-                var zipPath = Path.Combine(parentDir, "SkillForUnity-MCPServer.zip");
+                var zipPath = Path.Combine(parentDir, "SkillForUnity.zip");
 
                 if (File.Exists(zipPath))
                 {
@@ -45,7 +45,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(assetsPath, "SkillForUnity", "SkillForUnity-MCPServer.zip");
+            return Path.Combine(assetsPath, "SkillForUnity", "SkillForUnity.zip");
         }
 
         private static string FindSkillZipPath()
@@ -62,15 +62,15 @@ namespace MCP.Editor
                 return null;
             }
 
-            // .claude/skills/SkillForUnity-MCPServer.zip を探す
-            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity-MCPServer.zip");
+            // .claude/skills/SkillForUnity.zip を探す
+            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
             if (File.Exists(skillZipPath))
             {
                 return skillZipPath;
             }
 
             // 見つからない場合、プロジェクトルートを検索
-            var rootZipPath = Path.Combine(projectRoot, "SkillForUnity-MCPServer.zip");
+            var rootZipPath = Path.Combine(projectRoot, "SkillForUnity.zip");
             if (File.Exists(rootZipPath))
             {
                 return rootZipPath;
@@ -105,7 +105,7 @@ namespace MCP.Editor
         {
             if (string.IsNullOrEmpty(SkillZipPath))
             {
-                message = "Skill package (SkillForUnity-MCPServer.zip) not found. Please build the skill package first.";
+                message = "Skill package (SkillForUnity.zip) not found. Please build the skill package first.";
                 return false;
             }
 
@@ -231,7 +231,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity-MCPServer.zip");
+            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
         }
 
         /// <summary>
@@ -245,7 +245,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity-MCPServer.zip");
+            return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity.zip");
         }
     }
 }

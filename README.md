@@ -41,17 +41,17 @@ SkillForUnity/
 
 ### 2. Install Claude Skill Package
 
-The Unity package already bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`.
+The Unity package already bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity.zip`.
 
 **Option A: Copy the bundled zip to Claude Desktop's skills folder**
 
 ```bash
 # Copy the Claude Skill zip
-cp Assets/SkillForUnity/SkillForUnity-MCPServer.zip ~/.claude/skills/
+cp Assets/SkillForUnity/SkillForUnity.zip ~/.claude/skills/
 
 # Extract to create ~/.claude/skills/SkillForUnity
 cd ~/.claude/skills
-unzip -o SkillForUnity-MCPServer.zip
+unzip -o SkillForUnity.zip
 ```
 
 **Option B: Register via MCP Window**
@@ -239,7 +239,7 @@ See [SkillForUnity/examples/](SkillForUnity/examples/) for more tutorials.
 SkillForUnity/
 ├── Assets/
 │   └── SkillForUnity/
-│       ├── SkillForUnity-MCPServer.zip  # Bundled Claude Skill MCP server package
+│       ├── SkillForUnity.zip        # Bundled Claude Skill MCP server package
 │       └── Editor/
 │           └── MCPBridge/           # Unity C# Bridge
 │               ├── McpBridgeService.cs
@@ -323,7 +323,7 @@ If you were using the old structure (`Assets/Runtime/MCPServer/` or `SkillPackag
 
 1. **Unity Side**: Install via Unity Package Manager (see installation instructions above)
    - The Unity Bridge remains at `Assets/SkillForUnity/Editor/MCPBridge/` (unchanged)
-2. **Claude Skill Side**: Extract `Assets/SkillForUnity/SkillForUnity-MCPServer.zip` into your Claude Desktop skills folder (creates `~/.claude/skills/SkillForUnity`)
+2. **Claude Skill Side**: Extract `Assets/SkillForUnity/SkillForUnity.zip` into your Claude Desktop skills folder (creates `~/.claude/skills/SkillForUnity`)
    - Or configure via MCP Window by pointing to the extracted `skill.yml`
    - Or manually add to `claude_desktop_config.json`
 3. Remove old installation files if desired
