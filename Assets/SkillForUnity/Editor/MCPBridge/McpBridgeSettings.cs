@@ -104,7 +104,7 @@ namespace MCP.Editor
                 }
 
                 // Final fallback (should not happen)
-                return Path.Combine(Application.dataPath, "..", ".claude", "skills", "SkillForUnity-MCPServer.zip");
+                return Path.Combine(Application.dataPath, "..", ".claude", "skills", "SkillForUnity");
             }
         }
 

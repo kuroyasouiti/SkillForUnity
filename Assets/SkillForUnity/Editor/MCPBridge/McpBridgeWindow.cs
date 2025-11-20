@@ -316,7 +316,7 @@ namespace MCP.Editor
                 return;
             }
 
-            if (!File.Exists(settings.ServerInstallPath))
+            if (!Directory.Exists(settings.ServerInstallPath))
             {
                 EditorGUILayout.HelpBox("Skill package not installed yet. Click 'Install Skill Package' button above.", MessageType.Warning);
                 return;
@@ -345,13 +345,13 @@ namespace MCP.Editor
 
                 if (!string.IsNullOrEmpty(localPath))
                 {
-                    var localCmd = $"copy \"{skillZipPath}\" \"{localPath}\"";
+                    var localCmd = $"Expand-Archive -Path \"{skillZipPath}\" -DestinationPath \"{localPath}\" -Force";
                     EditorGUILayout.SelectableLabel(localCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
                 }
 
                 if (!string.IsNullOrEmpty(globalPath))
                 {
-                    var globalCmd = $"copy \"{skillZipPath}\" \"{globalPath}\"";
+                    var globalCmd = $"Expand-Archive -Path \"{skillZipPath}\" -DestinationPath \"{globalPath}\" -Force";
                     EditorGUILayout.SelectableLabel(globalCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
                 }
             }
@@ -362,13 +362,13 @@ namespace MCP.Editor
 
                 if (!string.IsNullOrEmpty(localPath))
                 {
-                    var localCmd = $"cp \"{skillZipPath}\" \"{localPath}\"";
+                    var localCmd = $"unzip -o \"{skillZipPath}\" -d \"{localPath}\"";
                     EditorGUILayout.SelectableLabel(localCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
                 }
 
                 if (!string.IsNullOrEmpty(globalPath))
                 {
-                    var globalCmd = $"cp \"{skillZipPath}\" \"{globalPath}\"";
+                    var globalCmd = $"unzip -o \"{skillZipPath}\" -d \"{globalPath}\"";
                     EditorGUILayout.SelectableLabel(globalCmd, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
                 }
             }
@@ -427,7 +427,7 @@ namespace MCP.Editor
             }
 
             // Check if already installed
-            if (File.Exists(destinationPath))
+            if (Directory.Exists(destinationPath))
             {
                 var overwrite = EditorUtility.DisplayDialog(
                     "Overwrite Existing Package",

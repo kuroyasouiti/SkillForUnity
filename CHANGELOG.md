@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-01-21
+
+### Changed
+- **Skill Installation Method**: Changed from zip file copy to directory extraction
+  - Unity Editor's MCP Assistant now extracts skill package to directories
+  - Installation path changed from `.claude/skills/SkillForUnity.zip` to `.claude/skills/SkillForUnity/`
+  - Supports source code installation for better development and debugging
+  - Automatic cleanup of temporary extraction directories
+
+### Improved
+- **ServerInstallerUtility**: Enhanced installation process
+  - Added support for zip file extraction using System.IO.Compression
+  - Automatic detection of internal directory structure
+  - Safe installation with temporary directory handling
+  - Better error handling during installation
+
+### Documentation
+- Updated manual installation commands to use extraction instead of copy
+  - Windows: `Expand-Archive` PowerShell command
+  - macOS/Linux: `unzip` command
+
+---
+
 ## [1.2.0] - 2025-01-20
 
 ### Added
@@ -74,6 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prefab workflow support
 - Project settings management
 
+[1.3.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/kuroyasouiti/SkillForUnity/releases/tag/v1.0.0

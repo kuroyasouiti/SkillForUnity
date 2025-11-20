@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using UnityEditor;
 using UnityEngine;
 
@@ -115,25 +116,64 @@ namespace MCP.Editor
                 return false;
             }
 
+            string tempExtractPath = null;
+
             try
             {
-                // Ensure destination directory exists
-                var destinationDir = Path.GetDirectoryName(destinationPath);
-                if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
+                // If destination exists, delete it first
+                if (Directory.Exists(destinationPath))
                 {
-                    Directory.CreateDirectory(destinationDir);
+                    Directory.Delete(destinationPath, recursive: true);
                 }
 
-                // Copy the zip file
-                File.Copy(SkillZipPath, destinationPath, overwrite: true);
+                // Ensure parent directory exists
+                var parentDir = Path.GetDirectoryName(destinationPath);
+                if (!string.IsNullOrEmpty(parentDir) && !Directory.Exists(parentDir))
+                {
+                    Directory.CreateDirectory(parentDir);
+                }
 
-                message = $"Skill package installed to: {destinationPath}";
+                // Extract to temporary directory first
+                tempExtractPath = Path.Combine(Path.GetTempPath(), "SkillForUnity_" + Guid.NewGuid().ToString("N"));
+                Directory.CreateDirectory(tempExtractPath);
+                ZipFile.ExtractToDirectory(SkillZipPath, tempExtractPath);
+
+                // Find the SkillForUnity directory inside the extracted content
+                var skillDir = Path.Combine(tempExtractPath, "SkillForUnity");
+                if (Directory.Exists(skillDir))
+                {
+                    // Move the SkillForUnity directory to the destination
+                    Directory.Move(skillDir, destinationPath);
+                }
+                else
+                {
+                    // If SkillForUnity subdirectory doesn't exist, move the temp directory itself
+                    Directory.Move(tempExtractPath, destinationPath);
+                    tempExtractPath = null; // Prevent deletion since we moved it
+                }
+
+                message = $"Skill package extracted to: {destinationPath}";
                 return true;
             }
             catch (Exception ex)
             {
                 message = $"Failed to install skill package: {ex.Message}";
                 return false;
+            }
+            finally
+            {
+                // Clean up temporary directory
+                if (!string.IsNullOrEmpty(tempExtractPath) && Directory.Exists(tempExtractPath))
+                {
+                    try
+                    {
+                        Directory.Delete(tempExtractPath, recursive: true);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
             }
         }
 
@@ -231,7 +271,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
+            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity");
         }
 
         /// <summary>
@@ -245,7 +285,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity.zip");
+            return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity");
         }
     }
 }
