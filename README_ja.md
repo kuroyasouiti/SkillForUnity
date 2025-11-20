@@ -13,7 +13,7 @@ AIクライアント (Claude Code/Cursor) <--(MCP)--> Pythonサーバー <--(Web
 ### コンポーネント
 
 1. **Unity C#ブリッジ** (`Assets/SkillForUnity/Editor/MCPBridge/`) - Unity Editor内で動作するWebSocketサーバー（Claude SkillのZIPを同梱）
-2. **Claude Skill (Python MCPサーバー)** (`.claude/skills/SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
+2. **Claude Skill (Python MCPサーバー)** (`SkillForUnity/src/`) - ブリッジに接続するMCPプロトコル実装
 
 ## クイックスタート
 
@@ -824,7 +824,7 @@ SkillForUnity/
 詳細なガイドは以下を参照:
 - [CLAUDE.md](CLAUDE.md) - 完全な開発ドキュメント
 - [TOOL_SELECTION_GUIDE.md](SkillForUnity/docs/TOOL_SELECTION_GUIDE.md) - バッチ操作やワークフローのまとめ
-- `.claude/skills/SkillForUnity/docs/` - API リファレンスと詳細ガイド
+- `SkillForUnity/docs/` - API リファレンスと詳細ガイド
 
 ---
 
@@ -931,8 +931,8 @@ SkillForUnity/
 ## ドキュメント
 
 - **メインドキュメント**: [CLAUDE.md](CLAUDE.md)
-- **クイックスタート**: [SkillForUnity/QUICKSTART.md](.claude/skills/SkillForUnity/QUICKSTART.md)
-- **API リファレンス**: [SkillForUnity/docs/](.claude/skills/SkillForUnity/docs/)
+- **クイックスタート**: [SkillForUnity/QUICKSTART.md](SkillForUnity/QUICKSTART.md)
+- **API リファレンス**: [SkillForUnity/docs/](SkillForUnity/docs/)
 - **バッチ処理例**: [TOOL_SELECTION_GUIDE.md](SkillForUnity/docs/TOOL_SELECTION_GUIDE.md)
 - **このファイル**: 完全なツールリファレンスとクイックスタート
 

@@ -75,9 +75,13 @@ unity_component_crud({
 **SkillForUnity** is a Model Context Protocol (MCP) server that enables AI assistants to interact with Unity Editor in real-time. It consists of two main components:
 
 1. **Unity C# Bridge** (`Assets/SkillForUnity/Editor/MCPBridge/`) - WebSocket server running inside Unity Editor
-2. **Claude Skill (Python MCP Server)** (`.claude/skills/SkillForUnity/src/`) - MCP protocol implementation that connects to the bridge
+2. **Claude Skill (Python MCP Server)** (`SkillForUnity/src/`) - MCP protocol implementation that connects to the bridge
 
-The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`. Extract it to `~/.claude/skills/SkillForUnity` (or any folder) when registering the server with Claude Desktop.
+### Project Structure
+
+The Claude Skill is located at the project root in `SkillForUnity/` directory. For Claude Code integration, a junction link exists at `.claude/skills/SkillForUnity` → `SkillForUnity/` to enable automatic skill recognition.
+
+The Unity package bundles the Claude Skill archive at `Assets/SkillForUnity/SkillForUnity-MCPServer.zip`. When setting up on other machines, extract it to the project root as `SkillForUnity/`, or to `~/.claude/skills/SkillForUnity` for traditional setup.
 
 ## Architecture
 
@@ -101,9 +105,9 @@ AI Client (Claude Code/Cursor) <--(MCP)--> Python Server <--(WebSocket)--> Unity
 | **McpBridgeService.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | WebSocket listener with custom HTTP handshake, manages client lifecycle |
 | **McpCommandProcessor.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | Executes tool commands (scene/GameObject/component/asset operations) |
 | **McpContextCollector.cs** | `Assets/SkillForUnity/Editor/MCPBridge/` | Gathers Unity state (hierarchy, selection, assets, Git status) |
-| **bridge_manager.py** | `.claude/skills/SkillForUnity/src/bridge/` | Python-side WebSocket client, command routing with timeout handling |
-| **register_tools.py** | `.claude/skills/SkillForUnity/src/tools/` | MCP tool definitions and schemas |
-| **main.py** | `.claude/skills/SkillForUnity/src/` | Server entrypoint with stdio/websocket transport modes |
+| **bridge_manager.py** | `SkillForUnity/src/bridge/` | Python-side WebSocket client, command routing with timeout handling |
+| **register_tools.py** | `SkillForUnity/src/tools/` | MCP tool definitions and schemas |
+| **main.py** | `SkillForUnity/src/` | Server entrypoint with stdio/websocket transport modes |
 
 ## Development Commands
 
@@ -112,10 +116,10 @@ AI Client (Claude Code/Cursor) <--(MCP)--> Python Server <--(WebSocket)--> Unity
 **From the project root:**
 ```bash
 # Using uv (recommended)
-uv run --directory .claude/skills/SkillForUnity src/main.py
+uv run --directory SkillForUnity src/main.py
 
 # Using Python directly
-cd .claude/skills/SkillForUnity
+cd SkillForUnity
 python src/main.py --transport stdio  # For MCP clients
 python src/main.py --transport websocket  # For HTTP/WebSocket mode
 ```
@@ -2854,7 +2858,7 @@ Comprehensive operations for working with Unity prefabs:
 
 **Unit Tests:**
 - C# tests: `Assets/SkillForUnity/Editor/MCPBridge/Tests/McpCommandProcessorTests.cs`
-- Python tests: `.claude/skills/SkillForUnity/tests/test_*.py`
+- Python tests: `SkillForUnity/tests/test_*.py`
 
 ## Common Pitfalls
 
