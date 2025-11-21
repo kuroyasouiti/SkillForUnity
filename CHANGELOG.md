@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-01-21
+
+### Added
+- **Automatic .mcp.json Configuration Management**: Seamless Claude Code auto-start setup
+  - **Installation**: Automatically creates/updates `.mcp.json` for skill auto-start
+    - Smart detection of global (`~/.claude/mcp.json`) vs local (project `.mcp.json`) installation
+    - Preserves existing MCP server configurations during updates
+    - Uses relative paths for portability (`skills/SkillForUnity` for global, `.claude/skills/SkillForUnity` for local)
+    - Merges skillforunity configuration with existing servers
+    - Backs up existing `.mcp.json` before making changes
+  - **Uninstallation**: Automatically removes skillforunity entry from `.mcp.json`
+    - Detects and updates correct configuration file (global or local)
+    - Preserves other MCP server configurations
+    - Deletes `.mcp.json` file if no servers remain after uninstall
+    - Safe error handling with informative messages
+
+### Improved
+- **ServerInstallerUtility**: Enhanced installation/uninstallation workflow
+  - Added `CreateMcpJsonFile()` method for automatic `.mcp.json` generation
+  - Added `RemoveFromMcpJson()` method for clean uninstallation
+  - JSON formatting with `FormatJson()` helper for readable output
+  - Comprehensive error handling and user feedback
+
+### Documentation
+- Updated installation instructions to mention automatic `.mcp.json` setup
+- Clarified Claude Code auto-start configuration process
+
+---
+
 ## [1.4.0] - 2025-01-21
 
 ### Added
@@ -119,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prefab workflow support
 - Project settings management
 
+[1.5.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/kuroyasouiti/SkillForUnity/compare/v1.1.0...v1.2.0

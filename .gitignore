@@ -99,6 +99,5 @@ ExportedObj/
 # ================================================================
 .DS_Store
 Thumbs.db
-.claude/skills/SkillForUnity-MCPServer.zip
-.claude/skills/SkillForUnity/tests/
 docs/
+.claude/skills/SkillForUnity/.venv/

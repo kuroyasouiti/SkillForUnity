@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using UnityEditor;
@@ -173,7 +174,10 @@ namespace MCP.Editor
                     CopyDirectoryRecursive(tempExtractPath, destinationPath);
                 }
 
-                message = $"Skill package extracted to: {destinationPath}";
+                // Create or update .mcp.json after successful installation
+                CreateMcpJsonFile(destinationPath, out string mcpJsonMessage);
+
+                message = $"Skill package extracted to: {destinationPath}\n{mcpJsonMessage}";
                 return true;
             }
             catch (Exception ex)
@@ -272,6 +276,13 @@ namespace MCP.Editor
                     return false;
                 }
 
+                // Remove from .mcp.json
+                RemoveFromMcpJson(normalized, out string mcpJsonMessage);
+                if (!string.IsNullOrEmpty(mcpJsonMessage))
+                {
+                    message += "\n" + mcpJsonMessage;
+                }
+
                 return true;
             }
             catch (Exception ex)
@@ -307,6 +318,281 @@ namespace MCP.Editor
             }
 
             return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity");
+        }
+
+        /// <summary>
+        /// Create or update .mcp.json file for Claude Code auto-start
+        /// </summary>
+        /// <param name="destinationPath">Installation destination path to determine local or global installation</param>
+        /// <param name="message">Result message</param>
+        private static bool CreateMcpJsonFile(string destinationPath, out string message)
+        {
+            try
+            {
+                // Determine if this is a local or global installation
+                var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                var isGlobalInstall = !string.IsNullOrEmpty(homeDir) &&
+                                     destinationPath.StartsWith(homeDir, StringComparison.OrdinalIgnoreCase);
+
+                // Determine .mcp.json path based on installation type
+                string mcpJsonPath;
+                string skillDirectory;
+
+                if (isGlobalInstall)
+                {
+                    // Global installation: ~/.claude/mcp.json
+                    // Path is relative to ~/.claude directory
+                    mcpJsonPath = Path.Combine(homeDir, ".claude", "mcp.json");
+                    skillDirectory = "skills/SkillForUnity";
+                }
+                else
+                {
+                    // Local installation: project root/.mcp.json
+                    // Path is relative to project root directory
+                    var projectRoot = Path.GetDirectoryName(Application.dataPath);
+                    if (string.IsNullOrEmpty(projectRoot))
+                    {
+                        message = ".mcp.json: Failed to determine project root directory";
+                        return false;
+                    }
+                    mcpJsonPath = Path.Combine(projectRoot, ".mcp.json");
+                    skillDirectory = ".claude/skills/SkillForUnity";
+                }
+
+                // Load existing .mcp.json or create new structure
+                var mcpConfig = new Dictionary<string, object>();
+                var mcpServers = new Dictionary<string, object>();
+
+                if (File.Exists(mcpJsonPath))
+                {
+                    try
+                    {
+                        var existingContent = File.ReadAllText(mcpJsonPath);
+                        var existingConfig = MiniJson.Deserialize(existingContent) as Dictionary<string, object>;
+
+                        if (existingConfig != null)
+                        {
+                            mcpConfig = existingConfig;
+
+                            // Extract existing mcpServers
+                            if (mcpConfig.ContainsKey("mcpServers") && mcpConfig["mcpServers"] is Dictionary<string, object> servers)
+                            {
+                                mcpServers = servers;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"Failed to parse existing .mcp.json, will create new one: {ex.Message}");
+                    }
+                }
+
+                // Create or update skillforunity server configuration
+                var skillforunityConfig = new Dictionary<string, object>
+                {
+                    ["command"] = "uv",
+                    ["args"] = new List<object>
+                    {
+                        "run",
+                        "--directory",
+                        skillDirectory,
+                        "src/main.py",
+                        "--transport",
+                        "stdio"
+                    },
+                    ["env"] = new Dictionary<string, object>
+                    {
+                        ["MCP_SERVER_TRANSPORT"] = "stdio",
+                        ["MCP_LOG_LEVEL"] = "info"
+                    }
+                };
+
+                // Update or add skillforunity configuration
+                mcpServers["skillforunity"] = skillforunityConfig;
+                mcpConfig["mcpServers"] = mcpServers;
+
+                // Ensure parent directory exists
+                var mcpJsonDir = Path.GetDirectoryName(mcpJsonPath);
+                if (!string.IsNullOrEmpty(mcpJsonDir) && !Directory.Exists(mcpJsonDir))
+                {
+                    Directory.CreateDirectory(mcpJsonDir);
+                }
+
+                // Serialize and write to file with pretty formatting
+                var jsonContent = MiniJson.Serialize(mcpConfig);
+                var formattedJson = FormatJson(jsonContent);
+                File.WriteAllText(mcpJsonPath, formattedJson);
+
+                var installType = isGlobalInstall ? "global" : "project";
+                message = $".mcp.json: Updated {installType} configuration at {mcpJsonPath}";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                message = $".mcp.json: Failed to create/update configuration file: {ex.Message}";
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Format JSON string with proper indentation
+        /// </summary>
+        private static string FormatJson(string json)
+        {
+            var indent = 0;
+            var formatted = new System.Text.StringBuilder();
+            var inString = false;
+            var escape = false;
+
+            foreach (var ch in json)
+            {
+                if (escape)
+                {
+                    formatted.Append(ch);
+                    escape = false;
+                    continue;
+                }
+
+                if (ch == '\\' && inString)
+                {
+                    formatted.Append(ch);
+                    escape = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                {
+                    formatted.Append(ch);
+                    inString = !inString;
+                    continue;
+                }
+
+                if (inString)
+                {
+                    formatted.Append(ch);
+                    continue;
+                }
+
+                switch (ch)
+                {
+                    case '{':
+                    case '[':
+                        formatted.Append(ch);
+                        formatted.Append('\n');
+                        indent++;
+                        formatted.Append(new string(' ', indent * 2));
+                        break;
+                    case '}':
+                    case ']':
+                        formatted.Append('\n');
+                        indent--;
+                        formatted.Append(new string(' ', indent * 2));
+                        formatted.Append(ch);
+                        break;
+                    case ',':
+                        formatted.Append(ch);
+                        formatted.Append('\n');
+                        formatted.Append(new string(' ', indent * 2));
+                        break;
+                    case ':':
+                        formatted.Append(ch);
+                        formatted.Append(' ');
+                        break;
+                    case ' ':
+                    case '\n':
+                    case '\r':
+                    case '\t':
+                        // Skip whitespace
+                        break;
+                    default:
+                        formatted.Append(ch);
+                        break;
+                }
+            }
+
+            return formatted.ToString();
+        }
+
+        /// <summary>
+        /// Remove SkillForUnity entry from .mcp.json configuration file
+        /// </summary>
+        private static bool RemoveFromMcpJson(string destinationPath, out string message)
+        {
+            try
+            {
+                var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                var isGlobalInstall = destinationPath.StartsWith(homeDir, StringComparison.OrdinalIgnoreCase);
+
+                string mcpJsonPath;
+                if (isGlobalInstall)
+                {
+                    // Global installation: ~/.claude/mcp.json
+                    mcpJsonPath = Path.Combine(homeDir, ".claude", "mcp.json");
+                }
+                else
+                {
+                    // Local installation: project root/.mcp.json
+                    var projectRoot = Path.GetDirectoryName(Application.dataPath);
+                    if (string.IsNullOrEmpty(projectRoot))
+                    {
+                        message = ".mcp.json: Failed to determine project root directory";
+                        return false;
+                    }
+                    mcpJsonPath = Path.Combine(projectRoot, ".mcp.json");
+                }
+
+                // Check if .mcp.json exists
+                if (!File.Exists(mcpJsonPath))
+                {
+                    message = ".mcp.json: File not found, nothing to remove";
+                    return true; // Not an error, just nothing to do
+                }
+
+                // Load existing .mcp.json
+                string existingJson = File.ReadAllText(mcpJsonPath);
+                var config = MiniJson.Deserialize(existingJson) as Dictionary<string, object>;
+
+                if (config == null || !config.ContainsKey("mcpServers"))
+                {
+                    message = ".mcp.json: No mcpServers found, nothing to remove";
+                    return true;
+                }
+
+                var servers = config["mcpServers"] as Dictionary<string, object>;
+                if (servers == null || !servers.ContainsKey("skillforunity"))
+                {
+                    message = ".mcp.json: skillforunity entry not found, nothing to remove";
+                    return true;
+                }
+
+                // Remove skillforunity entry
+                servers.Remove("skillforunity");
+
+                // If no servers left, delete the .mcp.json file
+                if (servers.Count == 0)
+                {
+                    File.Delete(mcpJsonPath);
+                    message = ".mcp.json: Removed file (no other servers configured)";
+                    Debug.Log(message);
+                    return true;
+                }
+
+                // Otherwise, update the .mcp.json file with remaining servers
+                config["mcpServers"] = servers;
+                string updatedJson = MiniJson.Serialize(config);
+                string formattedJson = FormatJson(updatedJson);
+
+                File.WriteAllText(mcpJsonPath, formattedJson);
+                message = ".mcp.json: Removed skillforunity entry";
+                Debug.Log(message);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                message = $".mcp.json: Failed to remove entry - {ex.Message}";
+                Debug.LogWarning(message);
+                return false;
+            }
         }
     }
 }
