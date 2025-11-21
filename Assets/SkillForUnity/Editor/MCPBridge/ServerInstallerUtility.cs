@@ -102,6 +102,28 @@ namespace MCP.Editor
             return info.ToString();
         }
 
+        private static void CopyDirectoryRecursive(string sourceDir, string destDir)
+        {
+            // Create destination directory
+            Directory.CreateDirectory(destDir);
+
+            // Copy files
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                var fileName = Path.GetFileName(file);
+                var destFile = Path.Combine(destDir, fileName);
+                File.Copy(file, destFile, overwrite: true);
+            }
+
+            // Copy subdirectories
+            foreach (var dir in Directory.GetDirectories(sourceDir))
+            {
+                var dirName = Path.GetFileName(dir);
+                var destSubDir = Path.Combine(destDir, dirName);
+                CopyDirectoryRecursive(dir, destSubDir);
+            }
+        }
+
         public static bool InstallSkillPackage(string destinationPath, out string message)
         {
             if (string.IsNullOrEmpty(SkillZipPath))
@@ -142,14 +164,13 @@ namespace MCP.Editor
                 var skillDir = Path.Combine(tempExtractPath, "SkillForUnity");
                 if (Directory.Exists(skillDir))
                 {
-                    // Move the SkillForUnity directory to the destination
-                    Directory.Move(skillDir, destinationPath);
+                    // Copy the SkillForUnity directory to the destination
+                    CopyDirectoryRecursive(skillDir, destinationPath);
                 }
                 else
                 {
-                    // If SkillForUnity subdirectory doesn't exist, move the temp directory itself
-                    Directory.Move(tempExtractPath, destinationPath);
-                    tempExtractPath = null; // Prevent deletion since we moved it
+                    // If SkillForUnity subdirectory doesn't exist, copy the temp directory contents
+                    CopyDirectoryRecursive(tempExtractPath, destinationPath);
                 }
 
                 message = $"Skill package extracted to: {destinationPath}";
