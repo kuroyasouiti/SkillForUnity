@@ -14,9 +14,6 @@ namespace MCP.Editor
         [SerializeField] private bool autoConnectOnLoad = true;
         [SerializeField] private float contextPushIntervalSeconds = 5f;
         [SerializeField] private string serverInstallPath = string.Empty;
-        private const string ServerInstallFolderName = "MCPServer";
-        private const string LegacyServerFolderName = "mcp-server";
-        private static readonly string LegacyNestedSuffix = Path.Combine(LegacyServerFolderName, ServerInstallFolderName);
 
         public static McpBridgeSettings Instance
         {
@@ -252,58 +249,8 @@ namespace MCP.Editor
                 // keep trimmed fallback
             }
 
-            // For skill packages (.zip files), return path as-is without appending folder name
-            if (trimmed.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-            {
-                return trimmed;
-            }
-
-            return EnsureServerFolder(trimmed);
-        }
-
-        private static string EnsureServerFolder(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return string.Empty;
-            }
-
-            var normalized = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            if (string.IsNullOrEmpty(normalized))
-            {
-                return ServerInstallFolderName;
-            }
-
-            if (normalized.EndsWith(LegacyNestedSuffix, StringComparison.OrdinalIgnoreCase))
-            {
-                var legacyParent = Path.GetDirectoryName(normalized);
-                var grandParent = string.IsNullOrEmpty(legacyParent) ? null : Path.GetDirectoryName(legacyParent);
-                if (string.IsNullOrEmpty(grandParent))
-                {
-                    return ServerInstallFolderName;
-                }
-
-                return Path.Combine(grandParent, ServerInstallFolderName);
-            }
-
-            var folderName = Path.GetFileName(normalized);
-            if (string.Equals(folderName, ServerInstallFolderName, StringComparison.OrdinalIgnoreCase))
-            {
-                return normalized;
-            }
-
-            if (string.Equals(folderName, LegacyServerFolderName, StringComparison.OrdinalIgnoreCase))
-            {
-                var parent = Path.GetDirectoryName(normalized);
-                if (string.IsNullOrEmpty(parent))
-                {
-                    return ServerInstallFolderName;
-                }
-
-                return Path.Combine(parent, ServerInstallFolderName);
-            }
-
-            return Path.Combine(normalized, ServerInstallFolderName);
+            // Return path as-is without appending any folder name
+            return trimmed.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
     }
 }
