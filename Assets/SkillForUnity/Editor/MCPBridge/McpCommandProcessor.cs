@@ -538,11 +538,37 @@ namespace MCP.Editor
         private static object CreateGameObject(Dictionary<string, object> payload)
         {
             var parentPath = GetString(payload, "parentPath");
+            var insertAsSiblingOf = GetString(payload, "insertAsSiblingOf");
             var templatePath = GetString(payload, "template");
             GameObject parent = null;
-            if (!string.IsNullOrEmpty(parentPath))
+            int? siblingIndex = null;
+
+            // insertAsSiblingOf takes priority over parentPath
+            if (!string.IsNullOrEmpty(insertAsSiblingOf))
+            {
+                var referenceObject = ResolveGameObject(insertAsSiblingOf);
+                parent = referenceObject.transform.parent != null ? referenceObject.transform.parent.gameObject : null;
+
+                // Get sibling index from payload, or default to placing right after the reference object
+                if (payload.TryGetValue("siblingIndex", out var indexObj))
+                {
+                    siblingIndex = Convert.ToInt32(indexObj);
+                }
+                else
+                {
+                    // Place right after the reference object
+                    siblingIndex = referenceObject.transform.GetSiblingIndex() + 1;
+                }
+            }
+            else if (!string.IsNullOrEmpty(parentPath))
             {
                 parent = ResolveGameObject(parentPath);
+
+                // Allow siblingIndex even with parentPath
+                if (payload.TryGetValue("siblingIndex", out var indexObj))
+                {
+                    siblingIndex = Convert.ToInt32(indexObj);
+                }
             }
 
             GameObject instance;
@@ -566,12 +592,19 @@ namespace MCP.Editor
                 instance.transform.SetParent(parent.transform);
             }
 
+            // Set sibling index if specified
+            if (siblingIndex.HasValue)
+            {
+                instance.transform.SetSiblingIndex(siblingIndex.Value);
+            }
+
             Selection.activeGameObject = instance;
 
             return new Dictionary<string, object>
             {
                 ["path"] = GetHierarchyPath(instance),
                 ["id"] = instance.GetInstanceID(),
+                ["siblingIndex"] = instance.transform.GetSiblingIndex(),
             };
         }
 

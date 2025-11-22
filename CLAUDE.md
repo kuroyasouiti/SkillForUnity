@@ -1551,10 +1551,34 @@ Comprehensive tool for managing GameObjects in the scene hierarchy.
 
 1. **create** - Create a new GameObject
    ```python
+   # Basic creation with parent
    unity_gameobject_crud({
        "operation": "create",
        "name": "Player",
        "parentPath": "Game"  # Optional
+   })
+
+   # Create as sibling of existing GameObject (same parent)
+   unity_gameobject_crud({
+       "operation": "create",
+       "name": "Enemy2",
+       "insertAsSiblingOf": "Enemy1"  # Places right after Enemy1
+   })
+
+   # Create with specific sibling index
+   unity_gameobject_crud({
+       "operation": "create",
+       "name": "FirstChild",
+       "parentPath": "Container",
+       "siblingIndex": 0  # First position among siblings
+   })
+
+   # Create as sibling with specific index
+   unity_gameobject_crud({
+       "operation": "create",
+       "name": "Enemy3",
+       "insertAsSiblingOf": "Enemy1",
+       "siblingIndex": 2  # Specific position among siblings
    })
    ```
 

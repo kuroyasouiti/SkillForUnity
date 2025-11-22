@@ -127,6 +127,14 @@ def register_tools(server: Server) -> None:
                     "type": "string",
                     "description": "Target parent path for move or create operations.",
                 },
+                "insertAsSiblingOf": {
+                    "type": "string",
+                    "description": "For create operation: hierarchy path of an existing GameObject. The new GameObject will be created as a sibling (same parent) of this object. Takes priority over parentPath. By default, the new object is placed right after the reference object.",
+                },
+                "siblingIndex": {
+                    "type": "integer",
+                    "description": "For create operation: the sibling index (position among siblings) to place the new GameObject. Use with parentPath or insertAsSiblingOf. 0 = first child, -1 or omit = last child. When used with insertAsSiblingOf and omitted, defaults to placing right after the reference object.",
+                },
                 "template": {
                     "type": "string",
                     "description": "Prefab path or template identifier to instantiate.",
