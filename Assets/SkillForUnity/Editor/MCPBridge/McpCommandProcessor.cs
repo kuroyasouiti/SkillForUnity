@@ -2183,11 +2183,11 @@ namespace MCP.Editor
         {
             var preservePosition = GetBool(payload, "preservePosition", true);
 
-            // Store current position in parent space if we need to preserve it
-            Vector2 oldPos = Vector2.zero;
+            // Store current world corners if we need to preserve position
+            Vector3[] corners = new Vector3[4];
             if (preservePosition)
             {
-                oldPos = rectTransform.anchoredPosition;
+                rectTransform.GetWorldCorners(corners);
             }
 
             // Get anchor values
@@ -2205,11 +2205,43 @@ namespace MCP.Editor
                 rectTransform.anchorMax = new Vector2(anchorMaxX.Value, anchorMaxY.Value);
             }
 
-            // Restore position if needed
+            // Restore world position by adjusting offsetMin/offsetMax
             if (preservePosition)
             {
-                rectTransform.anchoredPosition = oldPos;
+                RestoreWorldCorners(rectTransform, corners);
             }
+        }
+
+        /// <summary>
+        /// Restores the world corner positions of a RectTransform by adjusting offsetMin and offsetMax.
+        /// This is used to preserve visual position when anchors are changed.
+        /// </summary>
+        private static void RestoreWorldCorners(RectTransform rectTransform, Vector3[] corners)
+        {
+            var parentRect = rectTransform.parent.GetComponent<RectTransform>();
+            if (parentRect == null)
+            {
+                return;
+            }
+
+            // Convert world corners to parent local space
+            // corners[0] = bottom-left, corners[2] = top-right
+            Vector2 localCornerMin = parentRect.InverseTransformPoint(corners[0]);
+            Vector2 localCornerMax = parentRect.InverseTransformPoint(corners[2]);
+
+            // Calculate anchor positions in parent space
+            Vector2 parentSize = parentRect.rect.size;
+            Vector2 anchorMin = rectTransform.anchorMin;
+            Vector2 anchorMax = rectTransform.anchorMax;
+
+            Vector2 anchorPosMin = new Vector2(anchorMin.x * parentSize.x, anchorMin.y * parentSize.y);
+            Vector2 anchorPosMax = new Vector2(anchorMax.x * parentSize.x, anchorMax.y * parentSize.y);
+
+            // Set offsetMin and offsetMax to restore world corners
+            // offsetMin = localCornerMin - anchorPosMin
+            // offsetMax = localCornerMax - anchorPosMax
+            rectTransform.offsetMin = localCornerMin - anchorPosMin;
+            rectTransform.offsetMax = localCornerMax - anchorPosMax;
         }
 
         /// <summary>
@@ -2316,27 +2348,7 @@ namespace MCP.Editor
             // Restore position if needed by adjusting offsetMin and offsetMax
             if (preservePosition)
             {
-                Vector3[] newCorners = new Vector3[4];
-                rectTransform.GetWorldCorners(newCorners);
-
-                // Calculate the difference and adjust
-                var parentRect = rectTransform.parent.GetComponent<RectTransform>();
-                if (parentRect != null)
-                {
-                    // Convert world corners to local and adjust offsets
-                    Vector2 localCorner0 = parentRect.InverseTransformPoint(corners[0]);
-                    Vector2 localCorner2 = parentRect.InverseTransformPoint(corners[2]);
-
-                    Vector2 parentSize = parentRect.rect.size;
-                    Vector2 anchorMin = rectTransform.anchorMin;
-                    Vector2 anchorMax = rectTransform.anchorMax;
-
-                    Vector2 offsetMin = localCorner0 - new Vector2(anchorMin.x * parentSize.x, anchorMin.y * parentSize.y);
-                    Vector2 offsetMax = localCorner2 - new Vector2(anchorMax.x * parentSize.x, anchorMax.y * parentSize.y);
-
-                    rectTransform.offsetMin = offsetMin;
-                    rectTransform.offsetMax = offsetMax;
-                }
+                RestoreWorldCorners(rectTransform, corners);
             }
         }
 
