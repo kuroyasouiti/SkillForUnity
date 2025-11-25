@@ -13,10 +13,11 @@ Complete reference for all MCP tools available in SkillForUnity.
 3. [GameObject Manage](#gameobject-manage)
 4. [Component Manage](#component-manage)
 5. [Asset Manage](#asset-manage)
-6. [uGUI RectTransform Adjustment](#ugui-recttransform-adjustment)
-7. [Script Management](#script-management)
-8. [Error Handling](#error-handling)
-9. [Best Practices](#best-practices)
+6. [ScriptableObject Manage](#scriptableobject-manage)
+7. [uGUI RectTransform Adjustment](#ugui-recttransform-adjustment)
+8. [Script Management](#script-management)
+9. [Error Handling](#error-handling)
+10. [Best Practices](#best-practices)
 
 ---
 
@@ -927,6 +928,351 @@ Returns metadata and public fields/properties for an asset.
 - Non-text or complex assets may expose limited information
 - Unity object references include asset paths when available
 - Throws if the specified path cannot be resolved to an asset
+
+---
+
+## ScriptableObject Manage
+
+### `scriptableObjectManage`
+
+Creates, inspects, updates, deletes, duplicates, and finds ScriptableObject assets in the Unity project.
+
+### Operations
+
+#### Create ScriptableObject
+
+Creates a new ScriptableObject asset of the specified type.
+
+**Payload**:
+```json
+{
+  "operation": "create",
+  "typeName": "MyGame.PlayerData",
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "properties": {
+    "playerName": "Hero",
+    "maxHealth": 100,
+    "speed": 5.5
+  }
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"create"`
+- `typeName` (string, required): Fully qualified type name of the ScriptableObject to create
+- `assetPath` (string, required): Asset path where the ScriptableObject will be created (must start with `Assets/` and end with `.asset`)
+- `properties` (object, optional): Initial property values to set on the ScriptableObject
+
+**Returns**:
+```json
+{
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "guid": "abc123...",
+  "typeName": "MyGame.PlayerData",
+  "message": "ScriptableObject created successfully at Assets/Data/PlayerData.asset"
+}
+```
+
+**Example**:
+```
+Create a new ScriptableObject of type GameConfig at Assets/Data/Config.asset with properties: maxPlayers = 4, gameMode = "Competitive"
+```
+
+**Error Conditions**:
+- `typeName` not found or not a ScriptableObject type
+- `assetPath` already exists
+- `assetPath` doesn't start with `Assets/` or doesn't end with `.asset`
+
+---
+
+#### Inspect ScriptableObject
+
+Retrieves detailed information about a ScriptableObject asset.
+
+**Payload**:
+```json
+{
+  "operation": "inspect",
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "includeProperties": true,
+  "propertyFilter": ["playerName", "maxHealth"]
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"inspect"`
+- `assetPath` (string, optional): Asset path to the ScriptableObject
+- `assetGuid` (string, optional): Alternative to `assetPath`, GUID of the asset
+- `includeProperties` (boolean, optional): Whether to include property values. Default: `true`
+- `propertyFilter` (array of strings, optional): List of property names to include. If omitted, all properties are included
+
+**Returns**:
+```json
+{
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "guid": "abc123...",
+  "typeName": "MyGame.PlayerData",
+  "name": "PlayerData",
+  "properties": {
+    "playerName": "Hero",
+    "maxHealth": 100,
+    "speed": 5.5
+  }
+}
+```
+
+**Example**:
+```
+Inspect the ScriptableObject at Assets/Data/Config.asset and show all properties
+```
+
+---
+
+#### Update ScriptableObject
+
+Updates property values on an existing ScriptableObject asset.
+
+**Payload**:
+```json
+{
+  "operation": "update",
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "properties": {
+    "maxHealth": 150,
+    "speed": 6.0
+  }
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"update"`
+- `assetPath` (string, optional): Asset path to the ScriptableObject
+- `assetGuid` (string, optional): Alternative to `assetPath`, GUID of the asset
+- `properties` (object, required): Dictionary of property names to new values
+
+**Returns**:
+```json
+{
+  "assetPath": "Assets/Data/PlayerData.asset",
+  "guid": "abc123...",
+  "changedProperties": ["maxHealth", "speed"],
+  "message": "ScriptableObject updated successfully"
+}
+```
+
+**Example**:
+```
+Update the ScriptableObject at Assets/Data/Config.asset: set maxPlayers to 8 and gameMode to "Casual"
+```
+
+---
+
+#### Delete ScriptableObject
+
+Deletes a ScriptableObject asset from the project.
+
+**Payload**:
+```json
+{
+  "operation": "delete",
+  "assetPath": "Assets/Data/OldPlayerData.asset"
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"delete"`
+- `assetPath` (string, optional): Asset path to the ScriptableObject
+- `assetGuid` (string, optional): Alternative to `assetPath`, GUID of the asset
+
+**Returns**:
+```json
+{
+  "assetPath": "Assets/Data/OldPlayerData.asset",
+  "message": "ScriptableObject deleted successfully"
+}
+```
+
+**Example**:
+```
+Delete the ScriptableObject at Assets/Data/OldConfig.asset
+```
+
+---
+
+#### Duplicate ScriptableObject
+
+Creates a copy of an existing ScriptableObject asset.
+
+**Payload**:
+```json
+{
+  "operation": "duplicate",
+  "sourceAssetPath": "Assets/Data/PlayerData.asset",
+  "destinationAssetPath": "Assets/Data/PlayerData_Copy.asset"
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"duplicate"`
+- `sourceAssetPath` (string, optional): Source asset path
+- `sourceAssetGuid` (string, optional): Alternative to `sourceAssetPath`, GUID of the source asset
+- `destinationAssetPath` (string, required): Destination asset path (must start with `Assets/` and end with `.asset`)
+
+**Returns**:
+```json
+{
+  "sourceAssetPath": "Assets/Data/PlayerData.asset",
+  "destinationAssetPath": "Assets/Data/PlayerData_Copy.asset",
+  "guid": "def456...",
+  "message": "ScriptableObject duplicated successfully"
+}
+```
+
+**Example**:
+```
+Duplicate the ScriptableObject at Assets/Data/Config.asset to Assets/Data/Config_Backup.asset
+```
+
+---
+
+#### List ScriptableObjects
+
+Lists all ScriptableObject assets in the project or a specific folder with pagination support.
+
+**Payload**:
+```json
+{
+  "operation": "list",
+  "searchPath": "Assets/Data",
+  "typeName": "MyGame.PlayerData",
+  "maxResults": 100,
+  "offset": 0
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"list"`
+- `searchPath` (string, optional): Folder path to search in. Default: `"Assets"`
+- `typeName` (string, optional): Filter by type name (exact match on full name or short name)
+- `maxResults` (integer, optional): Maximum number of results to return. Default: `1000`
+- `offset` (integer, optional): Number of results to skip (for pagination). Default: `0`
+
+**Returns**:
+```json
+{
+  "count": 2,
+  "totalFound": 150,
+  "offset": 0,
+  "maxResults": 100,
+  "hasMore": true,
+  "scriptableObjects": [
+    {
+      "assetPath": "Assets/Data/PlayerData1.asset",
+      "guid": "abc123...",
+      "name": "PlayerData1",
+      "typeName": "MyGame.PlayerData"
+    },
+    {
+      "assetPath": "Assets/Data/PlayerData2.asset",
+      "guid": "def456...",
+      "name": "PlayerData2",
+      "typeName": "MyGame.PlayerData"
+    }
+  ],
+  "searchPath": "Assets/Data"
+}
+```
+
+**Example**:
+```
+List all ScriptableObjects in the Assets/Data folder (first 100 results)
+```
+
+**Pagination Example**:
+```python
+# Get first page
+result = unity_scriptableobject_crud({
+    "operation": "list",
+    "searchPath": "Assets/Data",
+    "maxResults": 100,
+    "offset": 0
+})
+
+# Get second page if there are more results
+if result["hasMore"]:
+    next_result = unity_scriptableobject_crud({
+        "operation": "list",
+        "searchPath": "Assets/Data",
+        "maxResults": 100,
+        "offset": 100
+    })
+```
+
+---
+
+#### Find ScriptableObjects by Type
+
+Finds all ScriptableObject assets of a specific type, including derived types, with pagination support.
+
+**Payload**:
+```json
+{
+  "operation": "findByType",
+  "typeName": "MyGame.GameConfig",
+  "searchPath": "Assets",
+  "includeProperties": true,
+  "propertyFilter": ["configName", "version"],
+  "maxResults": 50,
+  "offset": 0
+}
+```
+
+**Parameters**:
+- `operation` (string, required): `"findByType"`
+- `typeName` (string, required): Type name to search for (finds exact matches and derived types)
+- `searchPath` (string, optional): Folder path to search in. Default: `"Assets"`
+- `includeProperties` (boolean, optional): Whether to include property values. Default: `false`
+- `propertyFilter` (array of strings, optional): List of property names to include. If omitted, all properties are included (when includeProperties is true)
+- `maxResults` (integer, optional): Maximum number of results to return. Default: `1000`
+- `offset` (integer, optional): Number of results to skip (for pagination). Default: `0`
+
+**Returns**:
+```json
+{
+  "count": 2,
+  "totalMatched": 25,
+  "offset": 0,
+  "maxResults": 50,
+  "hasMore": false,
+  "typeName": "MyGame.GameConfig",
+  "scriptableObjects": [
+    {
+      "assetPath": "Assets/Config/DefaultConfig.asset",
+      "guid": "abc123...",
+      "name": "DefaultConfig",
+      "typeName": "MyGame.GameConfig",
+      "properties": {
+        "configName": "Default",
+        "version": "1.0"
+      }
+    }
+  ],
+  "searchPath": "Assets",
+  "note": "Searching for abstract type MyGame.GameConfig. Results include all derived types."
+}
+```
+
+**Example**:
+```
+Find all ScriptableObjects of type GameConfig in the project, including their properties
+```
+
+**Notes**:
+- `findByType` supports polymorphism - it will find instances of the specified type and any derived types
+- Use `includeProperties: true` to get detailed information about each ScriptableObject
+- Use `propertyFilter` to limit which properties are returned for better performance
+- When searching for abstract types, a note is included in the response
+- Use pagination with `maxResults` and `offset` for large datasets
 
 ---
 

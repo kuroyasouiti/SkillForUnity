@@ -1278,6 +1278,70 @@ def register_tools(server: Server) -> None:
         ["templateType", "className", "scriptPath"],
     )
 
+    scriptable_object_manage_schema = _schema_with_required(
+        {
+            "type": "object",
+            "properties": {
+                "operation": {
+                    "type": "string",
+                    "enum": ["create", "inspect", "update", "delete", "duplicate", "list", "findByType"],
+                    "description": "Operation to perform. 'create' creates a new ScriptableObject asset, 'inspect' retrieves detailed information, 'update' modifies property values, 'delete' removes the asset, 'duplicate' creates a copy, 'list' finds all ScriptableObjects in a folder, 'findByType' searches for ScriptableObjects of a specific type including derived types.",
+                },
+                "typeName": {
+                    "type": "string",
+                    "description": "Fully qualified type name of the ScriptableObject (e.g., 'MyGame.PlayerData'). Required for 'create' and 'findByType' operations. Optional for 'list' operation to filter by type.",
+                },
+                "assetPath": {
+                    "type": "string",
+                    "description": "Asset path to the ScriptableObject (must start with 'Assets/' and end with '.asset'). Required for create, inspect, update, and delete operations (unless assetGuid is provided).",
+                },
+                "assetGuid": {
+                    "type": "string",
+                    "description": "Optional GUID string to uniquely identify the asset. If provided, this takes priority over assetPath. Use this for precise asset identification.",
+                },
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": True,
+                    "description": "Dictionary of property names to values. For 'create' operation: initial property values. For 'update' operation: properties to change. Failed properties are reported in the response.",
+                },
+                "includeProperties": {
+                    "type": "boolean",
+                    "description": "Whether to include property values in the result. Default: true for 'inspect', false for 'findByType'. Use this to control output detail.",
+                },
+                "propertyFilter": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional list of property names to include in inspect results. If specified, only these properties will be returned. Use this to improve performance when you only need specific properties.",
+                },
+                "searchPath": {
+                    "type": "string",
+                    "description": "Folder path to search in for 'list' and 'findByType' operations. Default: 'Assets'. Use this to limit search scope.",
+                },
+                "maxResults": {
+                    "type": "integer",
+                    "description": "Maximum number of results to return for 'list' and 'findByType' operations. Default: 1000. Use this to prevent performance issues with large datasets.",
+                },
+                "offset": {
+                    "type": "integer",
+                    "description": "Number of results to skip for 'list' and 'findByType' operations (pagination). Default: 0. Use with maxResults for pagination.",
+                },
+                "sourceAssetPath": {
+                    "type": "string",
+                    "description": "Source asset path for 'duplicate' operation. Can also use sourceAssetGuid instead.",
+                },
+                "sourceAssetGuid": {
+                    "type": "string",
+                    "description": "Source asset GUID for 'duplicate' operation. Alternative to sourceAssetPath.",
+                },
+                "destinationAssetPath": {
+                    "type": "string",
+                    "description": "Destination asset path for 'duplicate' operation (must start with 'Assets/' and end with '.asset').",
+                },
+            },
+        },
+        ["operation"],
+    )
+
     tool_definitions = [
         types.Tool(
             name="unity_ping",
@@ -1393,6 +1457,11 @@ def register_tools(server: Server) -> None:
             name="unity_menu_hierarchyCreate",
             description="Create hierarchical menu systems with nested submenus and automatic State pattern navigation! Generates complete menu UI with vertical layout groups for each menu level, supports keyboard/gamepad navigation, and optionally creates a MenuStateMachine script for managing menu states and transitions. Perfect for creating main menus, pause menus, settings menus with nested options. Features: (1) Declarative menu structure definition, (2) Automatic button creation and layout, (3) State pattern for clean menu navigation code, (4) Input handling for keyboard and gamepad, (5) Parent-child menu transitions with back navigation.",
             inputSchema=menu_hierarchy_create_schema,
+        ),
+        types.Tool(
+            name="unity_scriptableobject_crud",
+            description="Manage Unity ScriptableObject assets. Create new ScriptableObject instances with initial property values, inspect existing assets with optional property filtering, update property values, delete assets, duplicate assets to create copies, list all ScriptableObjects in a folder with optional type filtering, and find ScriptableObjects by type including derived types. Supports both asset path and GUID-based identification for precise asset management.",
+            inputSchema=scriptable_object_manage_schema,
         ),
     ]
 
@@ -1549,6 +1618,9 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_menu_hierarchyCreate":
             return await _call_bridge_tool("menuHierarchyCreate", args)
+
+        if name == "unity_scriptableobject_crud":
+            return await _call_bridge_tool("scriptableObjectManage", args)
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 

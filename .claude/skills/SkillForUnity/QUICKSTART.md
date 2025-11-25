@@ -135,6 +135,7 @@ This will show the scene hierarchy and all GameObjects.
 | Create GameObject | "Create a cube at position (0, 1, 0)" |
 | Add component | "Add a Rigidbody to the Player" |
 | Create UI | "Create a button with text 'Start Game'" |
+| Create ScriptableObject | "Create a GameConfig ScriptableObject with maxPlayers=4" |
 | List GameObjects | "Show me all GameObjects in the scene" |
 | Batch operations | "Create 10 cubes in a line" |
 
@@ -182,6 +183,43 @@ unity_scene_crud({
     "operation": "inspect",
     "includeHierarchy": True,
     "includeComponents": False
+})
+```
+
+**ScriptableObject Management:**
+```python
+# Create a ScriptableObject
+unity_scriptableobject_crud({
+    "operation": "create",
+    "typeName": "MyGame.GameConfig",
+    "assetPath": "Assets/Data/Config.asset",
+    "properties": {
+        "maxPlayers": 4,
+        "gameSpeed": 1.0
+    }
+})
+
+# Inspect existing ScriptableObject
+unity_scriptableobject_crud({
+    "operation": "inspect",
+    "assetPath": "Assets/Data/Config.asset",
+    "includeProperties": True
+})
+
+# Update properties
+unity_scriptableobject_crud({
+    "operation": "update",
+    "assetPath": "Assets/Data/Config.asset",
+    "properties": {
+        "maxPlayers": 8
+    }
+})
+
+# Find all ScriptableObjects of a type
+unity_scriptableobject_crud({
+    "operation": "findByType",
+    "typeName": "MyGame.GameConfig",
+    "includeProperties": True
 })
 ```
 
