@@ -88,7 +88,7 @@ namespace MCP.Editor.Base
                 yield break;
             }
             
-            var allObjects = GameObject.FindObjectsOfType<GameObject>();
+            var allObjects = GameObject.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
             var count = 0;
             
             if (useRegex)
