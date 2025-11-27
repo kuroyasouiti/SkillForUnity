@@ -1,0 +1,418 @@
+# McpCommandProcessor.cs リファクタリング計画
+
+**作成日**: 2024年11月25日  
+**ステータス**: Phase 1 完了 ✅
+
+---
+
+## 📋 概要
+
+`McpCommandProcessor.cs`（元：9,265行）は、SkillForUnityの中核を成すファイルですが、その巨大さが保守性を低下させています。本ドキュメントは、このファイルを機能別に分割する段階的リファクタリング計画を示します。
+
+### 目標
+- **保守性の向上**: 各ファイルを500-1500行に抑え、理解しやすくする
+- **テスト容易性**: 機能ごとに独立したテストを可能にする
+- **並行開発**: 複数の開発者が異なる機能を同時に編集可能にする
+- **コードレビュー**: 変更をレビュー可能なサイズに保つ
+
+### アプローチ
+**段階的リファクタリング**を採用し、各フェーズで1つの機能セクションを分割します。各フェーズは独立したPRとしてレビュー・マージされます。
+
+---
+
+## 🗂️ ディレクトリ構造
+
+```
+Assets/SkillForUnity/Editor/MCPBridge/
+├── McpCommandProcessor.cs          # メインディスパッチャー（現在: 8,129行）
+├── Core/
+│   └── McpCommandProcessor.Helpers.cs  # ✅ ヘルパーメソッド（Phase 1完了）
+├── Scene/
+│   └── McpCommandProcessor.Scene.cs    # 🔜 シーン管理（Phase 2）
+├── GameObject/
+│   └── McpCommandProcessor.GameObject.cs  # 🔜 GameObject操作（Phase 3）
+├── Component/
+│   └── McpCommandProcessor.Component.cs   # 🔜 コンポーネント管理（Phase 4）
+├── Asset/
+│   └── McpCommandProcessor.Asset.cs       # 🔜 アセット管理（Phase 5）
+│   └── McpCommandProcessor.ScriptableObject.cs  # 🔜 ScriptableObject（Phase 6）
+├── UI/
+│   └── McpCommandProcessor.UI.cs          # 🔜 UI操作（Phase 7）
+├── Prefab/
+│   └── McpCommandProcessor.Prefab.cs      # 🔜 Prefab管理（Phase 8）
+├── Settings/
+│   └── McpCommandProcessor.Settings.cs    # 🔜 プロジェクト設定（Phase 9）
+├── Utilities/
+│   └── McpCommandProcessor.Utilities.cs   # 🔜 ユーティリティ（Phase 10）
+└── Template/
+    └── McpCommandProcessor.Template.cs    # 🔜 テンプレート生成（Phase 11）
+```
+
+---
+
+## 📊 リファクタリングフェーズ
+
+### ✅ Phase 1: ヘルパーメソッドの抽出（完了）
+
+**日付**: 2024年11月25日  
+**PR**: [準備中]
+
+#### 実施内容
+- `McpCommandProcessor.cs`を`partial class`に変更
+- ヘルパーメソッドを`Core/McpCommandProcessor.Helpers.cs`に抽出（約1,100行）
+
+#### 抽出されたメソッド
+- **Payload解析**: `GetString`, `GetBool`, `GetInt`, `GetFloat`, `GetList`, `GetStringList`
+- **シリアライズ**: `SerializeValue`, `SerializeObjectProperties`
+- **解決**: `ResolveType`, `ResolveGameObject`, `ResolveAssetPath`, `ResolveGameObjectFromPayload`, `ResolveAssetPathFromPayload`
+- **検証**: `ValidateAssetPath`, `EnsureValue`, `EnsureDirectoryExists`
+- **適用**: `ApplyProperty`, `ApplyPropertyToObject`, `ApplyAssetImporterProperties`, `ConvertValue`
+- **記述**: `DescribeComponent`, `DescribeAsset`
+
+#### 結果
+- **削除行数**: 1,144行
+- **ファイルサイズ**: 9,265行 → 8,129行（**12%削減**）
+- **コンパイルエラー**: ✅ なし
+- **テスト**: ✅ すべて成功
+
+---
+
+### 🔜 Phase 2: シーン管理の分割（計画中）
+
+**予定日**: 2024年12月  
+**対象行数**: 約450行
+
+#### 抽出予定のメソッド
+- `HandleSceneManage`
+- `CreateScene`, `LoadScene`, `SaveScene`, `DeleteScene`, `DuplicateScene`, `InspectScene`
+- シーンビルド設定関連メソッド
+
+#### ファイル
+- `Scene/McpCommandProcessor.Scene.cs`
+
+#### 期待効果
+- シーン操作のロジックが独立
+- シーン関連のテストが容易に
+
+---
+
+### 🔜 Phase 3: GameObject操作の分割（計画中）
+
+**予定日**: 2024年12月  
+**対象行数**: 約500行
+
+#### 抽出予定のメソッド
+- `HandleGameObjectManage`
+- `CreateGameObject`, `DeleteGameObject`, `MoveGameObject`, `RenameGameObject`, `DuplicateGameObject`, `InspectGameObject`
+- `FindMultiple`, `DeleteMultiple`, `InspectMultiple`
+
+#### ファイル
+- `GameObject/McpCommandProcessor.GameObject.cs`
+
+#### 期待効果
+- GameObject操作の独立性向上
+- バッチ処理のテストが容易に
+
+---
+
+### 🔜 Phase 4: コンポーネント管理の分割（計画中）
+
+**予定日**: 2025年1月  
+**対象行数**: 約600行
+
+#### 抽出予定のメソッド
+- `HandleComponentManage`
+- `AddComponent`, `RemoveComponent`, `UpdateComponent`, `InspectComponent`
+- `AddMultiple`, `RemoveMultiple`, `UpdateMultiple`, `InspectMultiple`
+
+#### ファイル
+- `Component/McpCommandProcessor.Component.cs`
+
+#### 期待効果
+- コンポーネント操作の独立性向上
+- リフレクションロジックの集約
+
+---
+
+### 🔜 Phase 5: アセット管理の分割（計画中）
+
+**予定日**: 2025年1月  
+**対象行数**: 約500行
+
+#### 抽出予定のメソッド
+- `HandleAssetManage`
+- `CreateAsset`, `UpdateAsset`, `DeleteAsset`, `RenameAsset`, `DuplicateAsset`, `InspectAsset`
+- `FindMultiple`, `DeleteMultiple`, `InspectMultiple`
+
+#### ファイル
+- `Asset/McpCommandProcessor.Asset.cs`
+
+#### 期待効果
+- アセット操作の独立性向上
+- AssetDatabaseとの連携が明確に
+
+---
+
+### 🔜 Phase 6: ScriptableObject管理の分割（計画中）
+
+**予定日**: 2025年1月  
+**対象行数**: 約500行
+
+#### 抽出予定のメソッド
+- `HandleScriptableObjectManage`
+- `CreateScriptableObject`, `InspectScriptableObject`, `UpdateScriptableObject`, `DeleteScriptableObject`
+- `DuplicateScriptableObject`, `ListScriptableObjects`, `FindScriptableObjectsByType`
+
+#### ファイル
+- `Asset/McpCommandProcessor.ScriptableObject.cs`
+
+#### 期待効果
+- ScriptableObject操作の独立性向上
+- 最近実装された機能の明確な分離
+
+---
+
+### 🔜 Phase 7: UI操作の分割（計画中）
+
+**予定日**: 2025年2月  
+**対象行数**: 約1,500行
+
+#### 抽出予定のメソッド
+- `HandleUguiRectAdjust`, `HandleUguiAnchorManage`, `HandleUguiManage`
+- `HandleUguiCreateFromTemplate`, `HandleUguiLayoutManage`, `HandleUguiDetectOverlaps`
+- UI関連のすべてのヘルパーメソッド
+
+#### ファイル
+- `UI/McpCommandProcessor.UI.cs`
+
+#### 期待効果
+- UI操作ロジックの集約
+- RectTransform操作の明確化
+
+---
+
+### 🔜 Phase 8: Prefab管理の分割（計画中）
+
+**予定日**: 2025年2月  
+**対象行数**: 約300行
+
+#### 抽出予定のメソッド
+- `HandlePrefabManage`
+- `CreatePrefab`, `UpdatePrefab`, `InspectPrefab`, `InstantiatePrefab`, `UnpackPrefab`
+- `ApplyPrefabOverrides`, `RevertPrefabOverrides`
+
+#### ファイル
+- `Prefab/McpCommandProcessor.Prefab.cs`
+
+#### 期待効果
+- Prefabワークフローの独立性向上
+- オーバーライド管理の明確化
+
+---
+
+### 🔜 Phase 9: プロジェクト設定の分割（計画中）
+
+**予定日**: 2025年2月  
+**対象行数**: 約600行
+
+#### 抽出予定のメソッド
+- `HandleProjectSettingsManage`, `HandleRenderPipelineManage`
+- `HandleTagLayerManage`, `HandleConstantConvert`
+- 設定関連のすべてのメソッド
+
+#### ファイル
+- `Settings/McpCommandProcessor.Settings.cs`
+
+#### 期待効果
+- プロジェクト設定操作の集約
+- 設定変更のトレーサビリティ向上
+
+---
+
+### 🔜 Phase 10: ユーティリティの分割（計画中）
+
+**予定日**: 2025年3月  
+**対象行数**: 約400行
+
+#### 抽出予定のメソッド
+- `HandleContextInspect`
+- コンパイル管理関連メソッド
+- その他のユーティリティメソッド
+
+#### ファイル
+- `Utilities/McpCommandProcessor.Utilities.cs`
+
+#### 期待効果
+- ユーティリティ機能の集約
+- 共通機能の再利用性向上
+
+---
+
+### 🔜 Phase 11: テンプレート生成の分割（計画中）
+
+**予定日**: 2025年3月  
+**対象行数**: 約800行
+
+#### 抽出予定のメソッド
+- `HandleSceneQuickSetup`, `HandleGameObjectCreateFromTemplate`
+- `HandleDesignPatternGenerate`, `HandleScriptTemplateGenerate`
+- `HandleTemplateManage`, `HandleMenuHierarchyCreate`
+
+#### ファイル
+- `Template/McpCommandProcessor.Template.cs`
+
+#### 期待効果
+- テンプレート生成ロジックの集約
+- デザインパターンコードの独立性向上
+
+---
+
+## 📈 期待される効果
+
+### コード品質
+- **可読性**: ✅ 各ファイルが特定の責務に集中
+- **保守性**: ✅ 変更の影響範囲が明確
+- **テスト性**: ✅ 機能ごとの単体テストが容易
+
+### 開発効率
+- **並行開発**: ✅ 複数の開発者が同時に作業可能
+- **コードレビュー**: ✅ レビュー可能なサイズの変更
+- **デバッグ**: ✅ 問題箇所の特定が容易
+
+### パフォーマンス
+- **コンパイル時間**: ✅ 変更時の再コンパイル範囲が縮小
+- **IDEパフォーマンス**: ✅ ファイル解析が高速化
+
+---
+
+## 🎯 ガイドライン
+
+### 各フェーズの進め方
+
+1. **ブランチ作成**
+   ```bash
+   git checkout -b refactor/phase-N-description
+   ```
+
+2. **ファイル作成**
+   - `partial class`として新しいファイルを作成
+   - 適切な`#region`を使用
+
+3. **メソッド移動**
+   - 元のファイルからメソッドをコピー
+   - コメントとドキュメントを保持
+   - 依存関係を確認
+
+4. **テスト**
+   - コンパイルエラーの確認
+   - 既存のテストを実行
+   - 必要に応じて新しいテストを追加
+
+5. **レビュー**
+   - PRを作成
+   - コードレビューを受ける
+   - フィードバックに対応
+
+6. **マージ**
+   - すべてのチェックが通過
+   - レビュー承認後にマージ
+
+### 命名規則
+
+- **ファイル名**: `McpCommandProcessor.[Feature].cs`
+- **Region名**: `#region [Feature Name] Operations`
+- **メソッド名**: 既存の命名規則を維持
+
+### コミットメッセージ
+
+```
+refactor: Phase N - [Feature Name] operations extraction
+
+- Extracted [Method1], [Method2], ... to [File]
+- Reduced McpCommandProcessor.cs by ~XXX lines
+- All tests passing
+- No breaking changes
+
+Part of refactoring plan: docs/REFACTORING_PLAN.md
+```
+
+---
+
+## ✅ チェックリスト
+
+各フェーズ完了時に以下を確認：
+
+- [ ] すべてのメソッドが正しく移動された
+- [ ] コンパイルエラーがない
+- [ ] すべてのテストが成功
+- [ ] コードレビューが完了
+- [ ] ドキュメントが更新された
+- [ ] このドキュメントが更新された
+
+---
+
+## 📝 注意事項
+
+### 互換性
+- すべての既存のAPIは変更なし
+- Python側のMCPサーバーへの影響なし
+- `partial class`により、外部からは単一のクラスとして見える
+
+### リスク軽減
+- 各フェーズは独立してロールバック可能
+- 段階的なマージにより、問題の早期発見が可能
+- 継続的なテストにより、回帰を防止
+
+### ベストプラクティス
+- 各ファイルは500-1500行を目安に
+- メソッドは論理的にグループ化
+- 依存関係を最小化
+- ドキュメントを常に最新に保つ
+
+---
+
+## 📊 進捗状況
+
+| Phase | ステータス | 完了日 | 削減行数 | PRリンク |
+|-------|-----------|--------|----------|----------|
+| 1. Helpers | ✅ 完了 | 2024-11-25 | 1,144行 | [準備中] |
+| 2. Scene | 🔜 計画中 | 2024-12-XX | 450行 | - |
+| 3. GameObject | 🔜 計画中 | 2024-12-XX | 500行 | - |
+| 4. Component | 🔜 計画中 | 2025-01-XX | 600行 | - |
+| 5. Asset | 🔜 計画中 | 2025-01-XX | 500行 | - |
+| 6. ScriptableObject | 🔜 計画中 | 2025-01-XX | 500行 | - |
+| 7. UI | 🔜 計画中 | 2025-02-XX | 1,500行 | - |
+| 8. Prefab | 🔜 計画中 | 2025-02-XX | 300行 | - |
+| 9. Settings | 🔜 計画中 | 2025-02-XX | 600行 | - |
+| 10. Utilities | 🔜 計画中 | 2025-03-XX | 400行 | - |
+| 11. Template | 🔜 計画中 | 2025-03-XX | 800行 | - |
+| **合計** | **9%完了** | - | **7,294行** | - |
+
+**現在のファイルサイズ**: 8,129行  
+**最終目標**: ~1,971行（メインディスパッチャーのみ）  
+**削減率**: 約**78%削減予定**
+
+---
+
+## 🚀 次のステップ
+
+1. **Phase 1のPR作成** ← 現在ここ
+   - コミットメッセージの作成
+   - PRの説明を記述
+   - レビュアーを指定
+
+2. **Phase 2の準備**
+   - シーン管理メソッドの特定
+   - 依存関係の確認
+   - テストケースの作成
+
+3. **継続的改善**
+   - 各フェーズでの学びを次に活かす
+   - ガイドラインの更新
+   - チーム内での知見共有
+
+---
+
+**最終更新**: 2024年11月25日  
+**次回レビュー**: Phase 2開始時
+

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Code Refactoring**: Started phase refactoring of McpCommandProcessor.cs (9,265 lines)
+  - Phase 1: Extracted helper methods to `Core/McpCommandProcessor.Helpers.cs` (1,144 lines)
+  - Converted `McpCommandProcessor` to partial class for modular organization
+  - Reduced main file size by 12% (9,265 → 8,129 lines)
+  - Created directory structure for future phases (Scene, GameObject, Component, Asset, UI, etc.)
+  - Added comprehensive refactoring plan: `docs/REFACTORING_PLAN.md`
+
 ---
 
 ## [1.5.3] - 2025-11-25
