@@ -403,7 +403,19 @@ public class CommandInvoker
 - [ ] UguiCommandHandler の実装（次のフェーズに延期 - 複雑すぎる）
 - [x] ドキュメント更新
 
-### Phase 6: UI/Template ハンドラーの実装（2-3週間）
+### Phase 6a: Template ハンドラーの実装（1週間） ✅ Completed (2025-11-27)
+
+- [x] TemplateCommandHandler の実装 (~800行、6ツールを統合)
+  - [x] sceneQuickSetup - シーンクイックセットアップ (3D, 2D, UI, VR, Empty)
+  - [x] gameObjectCreateFromTemplate - テンプレートからGameObject作成 (15+テンプレート)
+  - [x] designPatternGenerate - デザインパターンコード生成 (Singleton, ObjectPool, etc.)
+  - [x] scriptTemplateGenerate - MonoBehaviour/ScriptableObjectテンプレート
+  - [x] templateManage - GameObjectカスタマイズ＆Prefab変換
+  - [x] menuHierarchyCreate - 階層的メニューシステム作成
+- [x] ハンドラー登録更新
+- [x] ドキュメント更新
+
+### Phase 6b: UI ハンドラーの実装（2-3週間）
 
 - [ ] UguiCommandHandler の実装（UI管理、2081行のリファクタリング）
   - [ ] RectTransform操作（rectAdjust, setAnchor, setAnchorPreset）
@@ -411,13 +423,6 @@ public class CommandInvoker
   - [ ] 検査とレイアウト（inspect, updateRect, layoutManage）
   - [ ] テンプレート生成（createFromTemplate）
   - [ ] オーバーラップ検出（detectOverlaps）
-- [ ] TemplateCommandHandler の実装
-  - [ ] designPatternGenerate
-  - [ ] scriptTemplateGenerate
-  - [ ] templateManage
-  - [ ] menuHierarchyCreate
-  - [ ] sceneQuickSetup
-  - [ ] gameObjectCreateFromTemplate
 
 ### Phase 7: 設定系ハンドラーの実装（1週間）
 

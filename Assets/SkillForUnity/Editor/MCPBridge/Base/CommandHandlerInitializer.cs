@@ -38,6 +38,9 @@ namespace MCP.Editor.Base
                 // Phase 5で実装済みのハンドラーを登録
                 RegisterPhase5Handlers();
                 
+                // Phase 6で実装済みのハンドラーを登録
+                RegisterPhase6Handlers();
+                
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
                 Debug.Log($"[CommandHandlerInitializer] Initialized {stats["totalHandlers"]} command handlers");
@@ -87,16 +90,28 @@ namespace MCP.Editor.Base
         }
         
         /// <summary>
-        /// 残りのハンドラーを登録します（Phase 4以降で実装予定）。
+        /// Phase 6で実装されたハンドラーを登録します。
+        /// </summary>
+        private static void RegisterPhase6Handlers()
+        {
+            // Template Handler (consolidated 6 template-related tools)
+            var templateHandler = new TemplateCommandHandler();
+            CommandHandlerFactory.Register("sceneQuickSetup", templateHandler);
+            CommandHandlerFactory.Register("gameObjectCreateFromTemplate", templateHandler);
+            CommandHandlerFactory.Register("designPatternGenerate", templateHandler);
+            CommandHandlerFactory.Register("scriptTemplateGenerate", templateHandler);
+            CommandHandlerFactory.Register("templateManage", templateHandler);
+            CommandHandlerFactory.Register("menuHierarchyCreate", templateHandler);
+        }
+        
+        /// <summary>
+        /// 残りのハンドラーを登録します（Phase 7以降で実装予定）。
         /// </summary>
         private static void RegisterRemainingHandlers()
         {
-            // TODO: Phase 4以降で実装
-            // CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
+            // TODO: Phase 7以降で実装
             // CommandHandlerFactory.Register("uguiManage", new UguiCommandHandler());
-            // CommandHandlerFactory.Register("prefabManage", new PrefabCommandHandler());
-            // CommandHandlerFactory.Register("projectSettingsManage", new ProjectSettingsCommandHandler());
-            // CommandHandlerFactory.Register("designPatternGenerate", new DesignPatternCommandHandler());
+            // CommandHandlerFactory.Register("projectSettingsManage", new SettingsCommandHandler());
         }
     }
 }
