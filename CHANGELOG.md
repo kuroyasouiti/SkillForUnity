@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [1.6.0] - 2025-11-27
+
+### Added
+- **MCP Server Manager**: Integrated server management directly in Unity Editor
+  - Install/Uninstall/Reinstall MCP server from Unity
+  - Server status monitoring (Python, UV availability)
+  - Open install/source folders directly
+  - User-configurable install path with Browse functionality
+  
+- **AI Tool Registration**: JSON configuration file management for AI tools
+  - Direct JSON configuration file editing (no CLI required)
+  - Support for Cursor, Claude Desktop, Cline (VS Code), Windsurf
+  - Automatic backup before changes (with timestamp)
+  - Individual and bulk registration/unregistration
+  - Configuration file path display and quick access (📂 button)
+  
+- **Cursor Configuration Auto-Detection**: Intelligent path detection
+  - Checks 5 possible configuration file locations
+  - Prioritizes Roo Cline integration path
+  - Fallback to other common paths
+  - Detailed logging for debugging
+
+### Changed
+- **Default Install Path**: Changed from `~/.claude/skills/SkillForUnity` to `~/SkillForUnity`
+  - Simpler path structure
+  - User home directory directly
+  - Customizable via UI
+  
+- **Install Path Management**: Fully user-configurable
+  - Text field for direct path input
+  - Browse button for folder selection
+  - Default button to restore default path
+  - Saved in project settings (`ProjectSettings/McpBridgeSettings.asset`)
+
+### Improved
+- **MCP Bridge Window**: Unified interface
+  - Combined Bridge Listener and Server Manager
+  - Single window: "Tools > MCP Assistant"
+  - Cleaner UI with foldout sections
+  - Real-time status updates
+
+### Documentation
+- Added `JSON_CONFIG_REGISTRATION.md`: JSON configuration file registration guide
+- Added `CURSOR_CONFIG_FIX.md`: Cursor configuration detection improvements
+- Added `USER_CONFIGURABLE_INSTALL_PATH.md`: Install path customization guide
+- Added `CLI_REGISTRATION_MIGRATION.md`: CLI to JSON migration (deprecated)
+- Added `MCP_SERVER_MANAGEMENT_PLAN.md`: Server management implementation plan
+- Added `MCP_SERVER_MANAGEMENT_COMPLETED.md`: Server management completion report
+- Added `MCP_BRIDGE_INTEGRATION_REPORT.md`: Bridge integration summary
+
+### Removed
+- **CLI Registration**: Deprecated CLI-based registration (replaced with JSON editing)
+  - `McpCliRegistry.cs` no longer used
+  - More reliable JSON direct editing approach
+
+---
+
+## [1.5.3] - 2025-11-25
+
 ### Added
 - **Interface Extraction**: New modular command handler architecture for improved testability and maintainability
   - **Phase 2** (2025-11-27): Implemented `StandardPayloadValidator`, `UnityResourceResolver`, enhanced `BaseCommandHandler`

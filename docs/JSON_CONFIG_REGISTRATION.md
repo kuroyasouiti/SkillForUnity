@@ -102,7 +102,7 @@ Dictionary<AITool, bool> GetRegistrationStatus()
       "command": "uv",
       "args": [
         "--directory",
-        "C:\\Users\\username\\.claude\\skills\\SkillForUnity",
+        "C:\\Users\\username\\SkillForUnity",
         "run",
         "skill-for-unity"
       ]

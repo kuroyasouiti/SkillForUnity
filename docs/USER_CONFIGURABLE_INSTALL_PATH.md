@@ -91,15 +91,15 @@ public string ServerInstallPath
 #### DefaultServerInstallPath の更新
 
 ```csharp
-public string DefaultServerInstallPath
-{
-    get
-    {
-        // Use McpServerManager's default path
-        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        return Path.Combine(userProfile, ".claude", "skills", "SkillForUnity");
-    }
-}
+        public string DefaultServerInstallPath
+        {
+            get
+            {
+                // Use McpServerManager's default path
+                var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                return Path.Combine(userProfile, "SkillForUnity");
+            }
+        }
 ```
 
 ### 2. `McpServerManager` の更新
@@ -395,25 +395,31 @@ private static string NormalizeInstallPath(string value)
 
 ## 🎯 使用例
 
-### 例1: デフォルトパス
+### 例1: デフォルトパス（新）
+
+```
+C:\Users\username\SkillForUnity
+```
+
+### 例2: 旧デフォルトパス（互換性のため）
 
 ```
 C:\Users\username\.claude\skills\SkillForUnity
 ```
 
-### 例2: カスタムパス
+### 例3: カスタムパス
 
 ```
 D:\MyMCPServers\UnitySkill
 ```
 
-### 例3: プロジェクト内
+### 例4: プロジェクト内
 
 ```
 D:\Projects\MyGame\.mcp\SkillForUnity
 ```
 
-### 例4: ネットワークドライブ
+### 例5: ネットワークドライブ
 
 ```
 \\NetworkShare\MCPServers\SkillForUnity

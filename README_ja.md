@@ -3,18 +3,19 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-1.5.3-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
+[![Version](https://img.shields.io/badge/Version-1.6.0-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 SkillForUnityは、AIアシスタントがUnity Editorとリアルタイムで対話できる包括的なModel Context Protocol (MCP) サーバーです。シーン管理、GameObject操作、コンポーネント編集、アセット操作、UIレイアウト、デザインパターン生成、階層メニュー作成、Prefab、スクリプト管理など、広範なツールを提供します。
 
-## 🆕 v1.5.3の新機能
+## 🆕 v1.6.0の新機能
 
-- **ScriptableObject管理**: ページネーションとGUIDサポートを備えた完全なCRUD操作
-- **コード品質の向上**: コード重複を40%削減、エラーハンドリングの強化
-- **セキュリティ強化**: パストラバーサル防止とアセット検証
-- **パフォーマンス向上**: ページネーションにより大規模データセット処理が80%高速化
-- **本番環境対応**: 包括的なコードレビュー（9.2/10）とすべての改善を実装
+- **統合サーバーマネージャー**: Unity EditorからMCPサーバーを直接インストール・管理
+- **AIツール登録**: Cursor、Claude Desktop、Cline、WindsurfのJSON設定を直接編集
+- **インストールパスのカスタマイズ**: UIでサーバーインストール先を自由に設定可能
+- **Cursor自動検出**: 5つの候補パスからインテリジェントに設定ファイルを検出
+- **統一MCPアシスタント**: すべてのMCP管理を1つのウィンドウで（Tools > MCP Assistant）
+- **デフォルトパス簡略化**: `~/SkillForUnity`に変更（完全カスタマイズ可能）
 
 ## アーキテクチャ
 

@@ -5,16 +5,17 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-1.5.3-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
+[![Version](https://img.shields.io/badge/Version-1.6.0-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🆕 What's New in v1.5.3
+## 🆕 What's New in v1.6.0
 
-- **ScriptableObject Management**: Complete CRUD operations with pagination and GUID support
-- **Code Quality Improvements**: 40% reduction in code duplication, enhanced error handling
-- **Security Enhancements**: Path traversal prevention and asset validation
-- **Performance Boost**: 80% faster large dataset processing with pagination
-- **Production Ready**: Comprehensive code review (9.2/10) with all improvements implemented
+- **Integrated Server Manager**: Install/manage MCP server directly from Unity Editor
+- **AI Tool Registration**: Direct JSON configuration editing for Cursor, Claude Desktop, Cline, Windsurf
+- **User-Configurable Install Path**: Customize server installation location with UI
+- **Cursor Auto-Detection**: Intelligent configuration file path detection (5 locations)
+- **Unified MCP Assistant**: Single window for all MCP management (Tools > MCP Assistant)
+- **Default Path Simplified**: Changed to `~/SkillForUnity` (fully customizable)
 
 ## 📦 Skill Package Structure
 

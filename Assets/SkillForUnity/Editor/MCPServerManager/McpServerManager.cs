@@ -14,7 +14,7 @@ namespace MCP.Editor.ServerManager
         public const string ServerName = "skill-for-unity";
         
         // バージョン
-        public const string Version = "0.1.0";
+        public const string Version = "1.6.0";
         
         /// <summary>
         /// ユーザーホームディレクトリのインストール先パス
@@ -57,7 +57,7 @@ namespace MCP.Editor.ServerManager
                 
                 // Default path
                 var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                return Path.Combine(userProfile, ".claude", "skills", "SkillForUnity");
+                return Path.Combine(userProfile, "SkillForUnity");
             }
         }
         

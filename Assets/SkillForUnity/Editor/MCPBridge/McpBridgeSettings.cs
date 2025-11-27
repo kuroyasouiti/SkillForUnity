@@ -88,7 +88,7 @@ namespace MCP.Editor
             {
                 // Use McpServerManager's default path
                 var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                return Path.Combine(userProfile, ".claude", "skills", "SkillForUnity");
+                return Path.Combine(userProfile, "SkillForUnity");
             }
         }
 
