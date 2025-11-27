@@ -3,6 +3,8 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using MCP.Editor.ServerManager;
+using System.Collections.Generic;
 
 namespace MCP.Editor
 {
@@ -19,6 +21,13 @@ namespace MCP.Editor
         private bool _showServerSection = true;
         private bool _showLogSection = false;
         private bool _showQuickRegister = true;
+        private bool _showServerManagerSection = true;
+        private bool _showAIToolsSection = true;
+        
+        // Server Manager State
+        private ServerStatus _serverStatus;
+        private Dictionary<AITool, bool> _registrationStatus;
+        private bool _serverManagerInitialized;
 
         private readonly struct CliRegistration
         {
@@ -37,10 +46,11 @@ namespace MCP.Editor
         }
 
         [MenuItem("Tools/MCP Assistant")]
+        [MenuItem("Skill for Unity/MCP Assistant")]
         public static void ShowWindow()
         {
             var window = GetWindow<McpBridgeWindow>("MCP Assistant");
-            window.minSize = new Vector2(420f, 400f);
+            window.minSize = new Vector2(420f, 600f);
         }
 
         private void OnEnable()
@@ -48,12 +58,17 @@ namespace MCP.Editor
             McpBridgeService.StateChanged += OnStateChanged;
             McpBridgeService.ClientInfoReceived += OnClientInfoReceived;
             UpdateStatus(McpBridgeService.State);
+            
+            // Initialize Server Manager
+            Application.logMessageReceived += OnLogMessageReceived;
+            RefreshServerManagerStatus();
         }
 
         private void OnDisable()
         {
             McpBridgeService.StateChanged -= OnStateChanged;
             McpBridgeService.ClientInfoReceived -= OnClientInfoReceived;
+            Application.logMessageReceived -= OnLogMessageReceived;
         }
 
         private void OnStateChanged(McpConnectionState state)
@@ -98,7 +113,7 @@ namespace MCP.Editor
 
                 GUILayout.Space(4f);
 
-                _showServerSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showServerSection, "Server Management");
+                _showServerSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showServerSection, "Server Management (Legacy)");
                 if (_showServerSection)
                 {
                     DrawServerManagement(settings);
@@ -107,7 +122,25 @@ namespace MCP.Editor
 
                 GUILayout.Space(4f);
 
-                _showQuickRegister = EditorGUILayout.BeginFoldoutHeaderGroup(_showQuickRegister, "Client Registration");
+                _showServerManagerSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showServerManagerSection, "MCP Server Manager");
+                if (_showServerManagerSection)
+                {
+                    DrawServerManagerSection();
+                }
+                EditorGUILayout.EndFoldoutHeaderGroup();
+
+                GUILayout.Space(4f);
+
+                _showAIToolsSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showAIToolsSection, "AI Tool Registration");
+                if (_showAIToolsSection)
+                {
+                    DrawAIToolsSection();
+                }
+                EditorGUILayout.EndFoldoutHeaderGroup();
+
+                GUILayout.Space(4f);
+
+                _showQuickRegister = EditorGUILayout.BeginFoldoutHeaderGroup(_showQuickRegister, "Client Registration (Legacy)");
                 if (_showQuickRegister)
                 {
                     DrawQuickRegistration(settings);
@@ -698,6 +731,257 @@ namespace MCP.Editor
 
             return session.Length <= 8 ? session : session.Substring(0, 8);
         }
+        
+        #region Server Manager Integration
+        
+        private void RefreshServerManagerStatus()
+        {
+            try
+            {
+                _serverStatus = McpServerManager.GetStatus();
+                _registrationStatus = McpToolRegistry.GetRegistrationStatus();
+                _serverManagerInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Failed to refresh server manager status: {ex.Message}");
+                _serverManagerInitialized = false;
+            }
+        }
+        
+        private void DrawServerManagerSection()
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                // Server Status
+                EditorGUILayout.LabelField("Server Status", EditorStyles.boldLabel);
+                
+                if (_serverStatus == null)
+                {
+                    EditorGUILayout.HelpBox("Server manager not initialized", MessageType.Warning);
+                    if (GUILayout.Button("Refresh"))
+                    {
+                        RefreshServerManagerStatus();
+                    }
+                    return;
+                }
+                
+                var statusIcon = _serverStatus.IsInstalled ? "✅" : "❌";
+                EditorGUILayout.LabelField($"{statusIcon} Status", _serverStatus.IsInstalled ? "Installed" : "Not Installed");
+                
+                if (_serverStatus.IsInstalled)
+                {
+                    EditorGUILayout.LabelField("Install Path", _serverStatus.InstallPath, EditorStyles.wordWrappedLabel);
+                    EditorGUILayout.LabelField("Version", _serverStatus.Version);
+                    EditorGUILayout.LabelField("Python", _serverStatus.PythonAvailable ? "✅ Available" : "❌ Not Found");
+                    EditorGUILayout.LabelField("UV", _serverStatus.UvAvailable ? "✅ Available" : "❌ Not Found");
+                }
+                else
+                {
+                    EditorGUILayout.LabelField("Source Path", _serverStatus.SourcePath, EditorStyles.wordWrappedLabel);
+                }
+                
+                GUILayout.Space(5f);
+                
+                // Server Operations
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUI.enabled = !_serverStatus.IsInstalled && !_commandRunning;
+                    if (GUILayout.Button("Install Server", GUILayout.Height(30)))
+                    {
+                        ExecuteServerManagerAction(() =>
+                        {
+                            McpServerManager.Install();
+                            RefreshServerManagerStatus();
+                            AppendLog("Server installed successfully!");
+                        });
+                    }
+                    GUI.enabled = true;
+                    
+                    GUI.enabled = _serverStatus.IsInstalled && !_commandRunning;
+                    if (GUILayout.Button("Uninstall Server", GUILayout.Height(30)))
+                    {
+                        if (EditorUtility.DisplayDialog("Confirm Uninstall",
+                            "Are you sure you want to uninstall the MCP server?",
+                            "Yes", "No"))
+                        {
+                            ExecuteServerManagerAction(() =>
+                            {
+                                McpServerManager.Uninstall();
+                                RefreshServerManagerStatus();
+                                AppendLog("Server uninstalled successfully!");
+                            });
+                        }
+                    }
+                    GUI.enabled = true;
+                }
+                
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUI.enabled = _serverStatus.IsInstalled && !_commandRunning;
+                    if (GUILayout.Button("Reinstall Server", GUILayout.Height(30)))
+                    {
+                        ExecuteServerManagerAction(() =>
+                        {
+                            McpServerManager.Reinstall();
+                            RefreshServerManagerStatus();
+                            AppendLog("Server reinstalled successfully!");
+                        });
+                    }
+                    GUI.enabled = true;
+                    
+                    if (GUILayout.Button("Refresh Status", GUILayout.Height(30)))
+                    {
+                        RefreshServerManagerStatus();
+                        AppendLog("Status refreshed");
+                    }
+                }
+                
+                GUILayout.Space(5f);
+                
+                // Quick Actions
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Open Install Folder"))
+                    {
+                        McpServerManager.OpenInstallFolder();
+                    }
+                    
+                    if (GUILayout.Button("Open Source Folder"))
+                    {
+                        McpServerManager.OpenSourceFolder();
+                    }
+                }
+            }
+        }
+        
+        private void DrawAIToolsSection()
+        {
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (_serverStatus == null || !_serverStatus.IsInstalled)
+                {
+                    EditorGUILayout.HelpBox("Please install the MCP server first.", MessageType.Info);
+                    return;
+                }
+                
+                EditorGUILayout.LabelField("AI Tool Registration", EditorStyles.boldLabel);
+                EditorGUILayout.HelpBox("Register the MCP server with AI tools for seamless integration", MessageType.Info);
+                
+                GUILayout.Space(5f);
+                
+                // Individual tool registration
+                foreach (AITool tool in Enum.GetValues(typeof(AITool)))
+                {
+                    DrawAIToolRow(tool);
+                }
+                
+                GUILayout.Space(5f);
+                
+                // Bulk actions
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Register All", GUILayout.Height(25)))
+                    {
+                        ExecuteServerManagerAction(() =>
+                        {
+                            McpToolRegistry.RegisterAll();
+                            RefreshServerManagerStatus();
+                            AppendLog("Registered to all available tools");
+                        });
+                    }
+                    
+                    if (GUILayout.Button("Unregister All", GUILayout.Height(25)))
+                    {
+                        if (EditorUtility.DisplayDialog("Confirm Unregister All",
+                            "Are you sure you want to unregister from all AI tools?",
+                            "Yes", "No"))
+                        {
+                            ExecuteServerManagerAction(() =>
+                            {
+                                McpToolRegistry.UnregisterAll();
+                                RefreshServerManagerStatus();
+                                AppendLog("Unregistered from all tools");
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        private void DrawAIToolRow(AITool tool)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                var isRegistered = _registrationStatus != null && _registrationStatus.ContainsKey(tool) && _registrationStatus[tool];
+                var statusIcon = isRegistered ? "✅" : "❌";
+                
+                EditorGUILayout.LabelField($"{statusIcon} {McpConfigManager.GetToolDisplayName(tool)}", GUILayout.Width(200));
+                
+                GUILayout.FlexibleSpace();
+                
+                if (isRegistered)
+                {
+                    if (GUILayout.Button("Unregister", GUILayout.Width(100)))
+                    {
+                        ExecuteServerManagerAction(() =>
+                        {
+                            McpToolRegistry.Unregister(tool);
+                            RefreshServerManagerStatus();
+                            AppendLog($"Unregistered from {tool}");
+                        });
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button("Register", GUILayout.Width(100)))
+                    {
+                        ExecuteServerManagerAction(() =>
+                        {
+                            McpToolRegistry.Register(tool);
+                            RefreshServerManagerStatus();
+                            AppendLog($"Registered to {tool}");
+                        });
+                    }
+                }
+            }
+        }
+        
+        private void ExecuteServerManagerAction(Action action)
+        {
+            try
+            {
+                action();
+                Repaint();
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Error: {ex.Message}");
+                EditorUtility.DisplayDialog("Error", ex.Message, "OK");
+            }
+        }
+        
+        private void OnLogMessageReceived(string message, string stackTrace, LogType type)
+        {
+            // Filter Server Manager logs
+            if (message.Contains("[McpServerManager]") || 
+                message.Contains("[McpServerInstaller]") ||
+                message.Contains("[McpConfigManager]") ||
+                message.Contains("[McpToolRegistry]"))
+            {
+                // Extract clean message
+                var cleanMessage = message;
+                if (message.Contains("]"))
+                {
+                    var index = message.IndexOf("]");
+                    cleanMessage = message.Substring(index + 1).Trim();
+                }
+                
+                AppendLog(cleanMessage);
+            }
+        }
+        
+        #endregion
     }
 }
 
