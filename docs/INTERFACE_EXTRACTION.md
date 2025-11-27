@@ -380,13 +380,13 @@ public class CommandInvoker
 - [ ] 共通ロジックの抽出
 - [ ] ヘルパーメソッドのリファクタリング
 
-### Phase 3: 個別ハンドラーの移行（4週間）
+### Phase 3: 個別ハンドラーの移行（4週間） ✅ Completed (2025-11-27)
 
-- [ ] SceneCommandHandler の実装
-- [ ] GameObjectCommandHandler の実装
-- [ ] ComponentCommandHandler の実装
-- [ ] AssetCommandHandler の実装
-- [ ] その他のハンドラーの実装
+- [x] SceneCommandHandler の実装
+- [x] GameObjectCommandHandler の実装
+- [x] ComponentCommandHandler の実装
+- [x] AssetCommandHandler の実装
+- [ ] その他のハンドラーの実装 (UI, Prefab, Settings, Template)
 
 ### Phase 4: ファクトリーとディスパッチャーの実装（1週間）
 

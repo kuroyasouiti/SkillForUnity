@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Interface Extraction**: New modular command handler architecture for improved testability and maintainability
+  - **Phase 2** (2025-11-27): Implemented `StandardPayloadValidator`, `UnityResourceResolver`, enhanced `BaseCommandHandler`
+  - **Phase 3** (2025-11-27): Created 4 independent command handlers (`SceneCommandHandler`, `GameObjectCommandHandler`, `ComponentCommandHandler`, `AssetCommandHandler`)
+  - Comprehensive unit tests for `BaseCommandHandler`, `StandardPayloadValidator`, `UnityResourceResolver`
+  - Dependency injection support via `CommandHandlerFactory`
+  - Total ~2,000 lines of new handler code supporting 39 operations
+  - Documentation: `INTERFACE_EXTRACTION.md`, `INTERFACE_IMPLEMENTATION_GUIDE.md`, `PHASE2_IMPLEMENTATION_REPORT.md`, `PHASE3_IMPLEMENTATION_REPORT.md`
+
 ### Changed
 - **Code Refactoring**: Phased refactoring of McpCommandProcessor.cs for improved maintainability ✅ **Phase 11/11 Complete! 🎉**
   - **Phase 1** (2024-11-25): Extracted helper methods to `Core/McpCommandProcessor.Helpers.cs` (1,144 lines)
