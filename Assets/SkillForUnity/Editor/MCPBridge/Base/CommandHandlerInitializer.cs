@@ -41,6 +41,9 @@ namespace MCP.Editor.Base
                 // Phase 6で実装済みのハンドラーを登録
                 RegisterPhase6Handlers();
                 
+                // Phase 6bで実装済みのハンドラーを登録
+                RegisterPhase6BHandlers();
+                
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
                 Debug.Log($"[CommandHandlerInitializer] Initialized {stats["totalHandlers"]} command handlers");
@@ -105,12 +108,23 @@ namespace MCP.Editor.Base
         }
         
         /// <summary>
+        /// Phase 6bで実装されたハンドラーを登録します（UGUI関連）。
+        /// </summary>
+        private static void RegisterPhase6BHandlers()
+        {
+            // UGUI Handlers
+            CommandHandlerFactory.Register("uguiManage", new UguiManageCommandHandler());
+            CommandHandlerFactory.Register("uguiCreateFromTemplate", new UguiCreateFromTemplateHandler());
+            CommandHandlerFactory.Register("uguiLayoutManage", new UguiLayoutManageHandler());
+            CommandHandlerFactory.Register("uguiDetectOverlaps", new UguiDetectOverlapsHandler());
+        }
+        
+        /// <summary>
         /// 残りのハンドラーを登録します（Phase 7以降で実装予定）。
         /// </summary>
         private static void RegisterRemainingHandlers()
         {
             // TODO: Phase 7以降で実装
-            // CommandHandlerFactory.Register("uguiManage", new UguiCommandHandler());
             // CommandHandlerFactory.Register("projectSettingsManage", new SettingsCommandHandler());
         }
     }
