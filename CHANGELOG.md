@@ -12,16 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Phase 1** (2024-11-25): Extracted helper methods to `Core/McpCommandProcessor.Helpers.cs` (1,144 lines)
   - **Phase 2** (2024-11-27): Extracted scene management to `Scene/McpCommandProcessor.Scene.cs` (413 lines)
   - **Phase 3** (2024-11-27): Extracted GameObject operations to `GameObject/McpCommandProcessor.GameObject.cs` (401 lines)
+  - **Phase 4** (2024-11-27): Extracted component operations to `Component/McpCommandProcessor.Component.cs` (602 lines)
+  - **Phase 5** (2024-11-27): Extracted asset management to `Asset/McpCommandProcessor.Asset.cs` (428 lines)
+  - **Phase 6** (2024-11-27): Extracted ScriptableObject management to `Asset/McpCommandProcessor.ScriptableObject.cs` (474 lines)
   - Converted `McpCommandProcessor` to partial class for modular organization
-  - Reduced main file size by 22% (9,265 → 7,210 lines)
-  - Created directory structure for future phases (Component, Asset, UI, etc.)
+  - Reduced main file size by 38% (9,265 → 5,692 lines)
+  - Created organized directory structure (Core, Scene, GameObject, Component, Asset)
   - Added comprehensive refactoring plan: `docs/REFACTORING_PLAN.md`
   
-  **Phase 3 Details**:
-  - GameObject operations: Create, Delete, Move, Rename, Update, Duplicate, Inspect
-  - Batch operations: FindMultiple, DeleteMultiple, InspectMultiple
-  - All GameObject-related logic now isolated in dedicated file
-  - Improved code organization following Single Responsibility Principle
+  **Phases 4-6 Details**:
+  - **Component**: Add, Remove, Update, Inspect operations with batch support and property filtering
+  - **Asset**: Text asset creation/update, asset importer management, CRUD operations with batch support
+  - **ScriptableObject**: Full CRUD operations, type-based search, list operations with pagination
+  - All feature-specific logic now isolated in dedicated files
+  - Improved Single Responsibility Principle adherence across the codebase
 
 ---
 
