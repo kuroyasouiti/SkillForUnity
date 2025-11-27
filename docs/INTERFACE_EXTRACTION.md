@@ -395,13 +395,48 @@ public class CommandInvoker
 - [x] メインディスパッチャーのリファクタリング（ハイブリッドアプローチ）
 - [x] 統合テストの準備（CommandHandlerIntegrationTests）
 
-### Phase 5: ドキュメントとクリーンアップ（1週間）
+### Phase 5: 追加ハンドラーの実装（1週間） ✅ Completed (2025-11-27)
 
-- [ ] APIドキュメントの更新
-- [ ] コードレビュー
-- [ ] パフォーマンステスト
+- [x] PrefabCommandHandler の実装 (7操作)
+- [x] ScriptableObjectCommandHandler の実装 (7操作)
+- [x] CommandHandlerInitializer の更新（Phase 5ハンドラー登録）
+- [ ] UguiCommandHandler の実装（次のフェーズに延期 - 複雑すぎる）
+- [x] ドキュメント更新
 
-**合計所要時間**: 約9週間
+### Phase 6: UI/Template ハンドラーの実装（2-3週間）
+
+- [ ] UguiCommandHandler の実装（UI管理、2081行のリファクタリング）
+  - [ ] RectTransform操作（rectAdjust, setAnchor, setAnchorPreset）
+  - [ ] 位置変換（convertToAnchored, convertToAbsolute）
+  - [ ] 検査とレイアウト（inspect, updateRect, layoutManage）
+  - [ ] テンプレート生成（createFromTemplate）
+  - [ ] オーバーラップ検出（detectOverlaps）
+- [ ] TemplateCommandHandler の実装
+  - [ ] designPatternGenerate
+  - [ ] scriptTemplateGenerate
+  - [ ] templateManage
+  - [ ] menuHierarchyCreate
+  - [ ] sceneQuickSetup
+  - [ ] gameObjectCreateFromTemplate
+
+### Phase 7: 設定系ハンドラーの実装（1週間）
+
+- [ ] SettingsCommandHandler の実装
+  - [ ] projectSettingsManage
+  - [ ] renderPipelineManage
+  - [ ] tagLayerManage
+- [ ] ConstantCommandHandler の実装
+  - [ ] constantConvert
+
+### Phase 8: 完全移行とクリーンアップ（1-2週間）
+
+- [ ] すべてのツールを新システムに移行完了
+- [ ] `ExecuteLegacy` メソッドの削除
+- [ ] partial classファイルのクリーンアップ
+- [ ] パフォーマンス最適化
+- [ ] ドキュメント最終更新
+
+**合計所要時間**: 約11-13週間
 
 ---
 

@@ -35,6 +35,9 @@ namespace MCP.Editor.Base
                 // Phase 3で実装済みのハンドラーを登録
                 RegisterPhase3Handlers();
                 
+                // Phase 5で実装済みのハンドラーを登録
+                RegisterPhase5Handlers();
+                
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
                 Debug.Log($"[CommandHandlerInitializer] Initialized {stats["totalHandlers"]} command handlers");
@@ -69,6 +72,18 @@ namespace MCP.Editor.Base
             
             // Asset Handler
             CommandHandlerFactory.Register("assetManage", new AssetCommandHandler());
+        }
+        
+        /// <summary>
+        /// Phase 5で実装されたハンドラーを登録します。
+        /// </summary>
+        private static void RegisterPhase5Handlers()
+        {
+            // Prefab Handler
+            CommandHandlerFactory.Register("prefabManage", new PrefabCommandHandler());
+            
+            // ScriptableObject Handler
+            CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
         }
         
         /// <summary>
