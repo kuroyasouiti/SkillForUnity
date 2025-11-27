@@ -91,13 +91,19 @@ ExportedObj/
 # Local settings (user-specific)
 .claude/settings.local.json
 
-# Skill development (tracked in repository)
-# .claude/skills/SkillForUnity is now part of the repository
-.claude/skills/SkillForUnity/.venv/
+
+# ================================================================
+# MCP Server (now in Assets/SkillForUnity/MCPServer)
+# ================================================================
+Assets/SkillForUnity/MCPServer/__pycache__/
+Assets/SkillForUnity/MCPServer/**/__pycache__/
+Assets/SkillForUnity/MCPServer/.venv/
+Assets/SkillForUnity/MCPServer/**/*.pyc
+Assets/SkillForUnity/MCPServer/.pytest_cache/
+Assets/SkillForUnity/MCPServer/.DS_Store
 
 # ================================================================
 # OS-specific
 # ================================================================
 .DS_Store
 Thumbs.db
-docs/
