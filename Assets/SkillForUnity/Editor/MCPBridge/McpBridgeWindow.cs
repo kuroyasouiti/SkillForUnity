@@ -20,11 +20,12 @@ namespace MCP.Editor
         private bool _showBridgeSection = true;
         private bool _showLogSection = false;
         private bool _showServerManagerSection = true;
-        private bool _showCliRegistrationSection = true;
+        private bool _showRegistrationSection = true;
         
         // Server Manager State
         private ServerStatus _serverStatus;
-        private Dictionary<string, bool> _cliAvailability;
+        private Dictionary<AITool, bool> _registrationStatus;
+        private Dictionary<AITool, bool> _configFileStatus;
         private bool _serverManagerInitialized;
 
         private readonly struct CliRegistration
@@ -120,10 +121,10 @@ namespace MCP.Editor
 
                 GUILayout.Space(4f);
 
-                _showCliRegistrationSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showCliRegistrationSection, "AI Tool CLI Registration");
-                if (_showCliRegistrationSection)
+                _showRegistrationSection = EditorGUILayout.BeginFoldoutHeaderGroup(_showRegistrationSection, "AI Tool Registration");
+                if (_showRegistrationSection)
                 {
-                    DrawCliRegistrationSection();
+                    DrawRegistrationSection();
                 }
                 EditorGUILayout.EndFoldoutHeaderGroup();
 
@@ -482,16 +483,8 @@ namespace MCP.Editor
             try
             {
                 _serverStatus = McpServerManager.GetStatus();
-                
-                // Check CLI availability
-                _cliAvailability = new Dictionary<string, bool>
-                {
-                    { "cursor", McpCliRegistry.IsCliAvailable("cursor") },
-                    { "claude-code", McpCliRegistry.IsCliAvailable("claude-code") },
-                    { "cline", McpCliRegistry.IsCliAvailable("cline") },
-                    { "windsurf", McpCliRegistry.IsCliAvailable("windsurf") }
-                };
-                
+                _registrationStatus = McpToolRegistry.GetRegistrationStatus();
+                _configFileStatus = McpConfigManager.GetAllConfigStatus();
                 _serverManagerInitialized = true;
             }
             catch (Exception ex)
@@ -607,7 +600,7 @@ namespace MCP.Editor
             }
         }
         
-        private void DrawCliRegistrationSection()
+        private void DrawRegistrationSection()
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -617,118 +610,181 @@ namespace MCP.Editor
                     return;
                 }
                 
-                EditorGUILayout.LabelField("AI Tool CLI Registration", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("AI Tool Registration", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(
-                    "Register the MCP server using command-line tools.\n" +
-                    "Make sure the respective CLI tools are installed and available in PATH.",
+                    "Register the MCP server by updating configuration files.\n" +
+                    "Backups are automatically created before any changes.",
                     MessageType.Info
                 );
                 
                 GUILayout.Space(5f);
                 
-                var serverPath = _serverStatus.InstallPath;
-                
-                // Cursor
-                DrawCliToolRow("Cursor", "cursor", serverPath, 
-                    () => McpCliRegistry.RegisterToCursor(serverPath),
-                    () => McpCliRegistry.UnregisterFromCursor());
-                
-                // Claude Code
-                DrawCliToolRow("Claude Code", "claude-code", serverPath,
-                    () => McpCliRegistry.RegisterToClaudeCode(serverPath),
-                    () => McpCliRegistry.UnregisterFromClaudeCode());
-                
-                // Cline
-                DrawCliToolRow("Cline", "cline", serverPath,
-                    () => McpCliRegistry.RegisterToCline(serverPath),
-                    () => McpCliRegistry.UnregisterFromCline());
-                
-                // Windsurf
-                DrawCliToolRow("Windsurf", "windsurf", serverPath,
-                    () => McpCliRegistry.RegisterToWindsurf(serverPath),
-                    () => McpCliRegistry.UnregisterFromWindsurf());
+                // Individual tool registration
+                foreach (AITool tool in Enum.GetValues(typeof(AITool)))
+                {
+                    DrawToolRegistrationRow(tool);
+                }
                 
                 GUILayout.Space(5f);
                 
-                // Refresh button
-                if (GUILayout.Button("Refresh CLI Availability", GUILayout.Height(25)))
+                // Bulk actions
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    RefreshServerManagerStatus();
-                    AppendLog("CLI availability refreshed");
+                    GUI.enabled = !_commandRunning;
+                    
+                    if (GUILayout.Button("Register All", GUILayout.Height(25)))
+                    {
+                        ExecuteRegistrationAction(() =>
+                        {
+                            McpToolRegistry.RegisterAll();
+                            RefreshServerManagerStatus();
+                            AppendLog("Registered to all available tools");
+                        });
+                    }
+                    
+                    if (GUILayout.Button("Unregister All", GUILayout.Height(25)))
+                    {
+                        if (EditorUtility.DisplayDialog("Confirm Unregister All",
+                            "Are you sure you want to unregister from all AI tools?",
+                            "Yes", "No"))
+                        {
+                            ExecuteRegistrationAction(() =>
+                            {
+                                McpToolRegistry.UnregisterAll();
+                                RefreshServerManagerStatus();
+                                AppendLog("Unregistered from all tools");
+                            });
+                        }
+                    }
+                    
+                    if (GUILayout.Button("Refresh Status", GUILayout.Height(25)))
+                    {
+                        RefreshServerManagerStatus();
+                        AppendLog("Registration status refreshed");
+                    }
+                    
+                    GUI.enabled = true;
                 }
+                
+                GUILayout.Space(5f);
+                
+                // Show config file paths
+                if (EditorGUILayout.BeginFoldoutHeaderGroup(false, "Config File Paths"))
+                {
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        foreach (AITool tool in Enum.GetValues(typeof(AITool)))
+                        {
+                            var path = McpConfigManager.GetConfigPath(tool);
+                            EditorGUILayout.LabelField(McpConfigManager.GetToolDisplayName(tool), EditorStyles.boldLabel);
+                            EditorGUILayout.SelectableLabel(path, EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                            GUILayout.Space(3f);
+                        }
+                    }
+                }
+                EditorGUILayout.EndFoldoutHeaderGroup();
             }
         }
         
-        private void DrawCliToolRow(string displayName, string cliCommand, string serverPath, 
-            Func<McpCliRegistry.CliResult> registerFunc, Func<McpCliRegistry.CliResult> unregisterFunc)
+        private void DrawToolRegistrationRow(AITool tool)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                var isAvailable = _cliAvailability != null && _cliAvailability.ContainsKey(cliCommand) && _cliAvailability[cliCommand];
-                var statusIcon = isAvailable ? "✅" : "❌";
+                var isRegistered = _registrationStatus != null && _registrationStatus.ContainsKey(tool) && _registrationStatus[tool];
+                var configExists = _configFileStatus != null && _configFileStatus.ContainsKey(tool) && _configFileStatus[tool];
                 
-                EditorGUILayout.LabelField($"{statusIcon} {displayName}", GUILayout.Width(200));
+                // Status icons
+                var registrationIcon = isRegistered ? "✅" : "⭕";
+                var configIcon = configExists ? "📄" : "❌";
                 
-                if (!isAvailable)
+                var displayName = McpConfigManager.GetToolDisplayName(tool);
+                EditorGUILayout.LabelField($"{registrationIcon} {displayName}", GUILayout.Width(180));
+                
+                if (!configExists)
                 {
-                    EditorGUILayout.LabelField("(CLI not found)", EditorStyles.miniLabel, GUILayout.Width(100));
+                    EditorGUILayout.LabelField($"{configIcon} Config not found", EditorStyles.miniLabel, GUILayout.Width(120));
+                }
+                else if (isRegistered)
+                {
+                    EditorGUILayout.LabelField($"{configIcon} Registered", EditorStyles.miniLabel, GUILayout.Width(120));
+                }
+                else
+                {
+                    EditorGUILayout.LabelField($"{configIcon} Not registered", EditorStyles.miniLabel, GUILayout.Width(120));
                 }
                 
                 GUILayout.FlexibleSpace();
                 
-                GUI.enabled = isAvailable && !_commandRunning;
+                GUI.enabled = !_commandRunning;
                 
-                if (GUILayout.Button("Register", GUILayout.Width(100)))
+                if (isRegistered)
                 {
-                    ExecuteCliAction(displayName, "Register", registerFunc);
+                    if (GUILayout.Button("Unregister", GUILayout.Width(100)))
+                    {
+                        ExecuteToolAction(tool, "Unregister", () => McpToolRegistry.Unregister(tool));
+                    }
+                }
+                else
+                {
+                    if (GUILayout.Button("Register", GUILayout.Width(100)))
+                    {
+                        ExecuteToolAction(tool, "Register", () => McpToolRegistry.Register(tool));
+                    }
                 }
                 
-                if (GUILayout.Button("Unregister", GUILayout.Width(100)))
+                // Backup button
+                if (configExists && GUILayout.Button("📦", GUILayout.Width(30)))
                 {
-                    ExecuteCliAction(displayName, "Unregister", unregisterFunc);
+                    ExecuteToolAction(tool, "Backup", () => McpConfigManager.BackupConfig(tool));
                 }
                 
                 GUI.enabled = true;
             }
         }
         
-        private void ExecuteCliAction(string toolName, string action, Func<McpCliRegistry.CliResult> cliFunc)
+        private void ExecuteToolAction(AITool tool, string action, Action actionFunc)
         {
             try
             {
                 _commandRunning = true;
-                AppendLog($"[{toolName}] Executing {action}...");
+                var displayName = McpConfigManager.GetToolDisplayName(tool);
+                AppendLog($"[{displayName}] Executing {action}...");
                 
-                var result = cliFunc();
+                actionFunc();
                 
-                if (result.Success)
-                {
-                    AppendLog($"[{toolName}] {action} successful!");
-                    if (!string.IsNullOrEmpty(result.Output))
-                    {
-                        AppendLog(result.Output);
-                    }
-                }
-                else
-                {
-                    AppendLog($"[{toolName}] {action} failed (exit code: {result.ExitCode})");
-                    if (!string.IsNullOrEmpty(result.Error))
-                    {
-                        AppendLog($"Error: {result.Error}");
-                    }
-                    EditorUtility.DisplayDialog($"{toolName} {action} Failed", 
-                        $"Failed to {action.ToLower()} {toolName}.\n\n{result.Error}", "OK");
-                }
+                RefreshServerManagerStatus();
+                AppendLog($"[{displayName}] {action} successful!");
+                Repaint();
             }
             catch (Exception ex)
             {
-                AppendLog($"[{toolName}] Error: {ex.Message}");
-                EditorUtility.DisplayDialog("Error", ex.Message, "OK");
+                var displayName = McpConfigManager.GetToolDisplayName(tool);
+                AppendLog($"[{displayName}] {action} failed: {ex.Message}");
+                EditorUtility.DisplayDialog($"{displayName} {action} Failed", 
+                    $"Failed to {action.ToLower()} {displayName}.\n\n{ex.Message}", "OK");
             }
             finally
             {
                 _commandRunning = false;
+            }
+        }
+        
+        private void ExecuteRegistrationAction(Action action)
+        {
+            try
+            {
+                _commandRunning = true;
+                action();
                 Repaint();
+            }
+            catch (Exception ex)
+            {
+                AppendLog($"Action failed: {ex.Message}");
+                EditorUtility.DisplayDialog("Action Failed", ex.Message, "OK");
+            }
+            finally
+            {
+                _commandRunning = false;
             }
         }
         
@@ -751,7 +807,8 @@ namespace MCP.Editor
             // Filter Server Manager logs
             if (message.Contains("[McpServerManager]") || 
                 message.Contains("[McpServerInstaller]") ||
-                message.Contains("[McpCliRegistry]"))
+                message.Contains("[McpConfigManager]") ||
+                message.Contains("[McpToolRegistry]"))
             {
                 // Extract clean message
                 var cleanMessage = message;
