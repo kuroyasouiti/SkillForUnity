@@ -15,22 +15,51 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using MCP.Editor.Base;
 
 namespace MCP.Editor
 {
     /// <summary>
     /// Processes MCP tool commands and executes corresponding Unity Editor operations.
     /// Supports management operations for scenes, GameObjects, components, and assets.
+    /// 
+    /// Architecture:
+    /// - Phase 3+ handlers: Use new CommandHandlerFactory system for improved testability
+    /// - Legacy handlers: Continue to use partial class methods for backward compatibility
     /// </summary>
     internal static partial class McpCommandProcessor
     {
         /// <summary>
         /// Executes an MCP command and returns the result.
+        /// Tries to use new handler system first, falls back to legacy partial class methods.
         /// </summary>
         /// <param name="command">The command to execute containing tool name and payload.</param>
         /// <returns>Result dictionary with operation-specific data.</returns>
         /// <exception cref="InvalidOperationException">Thrown when tool name is not supported.</exception>
         public static object Execute(McpIncomingCommand command)
+        {
+            // Try new handler system first (Phase 3+ handlers)
+            if (CommandHandlerFactory.TryGetHandler(command.ToolName, out var handler))
+            {
+                try
+                {
+                    return handler.Execute(command.Payload);
+                }
+                catch (Exception ex)
+                {
+                    UnityEngine.Debug.LogError($"Handler '{command.ToolName}' threw exception: {ex.Message}");
+                    throw;
+                }
+            }
+            
+            // Fall back to legacy partial class methods
+            return ExecuteLegacy(command);
+        }
+        
+        /// <summary>
+        /// Executes legacy partial class methods for backward compatibility.
+        /// </summary>
+        private static object ExecuteLegacy(McpIncomingCommand command)
         {
             return command.ToolName switch
             {
@@ -59,6 +88,18 @@ namespace MCP.Editor
                 "menuHierarchyCreate" => HandleMenuHierarchyCreate(command.Payload),
                 _ => throw new InvalidOperationException($"Unsupported tool name: {command.ToolName}"),
             };
+        }
+        
+        /// <summary>
+        /// Gets handler execution mode for diagnostics.
+        /// </summary>
+        public static string GetHandlerMode(string toolName)
+        {
+            if (CommandHandlerFactory.IsRegistered(toolName))
+            {
+                return "NewHandler";
+            }
+            return "Legacy";
         }
 
         /// <summary>

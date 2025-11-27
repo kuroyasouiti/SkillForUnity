@@ -388,11 +388,12 @@ public class CommandInvoker
 - [x] AssetCommandHandler の実装
 - [ ] その他のハンドラーの実装 (UI, Prefab, Settings, Template)
 
-### Phase 4: ファクトリーとディスパッチャーの実装（1週間）
+### Phase 4: ファクトリーとディスパッチャーの実装（1週間） ✅ Completed (2025-11-27)
 
-- [ ] CommandHandlerFactory の実装
-- [ ] メインディスパッチャーのリファクタリング
-- [ ] 統合テストの実行
+- [x] CommandHandlerFactory の実装（既存実装を活用）
+- [x] CommandHandlerInitializer の実装（自動登録システム）
+- [x] メインディスパッチャーのリファクタリング（ハイブリッドアプローチ）
+- [x] 統合テストの準備（CommandHandlerIntegrationTests）
 
 ### Phase 5: ドキュメントとクリーンアップ（1週間）
 
