@@ -31,10 +31,6 @@ Assets/*
 !Assets/SkillForUnity/Editor/MCPBridge/
 !Assets/SkillForUnity/Editor/MCPBridge.meta
 
-# Editor-specific exclusions
-Assets/SkillForUnity/Editor/MCPBridge/SkillPackager.cs
-Assets/SkillForUnity/Editor/MCPBridge/SkillPackager.cs.meta
-
 # ================================================================
 # Build Outputs
 # ================================================================
