@@ -38,17 +38,8 @@ namespace MCP.Editor.Base
                 // Phase 5で実装済みのハンドラーを登録
                 RegisterPhase5Handlers();
                 
-                // Phase 6で実装済みのハンドラーを登録
-                RegisterPhase6Handlers();
-                
-                // Phase 6bで実装済みのハンドラーを登録
-                RegisterPhase6BHandlers();
-                
                 // Phase 7で実装済みのハンドラーを登録
                 RegisterPhase7Handlers();
-                
-                // Phase 8で実装済みのハンドラーを登録
-                RegisterPhase8Handlers();
                 
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
@@ -91,38 +82,8 @@ namespace MCP.Editor.Base
         /// </summary>
         private static void RegisterPhase5Handlers()
         {
-            // Prefab Handler
-            CommandHandlerFactory.Register("prefabManage", new PrefabCommandHandler());
-            
             // ScriptableObject Handler
             CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
-        }
-        
-        /// <summary>
-        /// Phase 6で実装されたハンドラーを登録します。
-        /// </summary>
-        private static void RegisterPhase6Handlers()
-        {
-            // Template Handler (consolidated 6 template-related tools)
-            var templateHandler = new TemplateCommandHandler();
-            CommandHandlerFactory.Register("sceneQuickSetup", templateHandler);
-            CommandHandlerFactory.Register("gameObjectCreateFromTemplate", templateHandler);
-            CommandHandlerFactory.Register("designPatternGenerate", templateHandler);
-            CommandHandlerFactory.Register("scriptTemplateGenerate", templateHandler);
-            CommandHandlerFactory.Register("templateManage", templateHandler);
-            CommandHandlerFactory.Register("menuHierarchyCreate", templateHandler);
-        }
-        
-        /// <summary>
-        /// Phase 6bで実装されたハンドラーを登録します（UGUI関連）。
-        /// </summary>
-        private static void RegisterPhase6BHandlers()
-        {
-            // UGUI Handlers
-            CommandHandlerFactory.Register("uguiManage", new UguiManageCommandHandler());
-            CommandHandlerFactory.Register("uguiCreateFromTemplate", new UguiCreateFromTemplateHandler());
-            CommandHandlerFactory.Register("uguiLayoutManage", new UguiLayoutManageHandler());
-            CommandHandlerFactory.Register("uguiDetectOverlaps", new UguiDetectOverlapsHandler());
         }
         
         /// <summary>
@@ -130,37 +91,8 @@ namespace MCP.Editor.Base
         /// </summary>
         private static void RegisterPhase7Handlers()
         {
-            // Tag/Layer Management Handler
-            CommandHandlerFactory.Register("tagLayerManage", new Handlers.Settings.TagLayerManageHandler());
-            
             // Project Settings Handler
             CommandHandlerFactory.Register("projectSettingsManage", new Handlers.Settings.ProjectSettingsManageHandler());
-            
-            // Render Pipeline Handler
-            CommandHandlerFactory.Register("renderPipelineManage", new Handlers.Settings.RenderPipelineManageHandler());
-            
-            // Constant Convert Handler
-            CommandHandlerFactory.Register("constantConvert", new Handlers.Settings.ConstantConvertHandler());
-            
-            // Compilation Await Handler
-            CommandHandlerFactory.Register("compilationAwait", new CompilationAwaitHandler());
-        }
-        
-        /// <summary>
-        /// Phase 8で実装されたハンドラーを登録します（Vector & Sprite関連）。
-        /// </summary>
-        private static void RegisterPhase8Handlers()
-        {
-            // Vector to Sprite Conversion Handler
-            CommandHandlerFactory.Register("vectorSpriteConvert", new VectorSpriteConvertHandler());
-        }
-        
-        /// <summary>
-        /// 残りのハンドラーを登録します（Phase 9以降で実装予定）。
-        /// </summary>
-        private static void RegisterRemainingHandlers()
-        {
-            // TODO: Phase 9以降で実装
         }
     }
 }

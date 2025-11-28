@@ -19,6 +19,7 @@
 - **New Features**:
   - `listCommonEnums` operation: Lists commonly used Unity enum types by category (Input, Rendering, Physics, UI, Audio, Animation, Scripting)
   - Enhanced error messages with helpful debugging information
+  - **Streamlined Toolset**: Removed experimental high-level/GameKit tools—SkillForUnity now focuses exclusively on low-level CRUD operations for scenes, GameObjects, components, assets, ScriptableObjects, and project settings
 
 - **Documentation**: Comprehensive technical docs and test reports for all improvements
 
@@ -142,180 +143,20 @@ AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity 
 
 ## ✨ Features
 
-### High-Level Tools (Recommended)
-
-- **Quick Scene Setup** - Instant 3D/2D/UI/VR scene configuration
-- **GameObject Templates** - Create primitives, lights, player, enemy with one command
-- **UI Templates** - Complete UI elements (Button, Panel, ScrollView, etc.)
-- **Vector Sprite Generation** - Create sprites from primitive shapes, SVG files, or solid colors for prototyping
-- **Hierarchy Builder** - Build complex nested structures declaratively
-- **Design Patterns** - Generate Singleton, ObjectPool, StateMachine, Observer, Command, Factory, ServiceLocator
-- **Layout Management** - Configure UI layouts (Vertical, Horizontal, Grid)
-
-### Core Tools (Low-Level)
+### Core Tools
 
 - **Scene Management** - Create, load, save, delete, inspect scenes
 - **GameObject CRUD** - Full hierarchy manipulation with batch operations
 - **Component CRUD** - Add, update, remove components with batch support
 - **Asset Operations** - Rename, duplicate, delete, inspect, update importer settings
 - **ScriptableObject Management** - Create, inspect, update, delete, duplicate, find ScriptableObject assets
-- **Script Template Generation** - Generate MonoBehaviour and ScriptableObject templates with proper structure
-- **Prefab Workflow** - Create, instantiate, update, apply/revert overrides
-
-### Advanced Features
-
-- **Project Settings** - Configure player, quality, time, physics, audio, editor settings
-- **Render Pipeline** - Manage Built-in/URP/HDRP pipeline settings
-- **Tags & Layers** - Manage project tags and layers
-- **Constants** - Convert between Unity constants and numeric values
-- **Automatic Compilation** - Detects and waits for Unity compilation
-
-## 📝 Script Template Generation
-
-SkillForUnity provides a **script template generation** system for quickly creating MonoBehaviour and ScriptableObject scripts with proper Unity structure.
-
-### Key Features
-
-- **MonoBehaviour Templates** - Includes standard lifecycle methods (Awake, Start, Update, OnDestroy)
-- **ScriptableObject Templates** - Data container classes with CreateAssetMenu attribute
-- **Namespace Support** - Optional C# namespace wrapping
-- **Fast Development** - Quickly scaffold scripts with proper structure
-
-### Example: Generate MonoBehaviour Script
-
-```python
-unity_script_template_generate({
-    "templateType": "MonoBehaviour",
-    "className": "PlayerController",
-    "scriptPath": "Assets/Scripts/PlayerController.cs",
-    "namespace": "MyGame.Player"
-})
-```
-
-### Example: Generate ScriptableObject Script
-
-```python
-unity_script_template_generate({
-    "templateType": "ScriptableObject",
-    "className": "GameConfig",
-    "scriptPath": "Assets/ScriptableObjects/GameConfig.cs"
-})
-```
-
-After generating the template, use `unity_asset_crud` with `update` operation to modify the script content:
-
-```python
-unity_asset_crud({
-    "operation": "update",
-    "assetPath": "Assets/Scripts/PlayerController.cs",
-    "content": "using UnityEngine;\n\nnamespace MyGame.Player\n{\n    public class PlayerController : MonoBehaviour\n    {\n        public float speed = 5f;\n        \n        void Update()\n        {\n            // Movement code\n        }\n    }\n}"
-})
-```
-
-## 🎮 Example: Create a 3D Game Scene
-
-```python
-# Set up a 3D scene
-unity_scene_quickSetup({"setupType": "3D"})
-
-# Create ground
-unity_gameobject_createFromTemplate({
-    "template": "Plane",
-    "name": "Ground",
-    "scale": {"x": 10, "y": 1, "z": 10}
-})
-
-# Create player
-unity_gameobject_createFromTemplate({
-    "template": "Player",
-    "name": "Player",
-    "position": {"x": 0, "y": 1, "z": 0}
-})
-
-# Add obstacles
-unity_gameobject_createFromTemplate({
-    "template": "Cube",
-    "name": "Wall1",
-    "position": {"x": 5, "y": 0.5, "z": 0}
-})
-
-unity_gameobject_createFromTemplate({
-    "template": "Cube",
-    "name": "Wall2",
-    "position": {"x": -5, "y": 0.5, "z": 0}
-})
-```
-
-See [SkillForUnity/examples/](SkillForUnity/examples/) for more tutorials.
-
-## 🎨 Example: Vector Sprite Generation for Prototyping
-
-```python
-# Generate a red circle sprite
-unity_vectorSprite_convert({
-    "operation": "primitiveToSprite",
-    "primitiveType": "circle",
-    "width": 256,
-    "height": 256,
-    "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0},
-    "outputPath": "Assets/Sprites/RedCircle.png"
-})
-
-# Generate a blue triangle
-unity_vectorSprite_convert({
-    "operation": "primitiveToSprite",
-    "primitiveType": "triangle",
-    "width": 256,
-    "height": 256,
-    "color": "#0000FF",
-    "outputPath": "Assets/Sprites/BlueTriangle.png"
-})
-
-# Create a solid color sprite for UI placeholder
-unity_vectorSprite_convert({
-    "operation": "createColorSprite",
-    "width": 64,
-    "height": 64,
-    "color": {"r": 0.5, "g": 0.5, "b": 0.5, "a": 1.0},
-    "outputPath": "Assets/UI/Placeholder.png"
-})
-```
+- **Project Settings** - Configure player, quality, time, physics, audio, and editor settings
+- **Tags & Layers** - Add or remove tags and layers via the project settings tool
 
 ## 📦 ScriptableObject Management Example
 
 ```python
-# Step 1: Generate ScriptableObject script template
-unity_script_template_generate({
-    "templateType": "ScriptableObject",
-    "className": "GameConfig",
-    "scriptPath": "Assets/Scripts/Data/GameConfig.cs",
-    "namespace": "MyGame.Data"
-})
-
-# Step 2: Update script content
-unity_asset_crud({
-    "operation": "update",
-    "assetPath": "Assets/Scripts/Data/GameConfig.cs",
-    "content": """using UnityEngine;
-
-namespace MyGame.Data
-{
-    [CreateAssetMenu(fileName = "GameConfig", menuName = "MyGame/Game Config")]
-    public class GameConfig : ScriptableObject
-    {
-        public string gameName = "My Awesome Game";
-        public int maxPlayers = 4;
-        public float gameSpeed = 1.0f;
-        public bool enableDebugMode = false;
-    }
-}
-"""
-})
-
-# Step 3: Wait for compilation
-unity_await_compilation({"timeoutSeconds": 60})
-
-# Step 4: Create ScriptableObject asset
+# Create a ScriptableObject asset
 unity_scriptableobject_manage({
     "operation": "create",
     "typeName": "MyGame.Data.GameConfig",
@@ -328,14 +169,14 @@ unity_scriptableobject_manage({
     }
 })
 
-# Step 5: Inspect ScriptableObject
+# Inspect properties
 config_info = unity_scriptableobject_manage({
     "operation": "inspect",
     "assetPath": "Assets/Data/DefaultConfig.asset",
     "includeProperties": True
 })
 
-# Step 6: Update properties
+# Update selected values
 unity_scriptableobject_manage({
     "operation": "update",
     "assetPath": "Assets/Data/DefaultConfig.asset",
@@ -345,19 +186,19 @@ unity_scriptableobject_manage({
     }
 })
 
-# Step 7: Duplicate ScriptableObject
+# Duplicate for experimentation
 unity_scriptableobject_manage({
     "operation": "duplicate",
     "sourceAssetPath": "Assets/Data/DefaultConfig.asset",
     "destinationAssetPath": "Assets/Data/HighSpeedConfig.asset"
 })
 
-# Step 8: Find all GameConfig ScriptableObjects
+# List all configs in a folder
 all_configs = unity_scriptableobject_manage({
     "operation": "findByType",
     "typeName": "MyGame.Data.GameConfig",
     "searchPath": "Assets/Data",
-    "includeProperties": True
+    "includeProperties": False
 })
 ```
 
