@@ -1,5 +1,5 @@
 name: SkillForUnity
-version: 1.7.1
+version: 1.8.0
 description: "Comprehensive Unity Editor integration through Model Context Protocol"
 author: "SkillForUnity Team"
 license: MIT
@@ -38,21 +38,18 @@ prerequisites:
 
 # Skill capabilities
 capabilities:
-  tools: 31+
+  tools: 21
   categories:
     - scene_management        # Create, load, save, delete, inspect scenes
     - gameobject_operations   # Create, move, rename, delete GameObjects with batch support
     - component_editing       # Add, update, remove components with batch support
-    - ui_creation            # Create UI elements with templates and layouts
     - asset_management       # Asset operations and importer settings
     - scriptableobject_crud  # Create, inspect, update, delete, duplicate, find ScriptableObject assets
-    - script_management      # C# script template generation and asset operations
-    - design_patterns        # Generate design pattern implementations (Singleton, ObjectPool, StateMachine, Observer, Command, Factory, ServiceLocator)
-    - prefab_workflow        # Prefab creation, instantiation, and override management
+    - prefab_management      # Create, update, inspect, instantiate, unpack prefabs
+    - sprite_conversion      # Generate sprites from primitives, SVG, textures, and solid colors
     - project_settings       # Configure Unity project settings
-    - render_pipeline        # Manage render pipeline settings
-    - tags_layers           # Manage tags and layers
-    - constants             # Convert Unity constants and values
+    - batch_operations       # Mid-level batch utilities for Transform, RectTransform, Physics, Camera, UI, Audio, and Input
+    - gamekit_systems        # High-level GameKit tools for actors, managers, interactions, UI commands, and scene flow
 
 # MCP configuration
 mcp:
@@ -71,15 +68,7 @@ mcp:
 # Quick examples
 examples:
   - path: examples/01-basic-scene-setup.md
-    description: "Set up a 3D game scene with player and obstacles"
-  - path: examples/02-ui-creation.md
-    description: "Create a complete UI menu system"
-  - path: examples/03-game-level.md
-    description: "Build a game level with terrain and enemies"
-  - path: examples/04-prefab-workflow.md
-    description: "Create and manage prefabs"
-  - path: examples/05-design-patterns.md
-    description: "Generate design patterns (Singleton, ObjectPool, StateMachine, etc.)"
+    description: "Scene, GameObject, and component CRUD walkthrough"
 
 # Documentation structure
 documentation:

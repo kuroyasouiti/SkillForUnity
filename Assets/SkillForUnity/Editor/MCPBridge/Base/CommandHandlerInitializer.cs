@@ -38,17 +38,14 @@ namespace MCP.Editor.Base
                 // Phase 5で実装済みのハンドラーを登録
                 RegisterPhase5Handlers();
                 
-                // Phase 6で実装済みのハンドラーを登録
-                RegisterPhase6Handlers();
-                
-                // Phase 6bで実装済みのハンドラーを登録
-                RegisterPhase6BHandlers();
-                
                 // Phase 7で実装済みのハンドラーを登録
                 RegisterPhase7Handlers();
-                
-                // Phase 8で実装済みのハンドラーを登録
-                RegisterPhase8Handlers();
+
+                // ミドルレベルツールのハンドラーを登録
+                RegisterMidLevelHandlers();
+
+                // ハイレベルGameKitツールのハンドラーを登録
+                RegisterGameKitHandlers();
                 
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
@@ -91,38 +88,14 @@ namespace MCP.Editor.Base
         /// </summary>
         private static void RegisterPhase5Handlers()
         {
+            // ScriptableObject Handler
+            CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
+            
             // Prefab Handler
             CommandHandlerFactory.Register("prefabManage", new PrefabCommandHandler());
             
-            // ScriptableObject Handler
-            CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
-        }
-        
-        /// <summary>
-        /// Phase 6で実装されたハンドラーを登録します。
-        /// </summary>
-        private static void RegisterPhase6Handlers()
-        {
-            // Template Handler (consolidated 6 template-related tools)
-            var templateHandler = new TemplateCommandHandler();
-            CommandHandlerFactory.Register("sceneQuickSetup", templateHandler);
-            CommandHandlerFactory.Register("gameObjectCreateFromTemplate", templateHandler);
-            CommandHandlerFactory.Register("designPatternGenerate", templateHandler);
-            CommandHandlerFactory.Register("scriptTemplateGenerate", templateHandler);
-            CommandHandlerFactory.Register("templateManage", templateHandler);
-            CommandHandlerFactory.Register("menuHierarchyCreate", templateHandler);
-        }
-        
-        /// <summary>
-        /// Phase 6bで実装されたハンドラーを登録します（UGUI関連）。
-        /// </summary>
-        private static void RegisterPhase6BHandlers()
-        {
-            // UGUI Handlers
-            CommandHandlerFactory.Register("uguiManage", new UguiManageCommandHandler());
-            CommandHandlerFactory.Register("uguiCreateFromTemplate", new UguiCreateFromTemplateHandler());
-            CommandHandlerFactory.Register("uguiLayoutManage", new UguiLayoutManageHandler());
-            CommandHandlerFactory.Register("uguiDetectOverlaps", new UguiDetectOverlapsHandler());
+            // Vector Sprite Converter
+            CommandHandlerFactory.Register("vectorSpriteConvert", new VectorSpriteConvertHandler());
         }
         
         /// <summary>
@@ -130,37 +103,34 @@ namespace MCP.Editor.Base
         /// </summary>
         private static void RegisterPhase7Handlers()
         {
-            // Tag/Layer Management Handler
-            CommandHandlerFactory.Register("tagLayerManage", new Handlers.Settings.TagLayerManageHandler());
-            
             // Project Settings Handler
             CommandHandlerFactory.Register("projectSettingsManage", new Handlers.Settings.ProjectSettingsManageHandler());
-            
-            // Render Pipeline Handler
-            CommandHandlerFactory.Register("renderPipelineManage", new Handlers.Settings.RenderPipelineManageHandler());
-            
-            // Constant Convert Handler
-            CommandHandlerFactory.Register("constantConvert", new Handlers.Settings.ConstantConvertHandler());
-            
-            // Compilation Await Handler
-            CommandHandlerFactory.Register("compilationAwait", new CompilationAwaitHandler());
         }
-        
+
         /// <summary>
-        /// Phase 8で実装されたハンドラーを登録します（Vector & Sprite関連）。
+        /// ミドルレベルツールのハンドラーを登録します。
         /// </summary>
-        private static void RegisterPhase8Handlers()
+        private static void RegisterMidLevelHandlers()
         {
-            // Vector to Sprite Conversion Handler
-            CommandHandlerFactory.Register("vectorSpriteConvert", new VectorSpriteConvertHandler());
+            CommandHandlerFactory.Register("transformBatch", new TransformBatchHandler());
+            CommandHandlerFactory.Register("rectTransformBatch", new RectTransformBatchHandler());
+            CommandHandlerFactory.Register("physicsBundle", new PhysicsBundleHandler());
+            CommandHandlerFactory.Register("cameraRig", new CameraRigHandler());
+            CommandHandlerFactory.Register("uiFoundation", new UIFoundationHandler());
+            CommandHandlerFactory.Register("audioSourceBundle", new AudioSourceBundleHandler());
+            CommandHandlerFactory.Register("inputProfile", new InputProfileHandler());
         }
-        
+
         /// <summary>
-        /// 残りのハンドラーを登録します（Phase 9以降で実装予定）。
+        /// ハイレベルGameKitツールのハンドラーを登録します。
         /// </summary>
-        private static void RegisterRemainingHandlers()
+        private static void RegisterGameKitHandlers()
         {
-            // TODO: Phase 9以降で実装
+            CommandHandlerFactory.Register("gamekitActor", new Handlers.GameKit.GameKitActorHandler());
+            CommandHandlerFactory.Register("gamekitManager", new Handlers.GameKit.GameKitManagerHandler());
+            CommandHandlerFactory.Register("gamekitInteraction", new Handlers.GameKit.GameKitInteractionHandler());
+            CommandHandlerFactory.Register("gamekitUICommand", new Handlers.GameKit.GameKitUICommandHandler());
+            CommandHandlerFactory.Register("gamekitSceneFlow", new Handlers.GameKit.GameKitSceneFlowHandler());
         }
     }
 }

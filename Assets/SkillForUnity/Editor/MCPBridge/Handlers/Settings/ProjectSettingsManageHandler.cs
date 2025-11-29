@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MCP.Editor.Base;
 using UnityEditor;
 using UnityEngine;
+using UnityEditorInternal;
 
 namespace MCP.Editor.Handlers.Settings
 {
@@ -79,6 +80,9 @@ namespace MCP.Editor.Handlers.Settings
                 case "editor":
                     result["settings"] = ReadEditorSettings(property);
                     break;
+                case "tagslayers":
+                    result["settings"] = ReadTagsAndLayers(property);
+                    break;
                 default:
                     throw new InvalidOperationException($"Unknown settings category: {category}");
             }
@@ -124,6 +128,9 @@ namespace MCP.Editor.Handlers.Settings
                     break;
                 case "editor":
                     WriteEditorSettings(property, value);
+                    break;
+                case "tagslayers":
+                    WriteTagsAndLayers(property, value);
                     break;
                 default:
                     throw new InvalidOperationException($"Unknown settings category: {category}");
@@ -196,6 +203,15 @@ namespace MCP.Editor.Handlers.Settings
                     "serializationMode", "spritePackerMode", "etcTextureCompressorBehavior",
                     "lineEndingsForNewScripts", "defaultBehaviorMode", "prefabRegularEnvironment",
                 },
+                "tagslayers" => new List<string>
+                {
+                    "tags",
+                    "layers",
+                    "addTag",
+                    "removeTag",
+                    "addLayer",
+                    "removeLayer",
+                },
                 _ => throw new InvalidOperationException($"Unknown settings category: {category}"),
             };
             
@@ -206,6 +222,172 @@ namespace MCP.Editor.Handlers.Settings
             };
         }
         
+        #endregion
+
+        #region Tags & Layers
+
+        private object ReadTagsAndLayers(string property)
+        {
+            var tags = InternalEditorUtility.tags;
+            var layers = InternalEditorUtility.layers;
+
+            if (string.IsNullOrEmpty(property))
+            {
+                return new Dictionary<string, object>
+                {
+                    ["tags"] = tags,
+                    ["layers"] = layers,
+                };
+            }
+
+            return property.ToLower() switch
+            {
+                "tags" => tags,
+                "layers" => layers,
+                _ => throw new InvalidOperationException($"Unknown tagsLayers property: {property}"),
+            };
+        }
+
+        private void WriteTagsAndLayers(string property, object value)
+        {
+            var stringValue = value?.ToString();
+            if (string.IsNullOrWhiteSpace(stringValue))
+            {
+                throw new InvalidOperationException("A non-empty string value is required for tag/layer operations.");
+            }
+
+            switch (property.ToLower())
+            {
+                case "addtag":
+                    AddTag(stringValue);
+                    break;
+                case "removetag":
+                    RemoveTag(stringValue);
+                    break;
+                case "addlayer":
+                    AddLayer(stringValue);
+                    break;
+                case "removelayer":
+                    RemoveLayer(stringValue);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unsupported tagsLayers property: {property}");
+            }
+        }
+
+        private void AddTag(string tag)
+        {
+            if (Array.Exists(InternalEditorUtility.tags, existing => existing == tag))
+            {
+                throw new InvalidOperationException($"Tag '{tag}' already exists.");
+            }
+
+            var tagManager = GetTagManagerSerializedObject();
+            var tagsProp = tagManager.FindProperty("tags");
+            tagsProp.arraySize++;
+            tagsProp.GetArrayElementAtIndex(tagsProp.arraySize - 1).stringValue = tag;
+            tagManager.ApplyModifiedProperties();
+            AssetDatabase.SaveAssets();
+        }
+
+        private void RemoveTag(string tag)
+        {
+            var tagManager = GetTagManagerSerializedObject();
+            var tagsProp = tagManager.FindProperty("tags");
+            for (int i = 0; i < tagsProp.arraySize; i++)
+            {
+                if (tagsProp.GetArrayElementAtIndex(i).stringValue == tag)
+                {
+                    tagsProp.DeleteArrayElementAtIndex(i);
+                    tagManager.ApplyModifiedProperties();
+                    AssetDatabase.SaveAssets();
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException($"Tag '{tag}' does not exist.");
+        }
+
+        private void AddLayer(string layerName)
+        {
+            foreach (var layer in InternalEditorUtility.layers)
+            {
+                if (layer == layerName)
+                {
+                    throw new InvalidOperationException($"Layer '{layerName}' already exists.");
+                }
+            }
+
+            var tagManager = GetTagManagerSerializedObject();
+            var layersProp = tagManager.FindProperty("layers");
+            for (int i = 8; i < layersProp.arraySize; i++)
+            {
+                var sp = layersProp.GetArrayElementAtIndex(i);
+                if (string.IsNullOrEmpty(sp.stringValue))
+                {
+                    sp.stringValue = layerName;
+                    tagManager.ApplyModifiedProperties();
+                    AssetDatabase.SaveAssets();
+                    return;
+                }
+            }
+
+            throw new InvalidOperationException("Maximum number of layers reached. Remove an existing layer before adding a new one.");
+        }
+
+        private void RemoveLayer(string layerNameOrIndex)
+        {
+            var tagManager = GetTagManagerSerializedObject();
+            var layersProp = tagManager.FindProperty("layers");
+
+            bool FoundByName()
+            {
+                for (int i = 8; i < layersProp.arraySize; i++)
+                {
+                    var sp = layersProp.GetArrayElementAtIndex(i);
+                    if (sp.stringValue == layerNameOrIndex)
+                    {
+                        sp.stringValue = string.Empty;
+                        tagManager.ApplyModifiedProperties();
+                        AssetDatabase.SaveAssets();
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            if (FoundByName())
+            {
+                return;
+            }
+
+            if (int.TryParse(layerNameOrIndex, out var index))
+            {
+                if (index < 8 || index >= layersProp.arraySize)
+                {
+                    throw new InvalidOperationException("Layer index must be between 8 and 31 (user layers).");
+                }
+
+                layersProp.GetArrayElementAtIndex(index).stringValue = string.Empty;
+                tagManager.ApplyModifiedProperties();
+                AssetDatabase.SaveAssets();
+                return;
+            }
+
+            throw new InvalidOperationException($"Layer '{layerNameOrIndex}' does not exist.");
+        }
+
+        private SerializedObject GetTagManagerSerializedObject()
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            if (assets == null || assets.Length == 0)
+            {
+                throw new InvalidOperationException("Unable to load TagManager asset.");
+            }
+
+            return new SerializedObject(assets[0]);
+        }
+
         #endregion
         
         #region PlayerSettings Read/Write
