@@ -25,11 +25,10 @@ sysinfo.txt
 # ================================================================
 # Unity Assets (Selective Include)
 # ================================================================
-# Keep only MCPBridge code in Assets
+# Keep only UnityAIForge package in Assets
 Assets/*
-!Assets/SkillForUnity
-!Assets/SkillForUnity/Editor/MCPBridge/
-!Assets/SkillForUnity/Editor/MCPBridge.meta
+!Assets/UnityAIForge
+!Assets/UnityAIForge/**
 
 # ================================================================
 # Build Outputs
@@ -89,14 +88,14 @@ ExportedObj/
 
 
 # ================================================================
-# MCP Server (now in Assets/SkillForUnity/MCPServer)
+# MCP Server (now in Assets/UnityAIForge/MCPServer)
 # ================================================================
-Assets/SkillForUnity/MCPServer/__pycache__/
-Assets/SkillForUnity/MCPServer/**/__pycache__/
-Assets/SkillForUnity/MCPServer/.venv/
-Assets/SkillForUnity/MCPServer/**/*.pyc
-Assets/SkillForUnity/MCPServer/.pytest_cache/
-Assets/SkillForUnity/MCPServer/.DS_Store
+Assets/UnityAIForge/MCPServer/__pycache__/
+Assets/UnityAIForge/MCPServer/**/__pycache__/
+Assets/UnityAIForge/MCPServer/.venv/
+Assets/UnityAIForge/MCPServer/**/*.pyc
+Assets/UnityAIForge/MCPServer/.pytest_cache/
+Assets/UnityAIForge/MCPServer/.DS_Store
 
 # ================================================================
 # Test Results

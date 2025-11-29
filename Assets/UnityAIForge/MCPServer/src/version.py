@@ -1,0 +1,2 @@
+SERVER_NAME = "Unity-AI-Forge"
+SERVER_VERSION = "2.0.0"
