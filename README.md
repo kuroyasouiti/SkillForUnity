@@ -5,23 +5,48 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-1.7.1-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
+[![Version](https://img.shields.io/badge/Version-1.8.0-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🆕 What's New in v1.7.1
+## 🆕 What's New in v1.8.0
 
-- **Critical Bug Fixes**: Template tools, constant conversion, and SerializedField support
-  - Fixed template tools (scene quick setup, GameObject templates, UI templates, design patterns, script templates) to work correctly
-  - Fixed enum type resolution in constant conversion (now supports Unity 2024.2+ module system)
-  - Added support for `[SerializeField]` private fields in Component and ScriptableObject operations
-  - 99%+ performance improvement in type resolution through caching
+- **New Tools**: Prefab and Vector Sprite management
+  - `unity_prefab_crud`: Create, update, inspect, instantiate, unpack prefabs, apply/revert overrides
+  - `unity_vector_sprite_convert`: Generate sprites from primitives (square, circle, triangle, polygon), import SVG, convert textures, create solid color sprites
 
-- **New Features**:
-  - `listCommonEnums` operation: Lists commonly used Unity enum types by category (Input, Rendering, Physics, UI, Audio, Animation, Scripting)
-  - Enhanced error messages with helpful debugging information
-  - **Streamlined Toolset**: Removed experimental high-level/GameKit tools—SkillForUnity now focuses exclusively on low-level CRUD operations for scenes, GameObjects, components, assets, ScriptableObjects, and project settings
+- **GameKit Framework**: High-level game development tools
+  - `unity_gamekit_actor`: Create game actors with behavior profiles (2D/3D movement), control modes (direct/AI/UI command), stats, abilities
+  - `unity_gamekit_manager`: Game managers (turn-based, realtime, resource pool) with Machinations framework support
+  - `unity_gamekit_interaction`: Interaction triggers with declarative actions and conditions
+  - `unity_gamekit_ui_command`: Command panels for UI-driven actor control
+  - `unity_gamekit_sceneflow`: Scene state machine with additive loading and shared scene groups
 
-- **Documentation**: Comprehensive technical docs and test reports for all improvements
+- **Mid-Level Tools**: Batch operations and presets
+  - Transform/RectTransform batch operations (arrange, align, distribute)
+  - Physics bundles (2D/3D presets: dynamic, kinematic, character, platformer, vehicle)
+  - Camera rigs (follow, orbit, split-screen, fixed, dolly)
+  - UI foundation (Canvas, Panel, Button, Text, Image, InputField)
+  - Audio source bundles (music, sfx, ambient, voice, ui presets)
+  - Input profiles (New Input System integration)
+
+- **Compilation Wait Feature**: Automatic compilation handling
+  - Operations execute first, then wait for compilation if triggered
+  - Bridge reconnection detection for early wait release
+  - Transparent wait information in responses
+
+- **Comprehensive Test Suite**: 100+ unit tests
+  - Unity Test Framework integration
+  - 97.7% pass rate across all tool categories
+  - CI/CD with GitHub Actions
+  - Editor menu integration (`Tools > SkillForUnity > Run All Tests`)
+
+- **Documentation**: Complete overhaul
+  - Test suite documentation and results
+  - Tooling roadmap (Japanese)
+  - Compilation wait feature guide
+  - Legacy cleanup summary
+  - [Full Release Notes](docs/Release_Notes_v1.8.0.md)
+  - [Changelog](CHANGELOG.md)
 
 ## 📦 Skill Package Structure
 
@@ -123,6 +148,7 @@ The AI should call `unity_ping()` and show Unity version information.
 - **[Claude Skill docs](SkillForUnity/docs/)** - API reference and guides
 - **[CLAUDE.md](CLAUDE.md)** - Instructions for Claude Code integration
 - **[Best Practices guide](SkillForUnity/docs/guides/best-practices.md)** - Repository guidelines and tips
+- **[Test Suite](Assets/SkillForUnity/Tests/Editor/README.md)** - Comprehensive test suite for all tools
 
 ## 🏗️ Architecture
 
@@ -141,6 +167,22 @@ AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity 
 | **Examples** | `SkillForUnity/examples/` | Practical tutorials and guides |
 | **Documentation** | `SkillForUnity/docs/` | API reference and best practices |
 
+## 🧪 Testing
+
+Comprehensive test suite powered by Unity Test Framework:
+
+- **100+ unit tests** covering all tool categories
+- **Automated CI/CD** with GitHub Actions
+- **Editor menu integration** for quick test execution
+- **Command-line test runners** for batch testing
+
+Run tests via:
+- Unity Editor: `Tools > SkillForUnity > Run All Tests`
+- PowerShell: `.\run-tests.ps1`
+- Bash: `./run-tests.sh`
+
+See [Test Suite Documentation](Assets/SkillForUnity/Tests/Editor/README.md) for details.
+
 ## ✨ Features
 
 ### Core Tools
@@ -150,8 +192,28 @@ AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity 
 - **Component CRUD** - Add, update, remove components with batch support
 - **Asset Operations** - Rename, duplicate, delete, inspect, update importer settings
 - **ScriptableObject Management** - Create, inspect, update, delete, duplicate, find ScriptableObject assets
+- **Prefab Management** (`unity_prefab_crud`) - Create prefabs from GameObjects, update, inspect, instantiate in scene, unpack, apply/revert overrides
+- **Vector Sprite Conversion** (`unity_vector_sprite_convert`) - Generate sprites from primitives (square, circle, triangle, polygon), import SVG, convert textures, create solid color sprites
 - **Project Settings** - Configure player, quality, time, physics, audio, and editor settings
 - **Tags & Layers** - Add or remove tags and layers via the project settings tool
+
+### Mid-Level Batch Tools
+
+- **Transform Batch** (`unity_transform_batch`) - Arrange objects in circles/lines, sequential/list-based renaming, auto-generate menu hierarchies
+- **RectTransform Batch** (`unity_rectTransform_batch`) - Set anchors/pivot/size/position, align to parent presets, distribute horizontally/vertically, match size from source
+- **Physics Bundle** (`unity_physics_bundle`) - Apply 2D/3D Rigidbody + Collider presets (dynamic, kinematic, static, character, platformer, topDown, vehicle, projectile), update individual physics properties, inspect physics components
+- **Camera Rig** (`unity_camera_rig`) - Create camera rigs (follow, orbit, split-screen, fixed, dolly) with target tracking, smooth movement, and viewport configuration
+- **UI Foundation** (`unity_ui_foundation`) - Create UI elements (Canvas, Panel, Button, Text, Image, InputField) with anchor presets, TextMeshPro support, and automatic layout
+- **Audio Source Bundle** (`unity_audio_source_bundle`) - Create and configure AudioSource with presets (music, sfx, ambient, voice, ui), 2D/3D spatial audio, and mixer group integration
+- **Input Profile** (`unity_input_profile`) - Create PlayerInput with New Input System, configure action maps, set notification behaviors, and create InputActions assets
+
+### High-Level GameKit Tools
+
+- **GameKit Actor** (`unity_gamekit_actor`) - Create game actors with behavior profiles (2D/3D movement types), control modes (direct/AI/UI command), stats, abilities, and equipment loadouts
+- **GameKit Manager** (`unity_gamekit_manager`) - Create game managers (turn-based, realtime, resource pool, event hub, state manager) with persistence, turn phases, and resource management
+- **GameKit Interaction** (`unity_gamekit_interaction`) - Create interaction triggers (collision, raycast, proximity, input) with declarative actions (spawn, destroy, sound, message, scene change) and conditions
+- **GameKit UI Command** (`unity_gamekit_ui_command`) - Create command panels with buttons that send commands to actors with UI command control mode, supporting horizontal/vertical/grid layouts
+- **GameKit SceneFlow** (`unity_gamekit_sceneflow`) - Manage scene transitions with state machine, additive loading, persistent manager scene, shared scene groups (UI/Audio), and trigger-based transitions
 
 ## 📦 ScriptableObject Management Example
 

@@ -1,5 +1,5 @@
 name: SkillForUnity
-version: 1.7.1
+version: 1.8.0
 description: "Comprehensive Unity Editor integration through Model Context Protocol"
 author: "SkillForUnity Team"
 license: MIT
@@ -38,14 +38,18 @@ prerequisites:
 
 # Skill capabilities
 capabilities:
-  tools: 7
+  tools: 21
   categories:
     - scene_management        # Create, load, save, delete, inspect scenes
     - gameobject_operations   # Create, move, rename, delete GameObjects with batch support
     - component_editing       # Add, update, remove components with batch support
     - asset_management       # Asset operations and importer settings
     - scriptableobject_crud  # Create, inspect, update, delete, duplicate, find ScriptableObject assets
+    - prefab_management      # Create, update, inspect, instantiate, unpack prefabs
+    - sprite_conversion      # Generate sprites from primitives, SVG, textures, and solid colors
     - project_settings       # Configure Unity project settings
+    - batch_operations       # Mid-level batch utilities for Transform, RectTransform, Physics, Camera, UI, Audio, and Input
+    - gamekit_systems        # High-level GameKit tools for actors, managers, interactions, UI commands, and scene flow
 
 # MCP configuration
 mcp:

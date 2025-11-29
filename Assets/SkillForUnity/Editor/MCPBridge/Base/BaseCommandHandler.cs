@@ -97,15 +97,15 @@ namespace MCP.Editor.Base
                     );
                 }
                 
-                // 4. コンパイル待機（必要な場合）
+                // 4. 操作の実行
+                var result = ExecuteOperation(operation, payload);
+                
+                // 5. 操作後のコンパイル待機（必要な場合）
                 Dictionary<string, object> compilationWaitInfo = null;
                 if (RequiresCompilationWait(operation))
                 {
-                    compilationWaitInfo = WaitForCompilationIfNeeded(operation);
+                    compilationWaitInfo = WaitForCompilationAfterOperation(operation);
                 }
-                
-                // 5. 操作の実行
-                var result = ExecuteOperation(operation, payload);
                 
                 // 6. コンパイル待機情報の追加
                 if (compilationWaitInfo != null && result is Dictionary<string, object> resultDict)
@@ -189,14 +189,119 @@ namespace MCP.Editor.Base
         }
         
         /// <summary>
-        /// コンパイルが必要な場合に待機します。
+        /// 操作実行後にコンパイルが開始された場合に待機します。
+        /// ブリッジ再ロード時に待機を解除します。
         /// 派生クラスでオーバーライドして個別のロジックを実装できます。
         /// </summary>
-        protected virtual Dictionary<string, object> WaitForCompilationIfNeeded(string operation)
+        protected virtual Dictionary<string, object> WaitForCompilationAfterOperation(string operation)
         {
-            // 実装は McpCommandProcessor.Settings.cs の EnsureNoCompilationInProgress を使用
-            // この基底クラスでは null を返す（実装例として）
-            return null;
+            // 少し待ってコンパイルが開始されるかチェック
+            System.Threading.Thread.Sleep(100);
+            
+            // コンパイル中でない場合は待機不要
+            if (!UnityEditor.EditorApplication.isCompiling)
+            {
+                return null;
+            }
+            
+            Debug.Log($"[{Category}] Compilation started after '{operation}', waiting for completion...");
+            
+            var startTime = UnityEditor.EditorApplication.timeSinceStartup;
+            var timeout = 60f; // 60秒タイムアウト
+            var checkInterval = 0.2f; // 200msごとにチェック
+            var initialBridgeState = GetBridgeConnectionState();
+            
+            while ((UnityEditor.EditorApplication.timeSinceStartup - startTime) < timeout)
+            {
+                // ブリッジが再接続された場合は待機解除
+                var currentBridgeState = GetBridgeConnectionState();
+                if (currentBridgeState != initialBridgeState && currentBridgeState)
+                {
+                    var waitTime = UnityEditor.EditorApplication.timeSinceStartup - startTime;
+                    Debug.Log($"[{Category}] Bridge reconnected after {waitTime:F1}s, releasing wait");
+                    
+                    return new Dictionary<string, object>
+                    {
+                        ["waited"] = true,
+                        ["bridgeReconnected"] = true,
+                        ["waitTimeSeconds"] = (float)System.Math.Round(waitTime, 2),
+                        ["operation"] = operation,
+                        ["category"] = Category
+                    };
+                }
+                
+                // コンパイル完了チェック
+                if (!UnityEditor.EditorApplication.isCompiling)
+                {
+                    var waitTime = UnityEditor.EditorApplication.timeSinceStartup - startTime;
+                    Debug.Log($"[{Category}] Compilation completed after {waitTime:F1}s");
+                    
+                    return new Dictionary<string, object>
+                    {
+                        ["waited"] = true,
+                        ["compilationCompleted"] = true,
+                        ["waitTimeSeconds"] = (float)System.Math.Round(waitTime, 2),
+                        ["operation"] = operation,
+                        ["category"] = Category
+                    };
+                }
+                
+                System.Threading.Thread.Sleep((int)(checkInterval * 1000));
+            }
+            
+            // タイムアウト
+            Debug.LogWarning($"[{Category}] Compilation wait timed out after {timeout}s");
+            
+            return new Dictionary<string, object>
+            {
+                ["waited"] = true,
+                ["timedOut"] = true,
+                ["waitTimeSeconds"] = timeout,
+                ["operation"] = operation,
+                ["category"] = Category
+            };
+        }
+        
+        /// <summary>
+        /// ブリッジの接続状態を取得します。
+        /// </summary>
+        private bool GetBridgeConnectionState()
+        {
+            try
+            {
+                // McpBridgeService の接続状態を取得
+                var bridgeServiceType = System.Type.GetType("MCP.Editor.McpBridgeService, Assembly-CSharp-Editor");
+                if (bridgeServiceType == null)
+                {
+                    return false;
+                }
+                
+                var instanceProperty = bridgeServiceType.GetProperty("Instance", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                if (instanceProperty == null)
+                {
+                    return false;
+                }
+                
+                var instance = instanceProperty.GetValue(null);
+                if (instance == null)
+                {
+                    return false;
+                }
+                
+                var isConnectedProperty = bridgeServiceType.GetProperty("IsConnected", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                if (isConnectedProperty == null)
+                {
+                    return false;
+                }
+                
+                return (bool)isConnectedProperty.GetValue(instance);
+            }
+            catch
+            {
+                return false;
+            }
         }
         
         /// <summary>

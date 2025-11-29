@@ -99,6 +99,14 @@ Assets/SkillForUnity/MCPServer/.pytest_cache/
 Assets/SkillForUnity/MCPServer/.DS_Store
 
 # ================================================================
+# Test Results
+# ================================================================
+TestResults*.xml
+TestLog.txt
+test-results/
+CodeCoverage/
+
+# ================================================================
 # OS-specific
 # ================================================================
 .DS_Store

@@ -3,19 +3,50 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-1.6.0-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
+[![Version](https://img.shields.io/badge/Version-1.8.0-brightgreen)](https://github.com/kuroyasouiti/SkillForUnity/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-SkillForUnityは、AIアシスタントがUnity Editorとリアルタイムで対話できる包括的なModel Context Protocol (MCP) サーバーです。シーン管理、GameObject操作、コンポーネント編集、アセット操作、UIレイアウト、デザインパターン生成、階層メニュー作成、Prefab、スクリプト管理など、広範なツールを提供します。
+SkillForUnityは、AIアシスタントがUnity Editorとリアルタイムで対話できる包括的なModel Context Protocol (MCP) サーバーです。Low-Level CRUD操作、Mid-Levelバッチツール、High-Level GameKitフレームワークの3層構造で、シンプルなアセット操作から複雑なゲームシステム構築まで対応します。
 
-## 🆕 v1.6.0の新機能
+## 🆕 v1.8.0の新機能
 
-- **統合サーバーマネージャー**: Unity EditorからMCPサーバーを直接インストール・管理
-- **AIツール登録**: Cursor、Claude Desktop、Cline、WindsurfのJSON設定を直接編集
-- **インストールパスのカスタマイズ**: UIでサーバーインストール先を自由に設定可能
-- **Cursor自動検出**: 5つの候補パスからインテリジェントに設定ファイルを検出
-- **統一MCPアシスタント**: すべてのMCP管理を1つのウィンドウで（Tools > MCP Assistant）
-- **デフォルトパス簡略化**: `~/SkillForUnity`に変更（完全カスタマイズ可能）
+- **新ツール**: PrefabとVector Sprite管理
+  - `unity_prefab_crud`: Prefabの作成、更新、検査、インスタンス化、アンパック、オーバーライド管理
+  - `unity_vector_sprite_convert`: プリミティブ形状からスプライト生成、SVGインポート、テクスチャ変換、単色スプライト作成
+
+- **GameKitフレームワーク**: ハイレベルゲーム開発ツール
+  - `unity_gamekit_actor`: 振る舞いプロファイル（2D/3D移動）、制御モード（直接/AI/UIコマンド）、ステータス、アビリティを持つゲームアクター
+  - `unity_gamekit_manager`: ターン制/リアルタイム/リソースプールのゲームマネージャー、Machinationsフレームワーク対応
+  - `unity_gamekit_interaction`: トリガー型インタラクション、宣言的アクションと条件
+  - `unity_gamekit_ui_command`: アクターへのコマンド送信用UIパネル
+  - `unity_gamekit_sceneflow`: シーン遷移ステートマシン、加算ロード、共有シーングループ
+
+- **Mid-Levelツール**: バッチ操作とプリセット
+  - Transform/RectTransformバッチ操作（配置、整列、分配）
+  - 物理バンドル（2D/3D プリセット: dynamic, kinematic, character, platformer, vehicle）
+  - カメラリグ（follow, orbit, split-screen, fixed, dolly）
+  - UI基礎（Canvas, Panel, Button, Text, Image, InputField）
+  - オーディオソースバンドル（music, sfx, ambient, voice, ui プリセット）
+  - 入力プロファイル（New Input System統合）
+
+- **コンパイル待機機能**: 自動コンパイル処理
+  - 操作実行後、コンパイルが開始された場合に自動待機
+  - ブリッジ再接続検出により早期解除
+  - 透明な待機情報をレスポンスに含める
+
+- **包括的テストスイート**: 100+ユニットテスト
+  - Unity Test Framework統合
+  - 全ツールカテゴリで97.7%の成功率
+  - GitHub Actionsによる自動CI/CD
+  - エディタメニュー統合（`Tools > SkillForUnity > Run All Tests`）
+
+- **ドキュメント**: 完全刷新
+  - テストスイートドキュメントと結果
+  - ツーリングロードマップ（日本語）
+  - コンパイル待機機能ガイド
+  - レガシークリーンアップサマリー
+  - [完全なリリースノート](docs/Release_Notes_v1.8.0.md)
+  - [変更履歴](CHANGELOG.md)
 
 ## アーキテクチャ
 
@@ -144,448 +175,183 @@ unity_asset_crud({
 })
 ```
 
+## 🧪 テスト
+
+Unity Test Frameworkによる包括的なテストスイート：
+
+- **100+ユニットテスト** - 全ツールカテゴリをカバー
+- **自動CI/CD** - GitHub Actions統合
+- **エディタメニュー統合** - クイックテスト実行
+- **コマンドラインテストランナー** - バッチテスト対応
+
+テスト実行方法：
+- Unity Editor: `Tools > SkillForUnity > Run All Tests`
+- PowerShell: `.\run-tests.ps1`
+- Bash: `./run-tests.sh`
+
+詳細は[テストスイートドキュメント](Assets/SkillForUnity/Tests/Editor/README.md)を参照してください。
+
+## ✨ 機能
+
+### Low-Levelツール（CRUD操作）
+
+| ツール | 説明 | 主な操作 |
+|------|------|---------|
+| `unity_ping` | ブリッジ接続の確認 | Unityバージョン、プロジェクト名、タイムスタンプを返す |
+| `unity_scene_crud` | シーン管理 | create, load, save, delete, duplicate, inspect シーン、ビルド設定管理 |
+| `unity_gameobject_crud` | GameObjectヒエラルキー管理 | create, delete, move, rename, duplicate, inspect GameObject、バッチ操作 |
+| `unity_component_crud` | コンポーネント操作 | add, remove, update, inspect GameObjectのコンポーネント、バッチ操作 |
+| `unity_asset_crud` | アセットファイル操作 | create, update, rename, duplicate, delete, inspect Assets/ファイル、インポーター設定 |
+| `unity_scriptableObject_crud` | ScriptableObject管理 | create, inspect, update, delete, duplicate, list, findByType ScriptableObject |
+| `unity_prefab_crud` | Prefab管理 | create, update, inspect, instantiate, unpack, applyOverrides, revertOverrides |
+| `unity_vector_sprite_convert` | Vector/Sprite変換 | primitiveToSprite, svgToSprite, textureToSprite, createColorSprite |
+| `unity_projectSettings_crud` | プロジェクト設定管理 | read, write, list 設定（Player, Quality, Time, Physics, Audio, Editor）|
+
+### Mid-Levelツール（バッチ操作とプリセット）
+
+| ツール | 説明 | 主な操作 |
+|------|------|---------|
+| `unity_transform_batch` | Transformバッチ操作 | arrangeCircle, arrangeLine, renameSequential, renameFromList, createMenuList |
+| `unity_rectTransform_batch` | RectTransformバッチ操作 | setAnchors, setPivot, setSizeDelta, alignToParent, distribute, matchSize |
+| `unity_physics_bundle` | 物理バンドル | applyPreset2D/3D, updateRigidbody, updateCollider, inspect |
+| `unity_camera_rig` | カメラリグ | createRig, updateRig, inspect（follow, orbit, splitScreen, fixed, dolly） |
+| `unity_ui_foundation` | UI基礎 | createCanvas, createPanel, createButton, createText, createImage, createInputField |
+| `unity_audio_source_bundle` | オーディオソースバンドル | createAudioSource, updateAudioSource, inspect（music, sfx, ambient, voice, ui） |
+| `unity_input_profile` | 入力プロファイル | createPlayerInput, createInputActions, inspect（New Input System） |
+
+**Transform Batch (`unity_transform_batch`)**
+- 円形・直線配置でオブジェクトを整列
+- 連番リネーム、リストベースリネーム
+- メニュー階層の自動生成
+
+**RectTransform Batch (`unity_rectTransform_batch`)**
+- アンカー、ピボット、サイズ、位置の一括設定
+- 親への整列プリセット
+- 水平/垂直分配
+- サイズマッチング
+
+**Physics Bundle (`unity_physics_bundle`)**
+- 2D/3D Rigidbody + Colliderプリセット適用
+- プリセット: dynamic, kinematic, static, character, platformer, topDown, vehicle, projectile
+- 個別物理プロパティの更新
+
+**Camera Rig (`unity_camera_rig`)**
+- follow, orbit, split-screen, fixed, dolly カメラリグ作成
+- ターゲット追跡とスムーズ移動
+- ビューポート設定
+
+**UI Foundation (`unity_ui_foundation`)**
+- Canvas, Panel, Button, Text, Image, InputField作成
+- アンカープリセット
+- TextMeshPro対応
+- 自動レイアウト
+
+**Audio Source Bundle (`unity_audio_source_bundle`)**
+- music, sfx, ambient, voice, ui プリセット
+- 2D/3D空間オーディオ設定
+- ミキサーグループ統合
+
+**Input Profile (`unity_input_profile`)**
+- New Input System統合
+- アクションマップ設定
+- 通知動作: sendMessages, broadcastMessages, invokeUnityEvents, invokeCSharpEvents
+
+### High-Level GameKitツール（ゲームシステム構築）
+
+| ツール | 説明 | 主な操作 |
+|------|------|---------|
+| `unity_gamekit_actor` | ゲームアクター | create, update, inspect, delete（振る舞い、制御、ステータス、アビリティ） |
+| `unity_gamekit_manager` | ゲームマネージャー | create, update, inspect, delete（ターン制御、リソース管理、Machinations） |
+| `unity_gamekit_interaction` | インタラクション | create, update, inspect, delete（トリガー、アクション、条件） |
+| `unity_gamekit_ui_command` | UIコマンド | createCommandPanel, addCommand, inspect, delete |
+| `unity_gamekit_sceneflow` | シーンフロー | create, update, inspect, delete, transition（シーン遷移、共有グループ） |
+
+**GameKit Actor (`unity_gamekit_actor`)**
+- 振る舞いプロファイル: 2D/3D物理、リニア、タイルマップ移動
+- 制御モード: 直接コントローラー、AI、UIコマンド
+- ステータスシステム（health, mana, speedなど）
+- アビリティと武器装備
+
+**GameKit Manager (`unity_gamekit_manager`)**
+- マネージャータイプ: ターン制、リアルタイム、リソースプール、イベントハブ、ステートマネージャー
+- ターンフェーズ管理とサイクル
+- リソースプール（追加、消費、可用性チェック）
+- Machinationsフレームワーク対応（ノード、接続、デザインパターン）
+- 永続化（DontDestroyOnLoad）
+
+**GameKit Interaction (`unity_gamekit_interaction`)**
+- トリガータイプ: collision, trigger, raycast, proximity, input
+- アクション: Prefabスポーン、オブジェクト破壊、サウンド再生、メッセージ送信、シーン変更
+- 条件: tag, layer, distance, custom
+- 自動コライダー/Rigidbody設定
+
+**GameKit UI Command (`unity_gamekit_ui_command`)**
+- コマンドパネル作成（horizontal, vertical, gridレイアウト）
+- ボタン生成（ラベルとアイコン）
+- アクターへのコマンド送信
+- 自動Canvas/Panel設定
+
+**GameKit SceneFlow (`unity_gamekit_sceneflow`)**
+- シーンステートマシンと遷移
+- 加算シーンロード対応
+- 永続マネージャーシーン（アンロードされない）
+- 共有シーングループ（UI、Audioなど）
+- シーン固有のオプトイン/オプトアウト
+- シーン間参照解決（GUID/AddressableKey + ランタイムサービス）
+
+---
+
+## 🧪 テスト
+
+Unity Test Frameworkによる包括的なテストスイート：
+
+- **43テスト** - Low/Mid/High-Level全カテゴリ
+- **97.7%成功率** - 高品質保証
+- **エディタ統合** - `Tools > SkillForUnity`メニュー
+- **CI/CD対応** - GitHub Actions自動実行
+
+テスト実行：
+```bash
+# Unity Editor内
+Tools > SkillForUnity > Run All Tests
+
+# コマンドライン
+.\run-tests.ps1              # Windows
+./run-tests.sh               # macOS/Linux
+```
+
+詳細: [テストスイートREADME](Assets/SkillForUnity/Tests/Editor/README.md)
+
+---
+
 ## 利用可能なツール
 
-### コア操作
+### Low-Levelツール（基本CRUD操作）
 
 | ツール | 説明 | 主な操作 |
 |------|------|---------|
-| `unity.ping` | ブリッジ接続の確認 | Unityバージョン、プロジェクト名、タイムスタンプを返す |
-| `unity.scene.crud` | シーン管理 | create, load, save, delete, duplicate シーン |
-| `unity.gameobject.crud` | GameObjectヒエラルキー管理 | create, delete, move, rename, duplicate, inspect GameObject |
-| `unity.component.crud` | コンポーネント操作 | add, remove, update, inspect GameObjectのコンポーネント |
-| `unity.asset.crud` | アセットファイル操作 | create, update, rename, duplicate, delete, inspect Assets/ファイル |
-| `unity.scriptableobject.crud` | ScriptableObject管理 | create, inspect, update, delete, duplicate, list, findByType ScriptableObject |
+| `unity_ping` | ブリッジ接続の確認 | Unityバージョン、プロジェクト名、タイムスタンプを返す |
+| `unity_scene_crud` | シーン管理 | create, load, save, delete, duplicate, inspect シーン、ビルド設定 |
+| `unity_gameobject_crud` | GameObjectヒエラルキー管理 | create, delete, move, rename, duplicate, inspect GameObject、バッチ |
+| `unity_component_crud` | コンポーネント操作 | add, remove, update, inspect GameObjectのコンポーネント、バッチ |
+| `unity_asset_crud` | アセットファイル操作 | create, update, rename, duplicate, delete, inspect Assets/ファイル |
+| `unity_scriptableObject_crud` | ScriptableObject管理 | create, inspect, update, delete, duplicate, list, findByType |
+| `unity_prefab_crud` | Prefab管理 | create, update, inspect, instantiate, unpack, applyOverrides, revertOverrides |
+| `unity_vector_sprite_convert` | Vector/Sprite変換 | primitiveToSprite, svgToSprite, textureToSprite, createColorSprite |
+| `unity_projectSettings_crud` | プロジェクト設定 | read, write, list（Player, Quality, Time, Physics, Audio, Editor）|
 
-**シーン管理 (`unity.scene.crud`)**
-- デフォルトGameObjectsを持つ新しいシーンを作成
-- シーンを加算的またはシングルモードで読み込み
-- アクティブまたは全ての開いているシーンを保存
-- シーンの削除と複製
-- 完全なAssetDatabase統合
+**Prefab Management (`unity_prefab_crud`)**
+- GameObjectからPrefab作成
+- Prefabの更新と検査
+- シーンへのインスタンス化
+- アンパック（完全/最外層）
+- オーバーライドの適用/復元
 
-**GameObject管理 (`unity.gameobject.crud`)**
-- 親階層を持つGameObjectを作成
-- ヒエラルキー内でGameObjectを移動
-- 子を含めてリネームと複製
-- 全ての添付コンポーネントとプロパティを確認するためのInspect
-- Undoサポート付き削除
-
-**コンポーネント管理 (`unity.component.crud`)**
-- 完全修飾型名でコンポーネントを追加
-- 辞書ベースの変更でコンポーネントプロパティを更新
-- Unity Object参照のサポート（メッシュ、マテリアル、スプライト）
-- ビルトインリソースの読み込み（`Library/unity default resources::`）
-- コンポーネント状態とプロパティの検査
-
-**アセット管理 (`unity.asset.crud`)**
-- **create**: テキストベースアセットの作成（JSON、XML、設定ファイルなど）
-- **update**: 既存アセットコンテンツの更新
-- **rename**: アセットのリネーム
-- **duplicate**: アセットの複製
-- **delete**: アセットの削除
-- **inspect**: アセットメタデータとコンテンツの検査
-- **findMultiple/deleteMultiple/inspectMultiple**: ワイルドカードパターンで複数アセットを操作
-- AssetDatabaseの自動更新
-> **重要:** C#スクリプト（.csファイル）もサポートしています。新しいMonoBehaviour/ScriptableObjectスクリプトには、`unity_script_template_generate`でテンプレートを生成してから`unity_asset_crud`で編集することをお勧めします。
-
----
-### 高レベルツール（迅速な開発に推奨）
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.scene.quickSetup` | **即座にシーン設定** | 3D/2D/UI/VR/空のシーンを適切なデフォルトで作成 |
-| `unity.gameobject.createFromTemplate` | **GameObjectテンプレート** | テンプレートからプリミティブ、ライト、カメラ、プレイヤー、敵を作成 |
-| `unity.ugui.createFromTemplate` | **UI要素テンプレート** | Button、Text、Image、Panel、ScrollView、InputField、Slider、Toggle、Dropdownを作成 |
-| `unity.ugui.layoutManage` | **レイアウトコンポーネント管理** | レイアウトグループの追加/更新/削除（Horizontal/Vertical/Grid/ContentSizeFitter等） |
-| `unity.hierarchy.builder` | **宣言的階層作成** | 1つのコマンドで複雑なネストされたGameObject構造を構築 |
-| `unity.menu.hierarchyCreate` | **階層メニュー作成** | State Patternを使用したネストされたサブメニューシステムを作成 |
-
-**シーンクイックセットアップ (`unity.scene.quickSetup`)** - NEW!
-- **3D**: Main CameraとDirectional Lightを作成（既存オブジェクトをチェックして重複を回避）
-- **2D**: 正射投影を使用した2D Cameraを作成
-- **UI**: CanvasとEventSystemを作成（既存オブジェクトをチェック）
-- **VR**: VR Camera設定を作成
-- **Empty**: デフォルトオブジェクトなしの空のシーン
-
-**特徴:**
-- **重複防止**: 既存のカメラ、ライト、キャンバス、イベントシステムを自動検出
-- 1コマンドでシーンの初期化
-- 各シーンタイプに適切なデフォルト
-- 迅速なプロトタイピングに最適
-
-**例 - UIシーンのセットアップ:**
-```json
-{
-  "tool": "sceneQuickSetup",
-  "payload": {
-    "setupType": "UI"
-  }
-}
-```
-
-**GameObjectテンプレート (`unity.gameobject.createFromTemplate`)** - NEW!
-- **プリミティブ**: Cube、Sphere、Plane、Cylinder、Capsule、Quad（MeshRenderer + Collider付き）
-- **ライト**: Directional、Point、Spotライトと適切なデフォルト
-- **特殊**: Camera、Empty、Player（CharacterController付き）、Enemy、Particle System、Audio Source
-
-**特徴:**
-- 各テンプレート用の事前設定済みコンポーネント
-- Transform プロパティ（position、rotation、scale）
-- Undoサポート
-- 親階層サポート
-
-**例 - プレイヤーの作成:**
-```json
-{
-  "tool": "gameObjectCreateFromTemplate",
-  "payload": {
-    "template": "Player",
-    "position": {"x": 0, "y": 1, "z": 0}
-  }
-}
-```
-
-**UI要素テンプレート (`unity.ugui.createFromTemplate`)** - NEW!
-- **要素**: Button、Text、Image、RawImage、Panel、ScrollView、InputField、Slider、Toggle、Dropdown
-- 各テンプレートには必要なすべてのコンポーネントが含まれています（Image、Button、Text等）
-- カスタマイズ可能なプロパティ（text、fontSize、width、height、interactable、anchorPreset）
-- 指定がない場合、自動的にCanvasの親を検索
-
-**特徴:**
-- 1コマンドで完全なUI要素
-- 各要素タイプに適切なデフォルト
-- RectTransformアンカープリセット
-- 親階層サポート
-
-**例 - ボタンの作成:**
-```json
-{
-  "tool": "uguiCreateFromTemplate",
-  "payload": {
-    "template": "Button",
-    "text": "ゲーム開始",
-    "width": 200,
-    "height": 50,
-    "anchorPreset": "center"
-  }
-}
-```
-
-**レイアウト管理 (`unity.ugui.layoutManage`)** - NEW!
-- **レイアウトグループ**: HorizontalLayoutGroup、VerticalLayoutGroup、GridLayoutGroup
-- **フィッター**: ContentSizeFitter、LayoutElement、AspectRatioFitter
-- 操作: レイアウトコンポーネントの追加、更新、削除、検査
-- スペース、パディング、配置、子コントロールの完全な制御
-
-**例 - 縦型レイアウトの追加:**
-```json
-{
-  "tool": "uguiLayoutManage",
-  "payload": {
-    "operation": "add",
-    "gameObjectPath": "Canvas/Panel",
-    "layoutType": "VerticalLayoutGroup",
-    "spacing": 10,
-    "padding": {"left": 20, "right": 20, "top": 20, "bottom": 20}
-  }
-}
-```
-
-**階層メニュー作成 (`unity_menu_hierarchyCreate`)** - NEW!
-- 完全な階層メニューシステムをネストされたサブメニューとともに作成
-- ボタン、パネル、レイアウトグループを自動生成
-- State patternナビゲーションスクリプトをオプションで生成
-- キーボード/ゲームパッドナビゲーション対応
-- メインメニュー、ポーズメニュー、設定メニューに最適
-
-**例 - 設定メニューの作成:**
-```python
-unity_menu_hierarchyCreate({
-    "menuName": "SettingsMenu",
-    "menuStructure": {
-        "Graphics": {
-            "text": "グラフィック設定",
-            "submenus": {
-                "Quality": "品質レベル",
-                "Resolution": "解像度"
-            }
-        },
-        "Audio": {
-            "text": "オーディオ設定",
-            "submenus": {
-                "Master": "マスター音量",
-                "Music": "音楽音量"
-            }
-        }
-    },
-    "generateStateMachine": True,
-    "stateMachineScriptPath": "Assets/Scripts/SettingsMenuManager.cs"
-})
-# パネル、ボタン、ナビゲーションスクリプトを自動生成
-```
-
-**シーンインスペクター (`unity_scene_crud` with `operation="inspect"`)** - UPDATED!
-- 包括的なシーンの概要を取得（階層、GameObjects、コンポーネント）
-- ワイルドカードパターンでフィルタリング（*と?）
-- 階層は1層のみ返す（パフォーマンス最適化）
-- オブジェクト数を返す（カメラ、ライト、キャンバス）
-
-**例 - シーンの検査:**
-```python
-unity_scene_crud({
-    "operation": "inspect",
-    "includeHierarchy": True,
-    "includeComponents": True,
-    "filter": "Player*"
-})
-```
-
-**階層メニュー作成 (`unity_menu_hierarchyCreate`)** - NEW!
-- ネストされたサブメニューを持つ完全な階層メニューシステムを作成
-- State Design Patternを使用したメニューナビゲーション制御
-- キーボード、ゲームパッド、または両方の入力サポート
-- CanvasGroupを使用した自動的な表示/非表示管理
-- VerticalLayoutGroupによる自動的なレイアウト調整
-- オプションの「戻る」ボタンによる簡単なナビゲーション
-
-**主な機能:**
-1. **宣言的なメニュー定義** - シンプルなJSON構造からメニュー階層全体を作成
-2. **State Pattern統合** - メニュー状態を管理するC#スクリプトを自動生成
-3. **柔軟な入力処理** - キーボード（矢印キー、Enter、Escape）またはゲームパッド（D-Pad、A、B）
-4. **自動レイアウト** - VerticalLayoutGroupとContentSizeFitterによる一貫したレイアウト
-5. **ビジュアル階層** - 明確な親子関係を持つ整理されたメニュー構造
-6. **カスタマイズ可能** - ボタンサイズ、スペーシング、ナビゲーションモードの設定可能
-
-**例 - シンプルなメインメニュー:**
-```python
-unity_menu_hierarchyCreate({
-    "menuName": "MainMenu",
-    "menuStructure": {
-        "Start Game": "StartGame",
-        "Settings": {
-            "Video": {
-                "Resolution": "SetResolution",
-                "Quality": "SetQuality",
-                "Fullscreen": "ToggleFullscreen"
-            },
-            "Audio": {
-                "Master Volume": "SetMasterVolume",
-                "Music Volume": "SetMusicVolume",
-                "SFX Volume": "SetSFXVolume"
-            },
-            "Controls": "ConfigureControls"
-        },
-        "Quit": "QuitGame"
-    },
-    "generateStateMachine": True,
-    "stateMachineScriptPath": "Assets/Scripts/MenuStateMachine.cs",
-    "navigationMode": "both",
-    "buttonWidth": 200,
-    "buttonHeight": 50,
-    "spacing": 10,
-    "enableBackNavigation": True
-})
-```
-
-**生成されるUI構造:**
-```
-Canvas/
-└── MainMenu (親パネル - CanvasGroup付き)
-    ├── MainMenuPanel (ボタンコンテナ - VerticalLayoutGroup付き)
-    │   ├── StartGameButton
-    │   ├── SettingsButton
-    │   └── QuitButton
-    ├── SettingsPanel (サブメニュー - CanvasGroup付き)
-    │   ├── VideoButton
-    │   ├── AudioButton
-    │   ├── ControlsButton
-    │   └── BackButton
-    ├── VideoPanel (サブメニュー)
-    │   ├── ResolutionButton
-    │   ├── QualityButton
-    │   ├── FullscreenButton
-    │   └── BackButton
-    └── AudioPanel (サブメニュー)
-        ├── MasterVolumeButton
-        ├── MusicVolumeButton
-        ├── SFXVolumeButton
-        └── BackButton
-```
-
-**生成されるMenuStateMachineスクリプトの機能:**
-- **IMenuState** - Enter()、Update()、Exit()メソッドを持つState Pattern インターフェース
-- **MenuState** - 各メニューパネル用の具体的なState実装
-- **Input処理** - 設定されたナビゲーションモードに基づく入力ハンドリング
-- **State遷移** - メニュー間のスムーズな切り替え
-- **CanvasGroup管理** - アクティブなメニューパネルの自動表示/非表示
-
-**使用方法:**
-```csharp
-// MenuStateMachineコンポーネントを使用
-var menuStateMachine = FindFirstObjectByType<MenuStateMachine>();
-
-// メインメニューに切り替え
-menuStateMachine.ChangeState("MainMenuPanel");
-
-// サブメニューに切り替え
-menuStateMachine.ChangeState("SettingsPanel");
-```
-
-**ベストプラクティス:**
-1. **Canvas配下に作成** - UIシーンのセットアップ後に使用（`unity_scene_quickSetup` の `setupType: "UI"`）
-2. **明確な命名** - メニュー項目には説明的な名前を使用
-3. **バックナビゲーションを有効化** - 深い階層には `enableBackNavigation: true` を設定
-4. **入力モードを選択** - ターゲットプラットフォームに応じて `navigationMode` を設定
-5. **生成スクリプトをカスタマイズ** - 生成されたスクリプトを編集してボタンのコールバックを実装
-
-**一般的な使用例:**
-1. **ゲームメインメニュー** - Start Game、Settings、Credits、Quit
-2. **設定メニュー** - Video、Audio、Controls、Gameplay のネストされたオプション
-3. **一時停止メニュー** - Resume、Options、Return to Main Menu
-4. **インベントリシステム** - カテゴリー化されたアイテムと詳細パネル
-5. **レベル選択** - ワールドとレベルの階層選択
-
-**戻り値:**
-```python
-{
-    "success": True,
-    "menuName": "MainMenu",
-    "createdPanels": ["MainMenuPanel", "SettingsPanel", "VideoPanel", "AudioPanel", "ControlsPanel"],
-    "scriptPath": "Assets/Scripts/MenuStateMachine.cs",
-    "navigationMode": "both"
-}
-```
-
-**重要な注意事項:**
-- UIシーンが既にセットアップされている必要があります（Canvas + EventSystemが存在）
-- メニュー構造は3つの形式をサポート：
-  - 文字列値 - リーフメニュー項目（`"Start Game": "StartGame"`）
-  - 辞書 - サブメニュー（`"Settings": {...}`）
-  - 配列 - 同じサブメニューに複数のアクション（`"Options": ["option1", "option2"]`）
-- 生成されたスクリプトには、ボタンクリック時に呼び出されるコールバックメソッドのスタブが含まれています
-- すべてのパネルにはCanvasGroupコンポーネントが追加され、アクティブでないメニューは自動的に非表示になります
-- ボタンにはデフォルトのUIコンポーネント（Image、Text）が含まれ、すぐに使用可能です
-- `generateStateMachine: false` を設定すると、スクリプト生成なしでUI階層のみを作成できます
-
----
-
-### UIシステム (UGUI)
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.ugui.manage` | **統合UGUI管理** | rectAdjust, setAnchor, setAnchorPreset, convertToAnchored, convertToAbsolute, inspect, updateRect |
-| `unity.ugui.rectAdjust` | RectTransformサイズ調整 | レイアウトベースのサイズ調整 |
-| `unity.ugui.anchorManage` | RectTransformアンカー管理 | カスタムアンカー、プリセット、位置変換 |
-
-**統合UGUIツール (`unity.ugui.manage`)** - 推奨
-- **rectAdjust**: ワールドコーナーに基づいてRectTransformを調整
-- **setAnchor**: カスタムアンカー値を設定（min/max X/Y）
-- **setAnchorPreset**: 一般的なプリセットを適用（top-left, center, stretchなど）
-- **convertToAnchored**: 絶対位置からアンカー位置に変換
-- **convertToAbsolute**: アンカー位置から絶対位置に変換
-- **inspect**: RectTransform状態を取得
-- **updateRect**: RectTransformプロパティを直接更新
-
-**アンカープリセット:**
-- 位置: top-left, top-center, top-right, middle-left, center, middle-right, bottom-left, bottom-center, bottom-right
-- ストレッチ: stretch-horizontal, stretch-vertical, stretch-all, stretch-top, stretch-middle, stretch-bottom
-
-**特徴:**
-- アンカー変更時の視覚的位置の保持
-- CanvasScaler参照解像度のサポート
-- 直接プロパティ更新（anchoredPosition, sizeDelta, pivot, offsets）
-- 完全なRectTransform制御
-
----
-
-### タグとレイヤー
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.tagLayer.manage` | タグとレイヤー管理 | GameObject: setTag, getTag, setLayer, getLayer, setLayerRecursive<br>プロジェクト: listTags, addTag, removeTag, listLayers, addLayer, removeLayer |
-
-**タグとレイヤー管理 (`unity.tagLayer.manage`)**
-- **GameObject操作:**
-  - setTag/getTag: 個別GameObjectのタグ管理
-  - setLayer/getLayer: 名前またはインデックスでレイヤーを設定
-  - setLayerRecursive: GameObjectと全ての子にレイヤーを設定
-- **プロジェクト操作:**
-  - listTags/listLayers: 利用可能な全てのタグ/レイヤーを表示
-  - addTag/addLayer: プロジェクトに新しいタグ/レイヤーを作成
-  - removeTag/removeLayer: プロジェクトからタグ/レイヤーを削除
-
-**特徴:**
-- レイヤー名またはインデックスのサポート
-- 階層の再帰的レイヤー設定
-- 完全なタグ/レイヤープロジェクト管理
-- Physicsとレンダリングシステムとの統合
-
----
-
-### Prefab
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.prefab.crud` | Prefabワークフロー | create, update, inspect, instantiate, unpack, applyOverrides, revertOverrides |
-
-**Prefab管理 (`unity.prefab.crud`)**
-- **create**: シーンGameObjectから新しいPrefabを作成
-  - 子を含めるオプション
-- **update**: 変更されたインスタンスから既存Prefabを更新
-- **inspect**: Prefabアセット情報を取得
-- **instantiate**: シーンにPrefabインスタンスを作成
-  - Prefab接続を維持
-  - オプションの親指定
-- **unpack**: Prefabインスタンスを通常のGameObjectsに展開
-  - OutermostRootまたはCompletelyモード
-- **applyOverrides**: インスタンスの変更をPrefabアセットに適用
-- **revertOverrides**: インスタンスをPrefab状態に戻す
-
-**特徴:**
-- 完全なPrefabワークフローサポート
-- ネストされたPrefabの処理
-- オーバーライド管理
-- インスタンス追跡
-
----
-
-### プロジェクト設定
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.projectSettings.crud` | プロジェクト設定管理 | read, write, list 設定 |
-| `unity.renderPipeline.manage` | レンダーパイプライン管理 | inspect, setAsset, getSettings |
-
-**プロジェクト設定 (`unity.projectSettings.crud`)**
-- **カテゴリ:**
-  - player: PlayerSettings（会社名、製品名、バージョン、画面設定）
-  - quality: QualitySettings（品質レベル、影、アンチエイリアシング）
-  - time: Time設定（fixedDeltaTime, timeScale）
-  - physics: Physics設定（重力、衝突、反復）
-  - audio: AudioSettings（DSPバッファ、サンプルレート、ボイス）
-  - editor: EditorSettings（シリアライゼーションモード、行末）
-
-**レンダーパイプライン (`unity.renderPipeline.manage`)**
-- **inspect**: 現在のパイプラインを確認（Built-in/URP/HDRP/Custom）
-- **setAsset**: レンダーパイプラインアセットを変更
-- **getSettings**: パイプライン固有の設定を読み取り
-- リフレクションによるパイプライン固有プロパティアクセス
-
----
-
-### ユーティリティ
-
-| ツール | 説明 | 主な操作 |
-|------|------|---------|
-| `unity.project.compile` | コンパイル要求 | アセット更新とコンパイル実行・結果待機 |
-
-**Project Compile (`unity.project.compile`)**
-- `refreshAssetDatabase` で AssetDatabase.Refresh() を実行してエディタに最新状態を通知
-- `requestScriptCompilation` で Unity に C# コンパイルの開始を依頼
-- 既定でコンパイル完了を待機（`awaitCompletion` は `true`）し、エラーを即座に把握
-- 複数のスクリプト変更は可能な限りまとめてから実行し、再コンパイル回数を最小化
-- スクリプトを生成・編集した直後に呼び出して、コンパイルエラーが残っていないか確認するのが推奨
+**Vector Sprite Conversion (`unity_vector_sprite_convert`)**
+- プリミティブ形状スプライト生成（square, circle, triangle, polygon）
+- SVGインポート
+- テクスチャからスプライト変換
+- 単色スプライト作成
 
 ---
 
@@ -625,265 +391,201 @@ menuStateMachine.ChangeState("SettingsPanel");
 
 ## 使用例
 
-### 例1: UIヒエラルキーの作成
-
-```json
-{
-  "operations": [
-    {
-      "tool": "gameObjectManage",
-      "payload": {
-        "operation": "create",
-        "gameObjectPath": "Canvas/Panel",
-        "name": "Panel"
-      }
-    },
-    {
-      "tool": "componentManage",
-      "payload": {
-        "operation": "add",
-        "gameObjectPath": "Canvas/Panel",
-        "componentType": "UnityEngine.UI.Image"
-      }
-    },
-    {
-      "tool": "uguiManage",
-      "payload": {
-        "operation": "setAnchorPreset",
-        "gameObjectPath": "Canvas/Panel",
-        "preset": "center",
-        "preservePosition": true
-      }
-    },
-    {
-      "tool": "uguiManage",
-      "payload": {
-        "operation": "updateRect",
-        "gameObjectPath": "Canvas/Panel",
-        "sizeDeltaX": 200,
-        "sizeDeltaY": 100
-      }
-    }
-  ]
-}
-```
-
-### 例2: タグとレイヤーの管理
-
-```json
-{
-  "operations": [
-    {
-      "tool": "tagLayerManage",
-      "payload": {
-        "operation": "addTag",
-        "tag": "Enemy"
-      }
-    },
-    {
-      "tool": "tagLayerManage",
-      "payload": {
-        "operation": "addLayer",
-        "layer": "Characters"
-      }
-    },
-    {
-      "tool": "gameObjectManage",
-      "payload": {
-        "operation": "create",
-        "gameObjectPath": "EnemyGroup",
-        "name": "EnemyGroup"
-      }
-    },
-    {
-      "tool": "tagLayerManage",
-      "payload": {
-        "operation": "setLayerRecursive",
-        "gameObjectPath": "EnemyGroup",
-        "layer": "Characters"
-      }
-    },
-    {
-      "tool": "tagLayerManage",
-      "payload": {
-        "operation": "setTag",
-        "gameObjectPath": "EnemyGroup",
-        "tag": "Enemy"
-      }
-    }
-  ]
-}
-```
-
-### 例3: Prefabワークフロー
-
-```json
-{
-  "operations": [
-    {
-      "tool": "gameObjectManage",
-      "payload": {
-        "operation": "create",
-        "gameObjectPath": "PlayerCharacter",
-        "name": "PlayerCharacter"
-      }
-    },
-    {
-      "tool": "componentManage",
-      "payload": {
-        "operation": "add",
-        "gameObjectPath": "PlayerCharacter",
-        "componentType": "UnityEngine.CharacterController"
-      }
-    },
-    {
-      "tool": "prefabManage",
-      "payload": {
-        "operation": "create",
-        "gameObjectPath": "PlayerCharacter",
-        "prefabPath": "Assets/Prefabs/Player.prefab",
-        "includeChildren": true
-      }
-    },
-    {
-      "tool": "prefabManage",
-      "payload": {
-        "operation": "instantiate",
-        "prefabPath": "Assets/Prefabs/Player.prefab",
-        "parentPath": "GameWorld"
-      }
-    }
-  ]
-}
-```
-
-### 例4: 階層メニューシステムの作成
+### 例1: ゲームアクターの作成（GameKit）
 
 ```python
-# ステップ1: UIシーンをセットアップ
-unity_scene_quickSetup({"setupType": "UI"})
-
-# ステップ2: 階層メニューを作成
-unity_menu_hierarchyCreate({
-    "menuName": "GameMenu",
-    "menuStructure": {
-        "プレイ": "StartGame",
-        "設定": {
-            "映像": {
-                "解像度": "SetResolution",
-                "品質": "SetQuality",
-                "フルスクリーン": "ToggleFullscreen"
-            },
-            "音声": {
-                "マスター音量": "SetMasterVolume",
-                "BGM音量": "SetMusicVolume",
-                "効果音音量": "SetSFXVolume"
-            },
-            "操作設定": "ConfigureControls"
-        },
-        "クレジット": "ShowCredits",
-        "終了": "QuitGame"
-    },
-    "generateStateMachine": True,
-    "stateMachineScriptPath": "Assets/Scripts/UI/GameMenuStateMachine.cs",
-    "navigationMode": "both",
-    "buttonWidth": 250,
-    "buttonHeight": 60,
-    "spacing": 15,
-    "enableBackNavigation": True
-})
-
-# 生成されたメニューシステムは以下を含みます:
-# - Canvas/GameMenu に完全なメニュー階層
-# - Assets/Scripts/UI/GameMenuStateMachine.cs にState Patternスクリプト
-# - キーボードとゲームパッドの両方をサポート
-# - すべてのサブメニューに戻るボタン
-```
-
-### 例5: ScriptableObjectの管理
-
-```python
-# ステップ1: ScriptableObjectスクリプトの生成
-unity_script_template_generate({
-    "templateType": "ScriptableObject",
-    "className": "GameConfig",
-    "scriptPath": "Assets/Scripts/Data/GameConfig.cs",
-    "namespace": "MyGame.Data"
-})
-
-# ステップ2: スクリプトの内容を更新
-unity_asset_crud({
-    "operation": "update",
-    "assetPath": "Assets/Scripts/Data/GameConfig.cs",
-    "content": """using UnityEngine;
-
-namespace MyGame.Data
-{
-    [CreateAssetMenu(fileName = "GameConfig", menuName = "MyGame/Game Config")]
-    public class GameConfig : ScriptableObject
-    {
-        public string gameName = "My Awesome Game";
-        public int maxPlayers = 4;
-        public float gameSpeed = 1.0f;
-        public bool enableDebugMode = false;
-    }
-}
-"""
-})
-
-# ステップ3: コンパイル完了を待つ
-unity_await_compilation({"timeoutSeconds": 60})
-
-# ステップ4: ScriptableObjectアセットを作成
-unity_scriptableobject_manage({
+# プレイヤーアクターを作成
+unity_gamekit_actor({
     "operation": "create",
-    "typeName": "MyGame.Data.GameConfig",
-    "assetPath": "Assets/Data/DefaultConfig.asset",
-    "properties": {
-        "gameName": "Adventure Quest",
-        "maxPlayers": 8,
-        "gameSpeed": 1.5,
-        "enableDebugMode": True
+    "actorId": "player_001",
+    "actorType": "player",
+    "behaviorProfile": "2dPhysics",
+    "controlMode": "directController",
+    "stats": {
+        "health": 100,
+        "maxHealth": 100,
+        "speed": 5.0,
+        "jumpForce": 10.0
+    },
+    "abilities": ["Jump", "Dash", "Attack"],
+    "spritePath": "Assets/Sprites/Player.png"
+})
+
+# 敵アクターを作成
+unity_gamekit_actor({
+    "operation": "create",
+    "actorId": "enemy_001",
+    "actorType": "enemy",
+    "behaviorProfile": "2dPhysics",
+    "controlMode": "aiAutonomous",
+    "stats": {
+        "health": 50,
+        "speed": 2.0
     }
 })
+```
 
-# ステップ5: ScriptableObjectの内容を確認
-config_info = unity_scriptableobject_manage({
-    "operation": "inspect",
-    "assetPath": "Assets/Data/DefaultConfig.asset",
-    "includeProperties": True
+### 例2: ターン制ゲームマネージャー（GameKit）
+
+```python
+# ターン制マネージャーを作成
+unity_gamekit_manager({
+    "operation": "create",
+    "managerId": "turn_manager",
+    "managerType": "turnBased",
+    "turnPhases": ["PlayerTurn", "EnemyTurn", "EndTurn"],
+    "resourcePool": {
+        "actionPoints": 3,
+        "mana": 100
+    },
+    "dontDestroyOnLoad": True
 })
 
-# ステップ6: プロパティを更新
-unity_scriptableobject_manage({
+# リソースを消費
+unity_gamekit_manager({
     "operation": "update",
-    "assetPath": "Assets/Data/DefaultConfig.asset",
-    "properties": {
-        "maxPlayers": 16,
-        "gameSpeed": 2.0
+    "managerId": "turn_manager",
+    "consumeResource": {
+        "resourceName": "actionPoints",
+        "amount": 1
     }
 })
 
-# ステップ7: ScriptableObjectを複製
-unity_scriptableobject_manage({
-    "operation": "duplicate",
-    "sourceAssetPath": "Assets/Data/DefaultConfig.asset",
-    "destinationAssetPath": "Assets/Data/HighSpeedConfig.asset"
+# 次のフェーズへ
+unity_gamekit_manager({
+    "operation": "update",
+    "managerId": "turn_manager",
+    "advancePhase": True
+})
+```
+
+### 例3: シーンフロー管理（GameKit）
+
+```python
+# シーンフローを作成
+unity_gamekit_sceneflow({
+    "operation": "create",
+    "flowId": "main_flow",
+    "scenes": [
+        {
+            "name": "Title",
+            "path": "Assets/Scenes/Title.unity",
+            "loadMode": "single"
+        },
+        {
+            "name": "Level1",
+            "path": "Assets/Scenes/Level1.unity",
+            "loadMode": "additive",
+            "sharedGroups": ["UI", "Audio"]
+        },
+        {
+            "name": "Level2",
+            "path": "Assets/Scenes/Level2.unity",
+            "loadMode": "additive",
+            "sharedGroups": ["UI", "Audio"]
+        }
+    ],
+    "sharedSceneGroups": {
+        "UI": ["Assets/Scenes/GameUI.unity"],
+        "Audio": ["Assets/Scenes/AudioManager.unity"]
+    },
+    "transitions": [
+        {"from": "Title", "to": "Level1", "trigger": "StartGame"},
+        {"from": "Level1", "to": "Level2", "trigger": "NextLevel"},
+        {"from": "Level2", "to": "Title", "trigger": "ReturnToTitle"}
+    ]
 })
 
-# ステップ8: 全てのGameConfig型のScriptableObjectを検索
-all_configs = unity_scriptableobject_manage({
-    "operation": "findByType",
-    "typeName": "MyGame.Data.GameConfig",
-    "searchPath": "Assets/Data",
-    "includeProperties": True
+# シーン遷移をトリガー
+unity_gamekit_sceneflow({
+    "operation": "transition",
+    "flowId": "main_flow",
+    "trigger": "StartGame"
+})
+```
+
+### 例4: Mid-Levelツール - カメラリグとUI
+
+```python
+# フォローカメラリグを作成
+unity_camera_rig({
+    "operation": "createRig",
+    "rigType": "follow",
+    "cameraName": "MainCamera",
+    "targetPath": "Player",
+    "offset": {"x": 0, "y": 5, "z": -10},
+    "smoothSpeed": 5.0
 })
 
-# 結果:
-# - Assets/Scripts/Data/GameConfig.cs に ScriptableObject スクリプト
-# - Assets/Data/DefaultConfig.asset に設定アセット
-# - Assets/Data/HighSpeedConfig.asset に複製アセット
-# - 全ての GameConfig アセットの情報
+# UIキャンバスとボタンを作成
+unity_ui_foundation({
+    "operation": "createCanvas",
+    "canvasName": "GameUI",
+    "renderMode": "screenSpaceOverlay"
+})
+
+unity_ui_foundation({
+    "operation": "createButton",
+    "buttonName": "StartButton",
+    "parentPath": "GameUI",
+    "text": "ゲーム開始",
+    "anchorPreset": "center",
+    "width": 200,
+    "height": 60
+})
+
+# 物理プリセットを適用
+unity_physics_bundle({
+    "operation": "applyPreset2D",
+    "gameObjectPath": "Player",
+    "preset": "platformer"
+})
+```
+
+### 例5: Vector Sprite生成とPrefab作成
+
+```python
+# プリミティブスプライトを生成
+unity_vector_sprite_convert({
+    "operation": "primitiveToSprite",
+    "primitiveType": "circle",
+    "width": 256,
+    "height": 256,
+    "color": {"r": 1.0, "g": 0.0, "b": 0.0, "a": 1.0},
+    "outputPath": "Assets/Sprites/RedCircle.png"
+})
+
+# GameObjectを作成してスプライトを適用
+unity_gameobject_crud({
+    "operation": "create",
+    "gameObjectPath": "Enemy",
+    "components": ["SpriteRenderer"]
+})
+
+unity_component_crud({
+    "operation": "update",
+    "gameObjectPath": "Enemy",
+    "componentType": "UnityEngine.SpriteRenderer",
+    "properties": {
+        "sprite": "Assets/Sprites/RedCircle.png"
+    }
+})
+
+# Prefabを作成
+unity_prefab_crud({
+    "operation": "create",
+    "gameObjectPath": "Enemy",
+    "prefabPath": "Assets/Prefabs/Enemy.prefab",
+    "includeChildren": True
+})
+
+# Prefabをインスタンス化
+unity_prefab_crud({
+    "operation": "instantiate",
+    "prefabPath": "Assets/Prefabs/Enemy.prefab",
+    "targetPath": "Enemies/Enemy_001",
+    "position": {"x": 5, "y": 0, "z": 0}
+})
 ```
 
 ---
@@ -930,58 +632,53 @@ SkillForUnity/
 
 ---
 
-## 機能
+## 機能ハイライト
+
+### 3層アーキテクチャ
+- ✅ **Low-Level CRUD** - Scene, GameObject, Component, Asset, ScriptableObject, Prefab, Sprite, Settings
+- ✅ **Mid-Level Batch** - Transform, RectTransform, Physics, Camera, UI, Audio, Input
+- ✅ **High-Level GameKit** - Actor, Manager, Interaction, UICommand, SceneFlow
 
 ### コア機能
 - ✅ WebSocket経由のリアルタイムUnity Editor統合
-- ✅ 包括的なシーンとGameObject管理
-- ✅ プロパティ更新によるコンポーネント操作
-- ✅ アセットの作成と変更
-- ✅ コンパイル後の自動再接続
+- ✅ 21ツール、100+操作
+- ✅ 自動コンパイル待機（操作後待機 + ブリッジ再接続検出）
+- ✅ 包括的テストスイート（100+テスト、97.7%成功率）
+- ✅ CI/CD統合（GitHub Actions）
 
-### 高レベルツール
-- ✅ **シーンクイックセットアップ** - 即座に3D/2D/UI/VRシーンを初期化
-- ✅ **GameObjectテンプレート** - 事前設定されたプリミティブ、ライト、特殊オブジェクト
-- ✅ **UI要素テンプレート** - 1コマンドで完全なUIコンポーネント
-- ✅ **レイアウト管理** - レイアウトグループとフィッターの簡単な設定
-- ✅ **階層ビルダー** - 宣言的なネスト構造作成
-- ✅ **階層メニューシステム** - State Patternを使用したネストされたメニューを自動生成
-- ✅ **重複防止** - シーン設定時の既存オブジェクトの自動検出
+### GameKitフレームワーク
+- ✅ **Actor System** - 振る舞いプロファイル、制御モード、ステータス、アビリティ
+- ✅ **Manager System** - ターン制御、リソース管理、Machinations対応
+- ✅ **Interaction System** - トリガー、アクション、条件の宣言的定義
+- ✅ **UI Command System** - UIボタンからアクターへのコマンド送信
+- ✅ **SceneFlow System** - シーン遷移ステートマシン、共有シーングループ
 
-### スクリプト管理
-- ✅ **バッチスクリプト管理** - 複数のC#スクリプトを一括作成・更新・削除
-- ✅ **自動コンパイル** - 全操作後に単一の統合コンパイル
-- ✅ **10-20倍高速** - 個別スクリプト操作と比較
-
-### UIとレイアウト
-- ✅ UGUIレイアウトと配置ツール
-- ✅ RectTransformアンカー管理
-- ✅ 位置変換（anchored ↔ absolute）
-- ✅ アンカープリセット（stretch, center, corners）
-
-### 高度なシステム
-- ✅ タグとレイヤー管理（GameObject & プロジェクト）
-- ✅ Prefabワークフロー（作成、更新、インスタンス化、オーバーライド管理）
-- ✅ プロジェクト設定構成（6カテゴリ）
-- ✅ レンダーパイプライン管理（Built-in/URP/HDRP）
+### Mid-Levelツール
+- ✅ **バッチ操作** - 円形/直線配置、連番リネーム、メニュー自動生成
+- ✅ **物理プリセット** - 8種類の2D/3Dプリセット（character, platformer, vehicle等）
+- ✅ **カメラリグ** - 5種類のカメラ設定（follow, orbit, split-screen等）
+- ✅ **UI基礎** - Canvas、ボタン、テキストなどの自動生成
+- ✅ **オーディオプリセット** - music, sfx, ambient, voice, ui
+- ✅ **入力システム** - New Input System統合
 
 ### 開発者ツール
-- ✅ コンパイル要求と結果通知
-- ✅ シーン状態によるコンテキスト対応アシスタンス
+- ✅ Prefab完全管理（作成、更新、インスタンス化、オーバーライド）
+- ✅ Vector/Spriteユーティリティ（プリミティブ、SVG、テクスチャ変換）
+- ✅ コンパイル待機システム（操作後自動待機、ブリッジ再接続検出）
+- ✅ 包括的テストスイート（Unity Test Framework、エディタメニュー統合）
 - ✅ 構造化されたエラー処理とレポート
 
 ---
 
 ## ツールリファレンスサマリー
 
-| カテゴリ | ツール数 | 操作 |
-|---------|---------|------|
-| **コア** | 5ツール | ping, シーン, GameObject, コンポーネント, アセット |
-| **高レベル** | 7ツール | シーンクイックセットアップ, GameObjectテンプレート, UIテンプレート, レイアウトマネージャー, 階層ビルダー, 階層メニュー作成, デザインパターン生成 |
-| **UI** | 3ツール | UGUI統合 + 専用ツール |
-| **システム** | 3ツール | タグ/レイヤー, Prefab, 設定, レンダーパイプライン |
-| **スクリプト** | 1ツール | スクリプトテンプレート生成（MonoBehaviour/ScriptableObject） |
-| **合計** | **19ツール** | **85+操作** |
+| カテゴリ | ツール数 | 主なツール |
+|---------|---------|----------|
+| **Low-Level CRUD** | 8ツール | Scene, GameObject, Component, Asset, ScriptableObject, Prefab, VectorSprite, ProjectSettings |
+| **Mid-Level Batch** | 7ツール | Transform, RectTransform, Physics, Camera, UI, Audio, Input |
+| **High-Level GameKit** | 5ツール | Actor, Manager, Interaction, UICommand, SceneFlow |
+| **Utility** | 1ツール | Ping |
+| **合計** | **21ツール** | **100+操作** |
 
 ---
 

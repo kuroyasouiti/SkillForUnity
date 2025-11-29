@@ -11,7 +11,7 @@ namespace MCP.Editor.Handlers
     /// <summary>
     /// Asset management command handler.
     /// Handles asset creation, updating, deletion, renaming, duplication, and inspection.
-    /// Note: C# script files (.cs) are restricted - use specialized tools instead.
+    /// Supports all asset types including C# scripts (.cs) with automatic compilation wait.
     /// </summary>
     public class AssetCommandHandler : BaseCommandHandler
     {
@@ -78,15 +78,6 @@ namespace MCP.Editor.Handlers
                 throw new InvalidOperationException("assetPath is required");
             }
             
-            // Security: Restrict .cs files
-            if (assetPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(
-                    "C# file operations are restricted. Use unity_designPattern_generate, " +
-                    "unity_script_template_generate, or code editor tools instead."
-                );
-            }
-            
             if (!ValidateAssetPath(assetPath))
             {
                 throw new InvalidOperationException($"Invalid asset path: {assetPath}");
@@ -107,6 +98,7 @@ namespace MCP.Editor.Handlers
             // Write content
             File.WriteAllText(assetPath, content ?? string.Empty);
             AssetDatabase.ImportAsset(assetPath);
+            AssetDatabase.Refresh(); // Trigger compilation if needed
             
             return CreateSuccessResponse(
                 ("assetPath", assetPath),
@@ -128,14 +120,6 @@ namespace MCP.Editor.Handlers
                 throw new InvalidOperationException("assetPath is required");
             }
             
-            // Security: Restrict .cs files
-            if (assetPath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            {
-                throw new InvalidOperationException(
-                    "C# file operations are restricted. Use code editor tools instead."
-                );
-            }
-            
             if (!File.Exists(assetPath))
             {
                 throw new InvalidOperationException($"Asset does not exist: {assetPath}");
@@ -143,6 +127,7 @@ namespace MCP.Editor.Handlers
             
             File.WriteAllText(assetPath, content ?? string.Empty);
             AssetDatabase.ImportAsset(assetPath);
+            AssetDatabase.Refresh(); // Trigger compilation if needed
             
             return CreateSuccessResponse(
                 ("assetPath", assetPath),

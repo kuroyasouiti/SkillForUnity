@@ -40,6 +40,12 @@ namespace MCP.Editor.Base
                 
                 // Phase 7で実装済みのハンドラーを登録
                 RegisterPhase7Handlers();
+
+                // ミドルレベルツールのハンドラーを登録
+                RegisterMidLevelHandlers();
+
+                // ハイレベルGameKitツールのハンドラーを登録
+                RegisterGameKitHandlers();
                 
                 // 統計情報をログ出力
                 var stats = CommandHandlerFactory.GetStatistics();
@@ -84,6 +90,12 @@ namespace MCP.Editor.Base
         {
             // ScriptableObject Handler
             CommandHandlerFactory.Register("scriptableObjectManage", new ScriptableObjectCommandHandler());
+            
+            // Prefab Handler
+            CommandHandlerFactory.Register("prefabManage", new PrefabCommandHandler());
+            
+            // Vector Sprite Converter
+            CommandHandlerFactory.Register("vectorSpriteConvert", new VectorSpriteConvertHandler());
         }
         
         /// <summary>
@@ -93,6 +105,32 @@ namespace MCP.Editor.Base
         {
             // Project Settings Handler
             CommandHandlerFactory.Register("projectSettingsManage", new Handlers.Settings.ProjectSettingsManageHandler());
+        }
+
+        /// <summary>
+        /// ミドルレベルツールのハンドラーを登録します。
+        /// </summary>
+        private static void RegisterMidLevelHandlers()
+        {
+            CommandHandlerFactory.Register("transformBatch", new TransformBatchHandler());
+            CommandHandlerFactory.Register("rectTransformBatch", new RectTransformBatchHandler());
+            CommandHandlerFactory.Register("physicsBundle", new PhysicsBundleHandler());
+            CommandHandlerFactory.Register("cameraRig", new CameraRigHandler());
+            CommandHandlerFactory.Register("uiFoundation", new UIFoundationHandler());
+            CommandHandlerFactory.Register("audioSourceBundle", new AudioSourceBundleHandler());
+            CommandHandlerFactory.Register("inputProfile", new InputProfileHandler());
+        }
+
+        /// <summary>
+        /// ハイレベルGameKitツールのハンドラーを登録します。
+        /// </summary>
+        private static void RegisterGameKitHandlers()
+        {
+            CommandHandlerFactory.Register("gamekitActor", new Handlers.GameKit.GameKitActorHandler());
+            CommandHandlerFactory.Register("gamekitManager", new Handlers.GameKit.GameKitManagerHandler());
+            CommandHandlerFactory.Register("gamekitInteraction", new Handlers.GameKit.GameKitInteractionHandler());
+            CommandHandlerFactory.Register("gamekitUICommand", new Handlers.GameKit.GameKitUICommandHandler());
+            CommandHandlerFactory.Register("gamekitSceneFlow", new Handlers.GameKit.GameKitSceneFlowHandler());
         }
     }
 }
