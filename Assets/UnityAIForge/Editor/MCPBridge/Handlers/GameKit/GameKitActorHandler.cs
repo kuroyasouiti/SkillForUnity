@@ -445,7 +445,7 @@ namespace MCP.Editor.Handlers.GameKit
             }
 
             // Check if default asset already exists
-            const string defaultPath = "Assets/SkillForUnity/GameKit/Runtime/DefaultGameKitInputActions.inputactions";
+            const string defaultPath = "Assets/UnityAIForge/GameKit/Runtime/DefaultGameKitInputActions.inputactions";
             var existingAsset = AssetDatabase.LoadAssetAtPath(defaultPath, inputActionsType);
             if (existingAsset != null)
             {

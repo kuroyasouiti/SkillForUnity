@@ -25,14 +25,14 @@ namespace MCP.Editor
 
         private static string GetEmbeddedSkillZipPath()
         {
-            // Find this script's location and look for SkillForUnity.zip in the parent directory
+            // Find this script's location and look for Unity-AI-Forge.zip in the parent directory
             var guids = AssetDatabase.FindAssets("ServerInstallerUtility t:Script");
             if (guids.Length > 0)
             {
                 var scriptPath = AssetDatabase.GUIDToAssetPath(guids[0]);
                 var scriptDir = Path.GetDirectoryName(scriptPath);
-                var parentDir = Path.GetDirectoryName(Path.GetDirectoryName(scriptDir)); // Go up to Assets/SkillForUnity
-                var zipPath = Path.Combine(parentDir, "SkillForUnity.zip");
+                var parentDir = Path.GetDirectoryName(Path.GetDirectoryName(scriptDir)); // Go up to Assets/UnityAIForge
+                var zipPath = Path.Combine(parentDir, "Unity-AI-Forge.zip");
 
                 if (File.Exists(zipPath))
                 {
@@ -47,7 +47,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(assetsPath, "SkillForUnity", "SkillForUnity.zip");
+            return Path.Combine(assetsPath, "UnityAIForge", "Unity-AI-Forge.zip");
         }
 
         private static string FindSkillZipPath()
@@ -64,15 +64,15 @@ namespace MCP.Editor
                 return null;
             }
 
-            // .claude/skills/SkillForUnity.zip を探す
-            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity.zip");
+            // .claude/skills/Unity-AI-Forge.zip を探す
+            var skillZipPath = Path.Combine(projectRoot, ".claude", "skills", "Unity-AI-Forge.zip");
             if (File.Exists(skillZipPath))
             {
                 return skillZipPath;
             }
 
             // 見つからない場合、プロジェクトルートを検索
-            var rootZipPath = Path.Combine(projectRoot, "SkillForUnity.zip");
+            var rootZipPath = Path.Combine(projectRoot, "Unity-AI-Forge.zip");
             if (File.Exists(rootZipPath))
             {
                 return rootZipPath;
@@ -129,7 +129,7 @@ namespace MCP.Editor
         {
             if (string.IsNullOrEmpty(SkillZipPath))
             {
-                message = "Skill package (SkillForUnity.zip) not found. Please build the skill package first.";
+                message = "Skill package (Unity-AI-Forge.zip) not found. Please build the skill package first.";
                 return false;
             }
 
@@ -157,20 +157,20 @@ namespace MCP.Editor
                 }
 
                 // Extract to temporary directory first
-                tempExtractPath = Path.Combine(Path.GetTempPath(), "SkillForUnity_" + Guid.NewGuid().ToString("N"));
+                tempExtractPath = Path.Combine(Path.GetTempPath(), "Unity-AI-Forge_" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(tempExtractPath);
                 ZipFile.ExtractToDirectory(SkillZipPath, tempExtractPath);
 
-                // Find the SkillForUnity directory inside the extracted content
-                var skillDir = Path.Combine(tempExtractPath, "SkillForUnity");
+                // Find the Unity-AI-Forge directory inside the extracted content
+                var skillDir = Path.Combine(tempExtractPath, "Unity-AI-Forge");
                 if (Directory.Exists(skillDir))
                 {
-                    // Copy the SkillForUnity directory to the destination
+                    // Copy the Unity-AI-Forge directory to the destination
                     CopyDirectoryRecursive(skillDir, destinationPath);
                 }
                 else
                 {
-                    // If SkillForUnity subdirectory doesn't exist, copy the temp directory contents
+                    // If Unity-AI-Forge subdirectory doesn't exist, copy the temp directory contents
                     CopyDirectoryRecursive(tempExtractPath, destinationPath);
                 }
 
@@ -303,7 +303,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(projectRoot, ".claude", "skills", "SkillForUnity");
+            return Path.Combine(projectRoot, ".claude", "skills", "Unity-AI-Forge");
         }
 
         /// <summary>
@@ -317,7 +317,7 @@ namespace MCP.Editor
                 return null;
             }
 
-            return Path.Combine(homeDir, ".claude", "skills", "SkillForUnity");
+            return Path.Combine(homeDir, ".claude", "skills", "Unity-AI-Forge");
         }
 
         /// <summary>
@@ -343,7 +343,7 @@ namespace MCP.Editor
                     // Global installation: ~/.claude/mcp.json
                     // Path is relative to ~/.claude directory
                     mcpJsonPath = Path.Combine(homeDir, ".claude", "mcp.json");
-                    skillDirectory = "skills/SkillForUnity";
+                    skillDirectory = "skills/Unity-AI-Forge";
                 }
                 else
                 {
@@ -356,7 +356,7 @@ namespace MCP.Editor
                         return false;
                     }
                     mcpJsonPath = Path.Combine(projectRoot, ".mcp.json");
-                    skillDirectory = ".claude/skills/SkillForUnity";
+                    skillDirectory = ".claude/skills/Unity-AI-Forge";
                 }
 
                 // Load existing .mcp.json or create new structure
@@ -514,7 +514,7 @@ namespace MCP.Editor
         }
 
         /// <summary>
-        /// Remove SkillForUnity entry from .mcp.json configuration file
+        /// Remove Unity-AI-Forge entry from .mcp.json configuration file
         /// </summary>
         private static bool RemoveFromMcpJson(string destinationPath, out string message)
         {
