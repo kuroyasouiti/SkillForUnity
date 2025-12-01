@@ -85,27 +85,6 @@ namespace MCP.Editor.Handlers.GameKit
                         manager.SetResource(kvp.Key, Convert.ToSingle(kvp.Value));
                     }
                 }
-                
-                // Add MachinationsController if requested
-                if (GetBool(payload, "addMachinationsController"))
-                {
-                    var controller = Undo.AddComponent<GameKitMachinationsController>(managerGo);
-                    
-                    // Configure controller settings
-                    if (payload.TryGetValue("autoProcessFlows", out var autoFlows))
-                    {
-                        var field = typeof(GameKitMachinationsController).GetField("autoProcessFlows",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                        field?.SetValue(controller, Convert.ToBoolean(autoFlows));
-                    }
-                    
-                    if (payload.TryGetValue("autoCheckTriggers", out var autoTriggers))
-                    {
-                        var field = typeof(GameKitMachinationsController).GetField("autoCheckTriggers",
-                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                        field?.SetValue(controller, Convert.ToBoolean(autoTriggers));
-                    }
-                }
             }
 
             EditorSceneManager.MarkSceneDirty(managerGo.scene);
