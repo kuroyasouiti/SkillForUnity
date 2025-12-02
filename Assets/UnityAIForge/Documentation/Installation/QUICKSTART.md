@@ -1,38 +1,38 @@
-# Unity-AI-Forge - Quick Start Guide
+# Unity-AI-Forge - クイックスタートガイド
 
-**Get started with Unity-AI-Forge in 5 minutes!**
+**5分でUnity-AI-Forgeを始めましょう！**
 
-## Prerequisites
+## 前提条件
 
-- ✅ Unity Editor 2022.3 or higher (2021.3+ supported)
-- ✅ Python 3.10 or higher
-- ✅ uv package manager (recommended)
+- ✅ Unity Editor 2022.3以降（2021.3以降サポート）
+- ✅ Python 3.10以降
+- ✅ uvパッケージマネージャー（推奨）
 
-## Step 1: Install Unity Package (1 minute)
+## ステップ1: Unityパッケージのインストール（1分）
 
-### Option A: Via Unity Package Manager (Recommended)
+### オプションA: Unity Package Manager経由（推奨）
 
-1. Open Unity Editor
-2. Open **Window > Package Manager**
-3. Click **+ (Plus)** button → **Add package from git URL...**
-4. Enter: `https://github.com/kuroyasouiti/Unity-AI-Forge.git?path=/Assets/UnityAIForge`
-5. Click **Add**
+1. Unity Editorを開く
+2. **Window > Package Manager**を開く
+3. **+（プラス）**ボタンをクリック → **Add package from git URL...**
+4. 入力: `https://github.com/kuroyasouiti/Unity-AI-Forge.git?path=/Assets/UnityAIForge`
+5. **Add**をクリック
 
-### Option B: Manual Installation
+### オプションB: 手動インストール
 
-1. Download the repository
-2. Copy `Assets/UnityAIForge` to your Unity project's `Assets/` folder
+1. リポジトリをダウンロード
+2. `Assets/UnityAIForge`をUnityプロジェクトの`Assets/`フォルダにコピー
 
-## Step 2: Install MCP Server (2 minutes)
+## ステップ2: MCPサーバーのインストール（2分）
 
-### Option A: Automatic (Recommended)
+### オプションA: 自動インストール（推奨）
 
-1. In Unity Editor, go to **Tools > Unity-AI-Forge > MCP Server Manager**
-2. Click **Install Server** (installs to `~/Unity-AI-Forge`)
-3. Click **Register** for your AI tool (Cursor, Claude Desktop, Cline, Windsurf)
-4. Restart your AI tool
+1. Unity Editorで**Tools > Unity-AI-Forge > MCP Server Manager**に移動
+2. **Install Server**をクリック（`~/Unity-AI-Forge`にインストール）
+3. AIツール（Cursor、Claude Desktop、Cline、Windsurf）用に**Register**をクリック
+4. AIツールを再起動
 
-### Option B: Manual Setup
+### オプションB: 手動セットアップ
 
 ```bash
 # Windows (PowerShell)
@@ -46,26 +46,26 @@ cd ~/Unity-AI-Forge
 uv sync
 ```
 
-## Step 3: Start Unity Bridge (30 seconds)
+## ステップ3: Unity Bridgeの起動（30秒）
 
-1. In Unity Editor, go to **Tools > Unity-AI-Forge > MCP Assistant**
-2. Click **Start Bridge**
-3. Status should show "Connected"
+1. Unity Editorで**Tools > Unity-AI-Forge > MCP Assistant**に移動
+2. **Start Bridge**をクリック
+3. ステータスが"Connected"と表示されることを確認
 
-💡 The bridge listens on `ws://localhost:7077/bridge` by default.
+💡 ブリッジはデフォルトで`ws://localhost:7077/bridge`をリッスンします。
 
-## Step 4: Configure Your MCP Client (if manual setup)
+## ステップ4: MCPクライアントの設定（手動セットアップの場合）
 
-**Note:** If you used the automatic installation in Step 2, this is already done for you!
+**注意:** ステップ2で自動インストールを使用した場合は、この設定は既に完了しています！
 
-### For Claude Desktop
+### Claude Desktopの場合
 
-Configuration location:
+設定ファイルの場所:
 - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
 - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - Linux: `~/.config/Claude/claude_desktop_config.json`
 
-Add this configuration:
+以下の設定を追加:
 ```json
 {
   "mcpServers": {
@@ -82,9 +82,9 @@ Add this configuration:
 }
 ```
 
-Replace `C:/Users/YOUR_USERNAME` with your actual home directory path.
+`C:/Users/YOUR_USERNAME`を実際のホームディレクトリパスに置き換えてください。
 
-For macOS/Linux, use:
+macOS/Linuxの場合:
 ```json
 {
   "mcpServers": {
@@ -101,100 +101,100 @@ For macOS/Linux, use:
 }
 ```
 
-### For Cursor
+### Cursorの場合
 
-Configuration is typically at: `%APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`
+設定ファイルは通常以下にあります: `%APPDATA%\Cursor\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`
 
-Use similar configuration as Claude Desktop.
+Claude Desktopと同様の設定を使用してください。
 
-### For Other Tools
+### その他のツール
 
-See [INSTALL_GUIDE.md](INSTALL_GUIDE.md) for Cline and Windsurf configuration.
+ClineとWindsurfの設定については[INSTALL_GUIDE.md](INSTALL_GUIDE.md)を参照してください。
 
-## Step 5: Test the Connection
+## ステップ5: 接続のテスト
 
-Open your MCP client (Claude Desktop, Cursor, etc.) and try:
-
-```
-Can you test the Unity MCP connection?
-```
-
-The AI should respond by calling `unity_ping()` and showing Unity version information.
-
-## Your First Commands
-
-### Create a 3D Scene
+MCPクライアント（Claude Desktop、Cursorなど）を開いて試してください:
 
 ```
-Create a 3D game scene with a player and ground.
+Unity MCP接続をテストしてもらえますか？
 ```
 
-This will:
-- Set up a 3D scene with camera and lighting
-- Create a ground plane
-- Add a player capsule
+AIは`unity_ping()`を呼び出し、Unityのバージョン情報を表示します。
 
-### Create a UI Menu
+## 最初のコマンド
 
-```
-Create a main menu UI with Play, Settings, and Quit buttons.
-```
-
-This will:
-- Set up a Canvas and EventSystem
-- Create a menu panel
-- Add three styled buttons
-
-### Inspect the Scene
+### 3Dシーンの作成
 
 ```
-What GameObjects are in the current scene?
+プレイヤーと地面のある3Dゲームシーンを作成してください。
 ```
 
-This will show the scene hierarchy and all GameObjects.
+これにより:
+- カメラとライトを備えた3Dシーンをセットアップ
+- 地面プレーンを作成
+- プレイヤーカプセルを追加
 
-## Common Commands Reference
+### UIメニューの作成
 
-| Task | Example Command |
+```
+Play、Settings、Quitボタンのあるメインメニューを作成してください。
+```
+
+これにより:
+- CanvasとEventSystemをセットアップ
+- メニューパネルを作成
+- 3つのスタイル付きボタンを追加
+
+### シーンの検査
+
+```
+現在のシーンにはどんなGameObjectがありますか？
+```
+
+これによりシーン階層とすべてのGameObjectが表示されます。
+
+## よく使うコマンドリファレンス
+
+| タスク | コマンド例 |
 |------|-----------------|
-| Create scene | "Set up a 3D scene" |
-| Create GameObject | "Create a cube at position (0, 1, 0)" |
-| Add component | "Add a Rigidbody to the Player" |
-| Create UI | "Create a button with text 'Start Game'" |
-| Create ScriptableObject | "Create a GameConfig ScriptableObject with maxPlayers=4" |
-| List GameObjects | "Show me all GameObjects in the scene" |
-| Batch operations | "Create 10 cubes in a line" |
+| シーン作成 | "3Dシーンをセットアップしてください" |
+| GameObject作成 | "位置(0, 1, 0)にCubeを作成してください" |
+| コンポーネント追加 | "PlayerにRigidbodyを追加してください" |
+| UI作成 | "「Start Game」というテキストのボタンを作成してください" |
+| ScriptableObject作成 | "maxPlayers=4のGameConfig ScriptableObjectを作成してください" |
+| GameObjectリスト | "シーン内のすべてのGameObjectを表示してください" |
+| バッチ操作 | "一列に10個のCubeを作成してください" |
 
-## Tool Reference
+## ツールリファレンス
 
-### Most Used Tools
+### 最もよく使われるツール
 
-**Scene Management:**
+**シーン管理:**
 ```python
-unity_scene_quickSetup({"setupType": "3D"})  # or "2D", "UI"
+unity_scene_quickSetup({"setupType": "3D"})  # または "2D"、"UI"
 unity_scene_crud({"operation": "create", "scenePath": "Assets/Scenes/Level1.unity"})
 ```
 
-**GameObject Creation:**
+**GameObject作成:**
 ```python
 unity_gameobject_createFromTemplate({
-    "template": "Cube",  # or Sphere, Player, Enemy, etc.
+    "template": "Cube",  # またはSphere、Player、Enemyなど
     "name": "MyObject",
     "position": {"x": 0, "y": 1, "z": 0}
 })
 ```
 
-**UI Creation:**
+**UI作成:**
 ```python
 unity_ugui_createFromTemplate({
-    "template": "Button",  # or Text, Panel, Image, etc.
+    "template": "Button",  # またはText、Panel、Imageなど
     "text": "Click Me!",
     "width": 200,
     "height": 50
 })
 ```
 
-**Component Management:**
+**コンポーネント管理:**
 ```python
 unity_component_crud({
     "operation": "add",
@@ -203,7 +203,7 @@ unity_component_crud({
 })
 ```
 
-**Scene Inspection:**
+**シーン検査:**
 ```python
 unity_scene_crud({
     "operation": "inspect",
@@ -213,9 +213,9 @@ unity_scene_crud({
 })
 ```
 
-**ScriptableObject Management:**
+**ScriptableObject管理:**
 ```python
-# Create a ScriptableObject
+# ScriptableObjectを作成
 unity_scriptableObject_crud({
     "operation": "create",
     "typeName": "MyGame.GameConfig",
@@ -226,14 +226,14 @@ unity_scriptableObject_crud({
     }
 })
 
-# Inspect existing ScriptableObject
+# 既存のScriptableObjectを検査
 unity_scriptableObject_crud({
     "operation": "inspect",
     "assetPath": "Assets/Data/Config.asset",
     "includeProperties": True
 })
 
-# Update properties
+# プロパティを更新
 unity_scriptableObject_crud({
     "operation": "update",
     "assetPath": "Assets/Data/Config.asset",
@@ -242,7 +242,7 @@ unity_scriptableObject_crud({
     }
 })
 
-# Find all ScriptableObjects of a type
+# 特定の型のすべてのScriptableObjectを検索
 unity_scriptableObject_crud({
     "operation": "findByType",
     "typeName": "MyGame.GameConfig",
@@ -250,72 +250,72 @@ unity_scriptableObject_crud({
 })
 ```
 
-## Next Steps
+## 次のステップ
 
-### Learn More
+### さらに学ぶ
 
-- 📖 **[README.md](README.md)** - Full MCP server documentation
-- 📋 **[INSTALL_GUIDE.md](INSTALL_GUIDE.md)** - Detailed installation instructions
-- 🎮 **[examples/](examples/)** - Practical tutorials
-- 📚 **[Project README](../../README.md)** - Complete project documentation
+- 📖 **[README.md](README.md)** - 完全なMCPサーバードキュメント
+- 📋 **[INSTALL_GUIDE.md](INSTALL_GUIDE.md)** - 詳細なインストール手順
+- 🎮 **[examples/](examples/)** - 実践的なチュートリアル
+- 📚 **[プロジェクトREADME](../../README.md)** - 完全なプロジェクトドキュメント
 
-### Try These Examples
+### これらの例を試してみましょう
 
-1. **[Basic Scene Setup](examples/01-basic-scene-setup.md)** - Create your first game scene
-2. **[UI Creation](examples/02-ui-creation.md)** - Build a complete menu system
-3. **[Game Level](examples/03-game-level.md)** - Design a game level
-4. **[Prefab Workflow](examples/04-prefab-workflow.md)** - Work with prefabs
-5. **[Design Patterns](examples/05-design-patterns.md)** - Generate design pattern code
+1. **[基本シーンセットアップ](examples/01-basic-scene-setup.md)** - 最初のゲームシーンを作成
+2. **[UI作成](examples/02-ui-creation.md)** - 完全なメニューシステムを構築
+3. **[ゲームレベル](examples/03-game-level.md)** - ゲームレベルをデザイン
+4. **[Prefabワークフロー](examples/04-prefab-workflow.md)** - Prefabを使って作業
+5. **[デザインパターン](examples/05-design-patterns.md)** - デザインパターンコードを生成
 
-### Best Practices
+### ベストプラクティス
 
-✅ **DO:**
-- Use templates when available (`createFromTemplate`)
-- Check scene context before making changes (`unity_scene_crud` with `operation="inspect"`)
-- Use batch operations for multiple similar tasks
-- Specify full component type names (e.g., `UnityEngine.Rigidbody`)
+✅ **推奨:**
+- 利用可能な場合はテンプレートを使用（`createFromTemplate`）
+- 変更を加える前にシーンコンテキストを確認（`unity_scene_crud`で`operation="inspect"`）
+- 類似の複数タスクにはバッチ操作を使用
+- 完全なコンポーネント型名を指定（例: `UnityEngine.Rigidbody`）
 
-❌ **DON'T:**
-- Create GameObjects manually when templates exist
-- Make many individual calls instead of batch operations
-- Forget to start the Unity Bridge before using tools
+❌ **非推奨:**
+- テンプレートが存在する場合に手動でGameObjectを作成
+- バッチ操作の代わりに多数の個別呼び出し
+- ツール使用前にUnity Bridgeの起動を忘れる
 
-## Troubleshooting
+## トラブルシューティング
 
-### Unity Bridge Not Connected
+### Unity Bridgeが接続されない
 
-**Problem:** Tools fail with "Unity bridge is not connected"
+**問題:** ツールが"Unity bridge is not connected"で失敗する
 
-**Solution:**
-1. Open Unity Editor
-2. Go to Tools > MCP Assistant
-3. Click "Start Bridge"
-4. Wait for "Connected" status
+**解決策:**
+1. Unity Editorを開く
+2. Tools > MCP Assistantに移動
+3. "Start Bridge"をクリック
+4. "Connected"ステータスを待つ
 
-### Commands Time Out
+### コマンドがタイムアウトする
 
-**Problem:** Commands take too long and timeout
+**問題:** コマンドに時間がかかりすぎてタイムアウトする
 
-**Solution:**
-- Increase timeout in MCP configuration
-- Check Unity isn't compiling scripts
-- Use lighter inspection operations (`includeProperties: false`)
+**解決策:**
+- MCP設定でタイムアウトを増やす
+- Unityがスクリプトをコンパイルしていないか確認
+- より軽い検査操作を使用（`includeProperties: false`）
 
-### GameObject Not Found
+### GameObjectが見つからない
 
-**Problem:** "GameObject not found" error
+**問題:** "GameObject not found"エラー
 
-**Solution:**
-1. Use `unity_scene_crud({"operation": "inspect"})` to see what exists
-2. Check GameObject path is correct (case-sensitive)
-3. Verify GameObject is in the active scene
+**解決策:**
+1. `unity_scene_crud({"operation": "inspect"})`を使用して存在するものを確認
+2. GameObjectパスが正しいか確認（大文字小文字区別）
+3. GameObjectがアクティブなシーンにあることを確認
 
-## Getting Help
+## ヘルプの入手
 
-- 🐛 **Report Issues**: [GitHub Issues](https://github.com/kuroyasouiti/Unity-AI-Forge/issues)
-- 📖 **Documentation**: [README.md](README.md) and [INSTALL_GUIDE.md](INSTALL_GUIDE.md)
-- 💬 **Examples**: Check [examples/](examples/) for practical guides
+- 🐛 **問題報告**: [GitHub Issues](https://github.com/kuroyasouiti/Unity-AI-Forge/issues)
+- 📖 **ドキュメント**: [README.md](README.md)と[INSTALL_GUIDE.md](INSTALL_GUIDE.md)
+- 💬 **Examples**: 実践的なガイドについては[examples/](examples/)を確認
 
 ---
 
-**Ready to build amazing Unity projects with AI assistance!** 🚀
+**AI支援で素晴らしいUnityプロジェクトを構築する準備ができました！** 🚀

@@ -1,37 +1,37 @@
-# Example 04: Prefab Workflow - Create, Modify, and Reuse Assets
+# 例題4: Prefabワークフロー - アセットの作成、変更、再利用
 
-This example demonstrates how to work with Unity prefabs using MCP Skill. You'll learn to create prefabs from GameObjects, instantiate them in scenes, make modifications, and manage prefab overrides.
+この例では、Unity-AI-ForgeでUnity Prefabを操作する方法を示します。シーンのGameObjectからPrefabを作成し、シーンにインスタンス化し、変更を加え、Prefabオーバーライドを管理する方法を学びます。
 
-## What You'll Learn
+## 学ぶこと
 
-- Creating prefabs from scene GameObjects
-- Instantiating prefabs in the scene
-- Modifying prefab instances
-- Applying and reverting instance overrides
-- Unpacking prefab instances
-- Inspecting prefab assets
+- シーンのGameObjectからPrefabを作成
+- Prefabをシーンにインスタンス化
+- Prefabインスタンスの変更
+- インスタンスオーバーライドの適用と復帰
+- Prefabインスタンスのアンパック
+- Prefabアセットの検査
 
-## Prerequisites
+## 前提条件
 
-- Unity Editor running with MCP Bridge connected
-- Completed examples 01-03 (or basic Unity knowledge)
+- MCP Bridgeが接続されたUnity Editorが実行中
+- 例題01-03を完了（または基本的なUnity知識）
 
-## Step 1: Create a Reusable Enemy Prefab
+## ステップ1: 再利用可能な敵Prefabの作成
 
-First, create an enemy GameObject that we'll convert to a prefab:
+まず、Prefabに変換する敵GameObjectを作成します：
 
 ```python
-# Set up 3D scene
+# 3Dシーンをセットアップ
 unity_scene_quickSetup({"setupType": "3D"})
 
-# Create the enemy GameObject using template
+# テンプレートを使用して敵GameObjectを作成
 unity_gameobject_createFromTemplate({
     "template": "Capsule",
     "name": "Enemy_Template",
     "position": {"x": 0, "y": 1, "z": 0}
 })
 
-# Customize with components and children
+# コンポーネントと子オブジェクトでカスタマイズ
 unity_template_manage({
     "operation": "customize",
     "gameObjectPath": "Enemy_Template",
@@ -48,7 +48,7 @@ unity_template_manage({
             "properties": {
                 "mass": 2.0,
                 "useGravity": True,
-                "constraints": 112  # Freeze rotation X, Z
+                "constraints": 112  # X、Z軸の回転を固定
             }
         }
     ],
@@ -77,37 +77,37 @@ unity_template_manage({
 })
 ```
 
-## Step 2: Create the Prefab Asset
+## ステップ2: Prefabアセットの作成
 
-Now convert the GameObject to a prefab:
+次にGameObjectをPrefabに変換します：
 
 ```python
-# Create prefab from the Enemy_Template GameObject
+# Enemy_Template GameObjectからPrefabを作成
 unity_prefab_crud({
     "operation": "create",
     "gameObjectPath": "Enemy_Template",
     "prefabPath": "Assets/Prefabs/Enemy.prefab"
 })
 
-# Inspect the prefab to verify it was created correctly
+# Prefabを検査して正しく作成されたことを確認
 unity_prefab_crud({
     "operation": "inspect",
     "prefabPath": "Assets/Prefabs/Enemy.prefab"
 })
 ```
 
-## Step 3: Instantiate Multiple Prefab Instances
+## ステップ3: 複数のPrefabインスタンスのインスタンス化
 
-Create several instances of the enemy prefab:
+敵Prefabのいくつかのインスタンスを作成します：
 
 ```python
-# Create a container for all enemies
+# すべての敵用のコンテナを作成
 unity_gameobject_crud({
     "operation": "create",
     "name": "Enemies"
 })
 
-# Instantiate enemy at different positions using batch operations
+# バッチ操作を使用して異なる位置に敵をインスタンス化
 positions = [
     {"x": 5, "y": 1, "z": 5},
     {"x": -5, "y": 1, "z": 5},
@@ -116,7 +116,7 @@ positions = [
     {"x": 0, "y": 1, "z": 7}
 ]
 
-# Create multiple instances
+# 複数のインスタンスを作成
 for i, pos in enumerate(positions):
     unity_prefab_crud({
         "operation": "instantiate",
@@ -124,7 +124,7 @@ for i, pos in enumerate(positions):
         "parentPath": "Enemies"
     })
 
-    # Rename and position each instance
+    # 各インスタンスの名前変更と位置設定
     unity_gameobject_crud({
         "operation": "rename",
         "gameObjectPath": f"Enemies/Enemy(Clone)",
@@ -141,13 +141,12 @@ for i, pos in enumerate(positions):
     })
 ```
 
+## ステップ4: Prefabインスタンスの変更
 
-## Step 4: Modify Prefab Instances
-
-Make unique modifications to specific instances:
+特定のインスタンスに固有の変更を加えます：
 
 ```python
-# Make Enemy_1 larger and heavier (boss enemy)
+# Enemy_1を大きく重くする（ボス敵）
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Enemies/Enemy_1",
@@ -166,7 +165,7 @@ unity_component_crud({
     }
 })
 
-# Make Enemy_2 faster (scout enemy)
+# Enemy_2を速くする（偵察敵）
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Enemies/Enemy_2",
@@ -177,102 +176,102 @@ unity_component_crud({
 })
 ```
 
-## Step 5: Apply Instance Overrides to Prefab
+## ステップ5: インスタンスオーバーライドをPrefabに適用
 
-If you want to save the modifications from Enemy_1 back to the prefab:
+Enemy_1からの変更をPrefabに保存したい場合：
 
 ```python
-# Apply overrides from Enemy_1 back to the Enemy prefab
+# Enemy_1からのオーバーライドをEnemyPrefabに適用
 unity_prefab_crud({
     "operation": "applyOverrides",
     "gameObjectPath": "Enemies/Enemy_1"
 })
 
-# Now all future instances will have the larger scale and heavier mass
+# これ以降のすべてのインスタンスが大きなスケールと重い質量を持つようになります
 ```
 
-## Step 6: Revert Instance Overrides
+## ステップ6: インスタンスオーバーライドの復帰
 
-If you want to reset an instance back to the prefab's original state:
+インスタンスをPrefabの元の状態にリセットしたい場合：
 
 ```python
-# Revert Enemy_2 back to prefab defaults
+# Enemy_2をPrefabのデフォルトに戻す
 unity_prefab_crud({
     "operation": "revertOverrides",
     "gameObjectPath": "Enemies/Enemy_2"
 })
 
-# Enemy_2 is now identical to the prefab again
+# Enemy_2は再びPrefabと同一になります
 ```
 
-## Step 7: Update Prefab Asset Directly
+## ステップ7: Prefabアセットを直接更新
 
-Modify the prefab asset itself:
+Prefabアセット自体を変更します：
 
 ```python
-# First, let's modify the original template GameObject
+# まず、元のテンプレートGameObjectを変更しましょう
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Enemy_Template",
     "componentType": "UnityEngine.CapsuleCollider",
     "propertyChanges": {
-        "radius": 0.6  # Make collider slightly larger
+        "radius": 0.6  # コライダーを少し大きくする
     }
 })
 
-# Update the prefab asset with changes from the template
+# テンプレートからの変更でPrefabアセットを更新
 unity_prefab_crud({
     "operation": "update",
     "gameObjectPath": "Enemy_Template",
     "prefabPath": "Assets/Prefabs/Enemy.prefab"
 })
 
-# All instances without overrides will automatically update!
+# オーバーライドのないすべてのインスタンスが自動的に更新されます！
 ```
 
-## Step 8: Unpack a Prefab Instance
+## ステップ8: Prefabインスタンスのアンパック
 
-Convert a prefab instance back to regular GameObjects:
+Prefabインスタンスを通常のGameObjectに戻します：
 
 ```python
-# Unpack Enemy_3 (removes prefab connection)
+# Enemy_3をアンパック（Prefab接続を削除）
 unity_prefab_crud({
     "operation": "unpack",
     "gameObjectPath": "Enemies/Enemy_3",
     "unpackMode": "Completely"
 })
 
-# Enemy_3 is now a regular GameObject, not connected to the prefab
-# Changes to the prefab won't affect it anymore
+# Enemy_3は通常のGameObjectになり、Prefabに接続されていません
+# Prefabへの変更はもう影響しません
 ```
 
-## Step 9: Create Nested Prefabs
+## ステップ9: ネストされたPrefabの作成
 
-Create a weapon prefab and add it to the enemy:
+武器Prefabを作成して敵に追加します：
 
 ```python
-# Create a weapon GameObject
+# 武器GameObjectを作成
 unity_gameobject_createFromTemplate({
     "template": "Cube",
     "name": "Sword",
     "scale": {"x": 0.2, "y": 1.0, "z": 0.1}
 })
 
-# Create weapon prefab
+# 武器Prefabを作成
 unity_prefab_crud({
     "operation": "create",
     "gameObjectPath": "Sword",
     "prefabPath": "Assets/Prefabs/Sword.prefab"
 })
 
-# Instantiate sword as child of enemy template
+# 敵テンプレートの子として剣をインスタンス化
 unity_prefab_crud({
     "operation": "instantiate",
     "prefabPath": "Assets/Prefabs/Sword.prefab",
     "parentPath": "Enemy_Template"
 })
 
-# Position the sword
+# 剣の位置を設定
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Enemy_Template/Sword(Clone)",
@@ -283,35 +282,35 @@ unity_component_crud({
     }
 })
 
-# Update the enemy prefab to include the sword
+# 敵Prefabを更新して剣を含める
 unity_prefab_crud({
     "operation": "update",
     "gameObjectPath": "Enemy_Template",
     "prefabPath": "Assets/Prefabs/Enemy.prefab"
 })
 
-# Now all new enemy instances will have a sword!
+# 新しい敵インスタンスはすべて剣を持つようになります！
 ```
 
-## Step 10: Inspect and Verify
+## ステップ10: 検査と確認
 
-Check the prefab structure and instances:
+Prefab構造とインスタンスを確認します：
 
 ```python
-# Inspect the enemy prefab
+# 敵Prefabを検査
 unity_prefab_crud({
     "operation": "inspect",
     "prefabPath": "Assets/Prefabs/Enemy.prefab"
 })
 
-# Find all instances of the enemy prefab in the scene
+# シーン内の敵Prefabのすべてのインスタンスを検索
 unity_gameobject_crud({
     "operation": "findMultiple",
     "pattern": "Enemies/Enemy*",
     "maxResults": 20
 })
 
-# Inspect a specific instance with details
+# 詳細付きで特定のインスタンスを検査
 unity_gameobject_crud({
     "operation": "inspect",
     "gameObjectPath": "Enemies/Enemy_1",
@@ -319,19 +318,19 @@ unity_gameobject_crud({
 })
 ```
 
-## Complete Prefab Workflow Example
+## 完全なPrefabワークフローの例
 
-Here's a complete script combining all concepts:
+すべての概念を組み合わせた完全なスクリプトです：
 
 ```python
-# 1. Create template
+# 1. テンプレートを作成
 unity_gameobject_createFromTemplate({
     "template": "Cube",
     "name": "Powerup_Template",
     "scale": {"x": 0.5, "y": 0.5, "z": 0.5}
 })
 
-# 2. Add components
+# 2. コンポーネントを追加
 unity_component_crud({
     "operation": "add",
     "gameObjectPath": "Powerup_Template",
@@ -339,21 +338,21 @@ unity_component_crud({
     "propertyChanges": {"isTrigger": True}
 })
 
-# 3. Create prefab
+# 3. Prefabを作成
 unity_prefab_crud({
     "operation": "create",
     "gameObjectPath": "Powerup_Template",
     "prefabPath": "Assets/Prefabs/Powerup.prefab"
 })
 
-# 4. Instantiate multiple times
+# 4. 複数回インスタンス化
 for i in range(5):
     unity_prefab_crud({
         "operation": "instantiate",
         "prefabPath": "Assets/Prefabs/Powerup.prefab"
     })
 
-# 5. Modify one instance
+# 5. 1つのインスタンスを変更
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Powerup(Clone)",
@@ -363,42 +362,42 @@ unity_component_crud({
     }
 })
 
-# 6. Apply changes back to prefab
+# 6. 変更をPrefabに適用
 unity_prefab_crud({
     "operation": "applyOverrides",
     "gameObjectPath": "Powerup(Clone)"
 })
 ```
 
-## Best Practices
+## ベストプラクティス
 
-1. **Always Use Prefabs for Repeated Objects**
-   - Enemies, collectibles, UI elements, environmental props
-   - Easier to maintain and update
+1. **繰り返しオブジェクトには常にPrefabを使用**
+   - 敵、収集アイテム、UI要素、環境小道具
+   - メンテナンスと更新が容易
 
-2. **Organize Prefabs in Folders**
+2. **Prefabをフォルダに整理**
    - `Assets/Prefabs/Characters/`
    - `Assets/Prefabs/Environment/`
    - `Assets/Prefabs/UI/`
 
-3. **Use Nested Prefabs**
-   - Break complex objects into smaller prefab components
-   - Easier to reuse parts (e.g., wheels on different vehicles)
+3. **ネストされたPrefabを使用**
+   - 複雑なオブジェクトを小さなPrefabコンポーネントに分割
+   - パーツの再利用が容易（例：異なる車両のホイール）
 
-4. **Apply vs. Revert Carefully**
-   - `applyOverrides`: Saves changes to the prefab (affects all instances)
-   - `revertOverrides`: Discards changes (resets to prefab)
+4. **適用と復帰を慎重に使用**
+   - `applyOverrides`: 変更をPrefabに保存（すべてのインスタンスに影響）
+   - `revertOverrides`: 変更を破棄（Prefabにリセット）
 
-5. **Unpack Only When Necessary**
-   - Unpacking breaks the prefab connection
-   - Only unpack if you need a unique, one-off variation
+5. **必要な場合のみアンパック**
+   - アンパックするとPrefab接続が切れます
+   - ユニークな一回限りのバリエーションが必要な場合のみアンパック
 
-## Performance Tips
+## パフォーマンスのヒント
 
-When working with many prefabs:
+多くのPrefabを扱う場合：
 
 ```python
-# Use includeProperties=false for faster inspection
+# 検査を高速化するためにincludeProperties=falseを使用
 unity_gameobject_crud({
     "operation": "inspectMultiple",
     "pattern": "Enemies/*",
@@ -406,7 +405,7 @@ unity_gameobject_crud({
     "maxResults": 100
 })
 
-# Instantiate multiple prefabs
+# 複数のPrefabをインスタンス化
 for i in range(5):
     unity_prefab_crud({
         "operation": "instantiate",
@@ -415,21 +414,21 @@ for i in range(5):
     })
 ```
 
-## Common Issues
+## よくある問題
 
-**Issue**: Changes to prefab not affecting instances
-**Solution**: Ensure instances don't have overrides. Use `revertOverrides` first.
+**問題**: Prefabへの変更がインスタンスに影響しない
+**解決策**: インスタンスにオーバーライドがないことを確認。まず`revertOverrides`を使用。
 
-**Issue**: Cannot modify prefab instances
-**Solution**: Check that instances are still connected to prefab (not unpacked).
+**問題**: Prefabインスタンスを変更できない
+**解決策**: インスタンスがまだPrefabに接続されているか確認（アンパックされていない）。
 
-**Issue**: Nested prefab modifications lost
-**Solution**: Apply overrides from innermost to outermost prefab.
+**問題**: ネストされたPrefabの変更が失われる
+**解決策**: 最も内側から最も外側のPrefabへとオーバーライドを適用。
 
 ---
 
-**See Also:**
-- [01-basic-scene-setup.md](01-basic-scene-setup.md) - Basic scene creation
-- [02-ui-creation.md](02-ui-creation.md) - UI prefab workflow
-- [03-game-level.md](03-game-level.md) - Using prefabs in levels
-- CLAUDE.md - Prefab Management section for API details
+**関連項目:**
+- [01-basic-scene-setup.md](01-basic-scene-setup.md) - 基本的なシーン作成
+- [02-ui-creation.md](02-ui-creation.md) - UI Prefabワークフロー
+- [03-game-level.md](03-game-level.md) - レベルでのPrefab使用
+- CLAUDE.md - API詳細についてのPrefab管理セクション

@@ -1,29 +1,29 @@
-# Example 2: UI Menu Creation
+# 例題2: UIメニュー作成
 
-**Goal**: Create a complete main menu UI with buttons, title, and panel.
+**目標**: ボタン、タイトル、パネルを含む完全なメインメニューUIを作成する。
 
-**Difficulty**: Beginner
-**Time**: 10 minutes
+**難易度**: 初級
+**所要時間**: 10分
 
-## Prerequisites
+## 前提条件
 
-- Unity Editor 2021.3 or higher
-- MCP Bridge running
-- Basic understanding of Unity UI (Canvas, RectTransform)
+- Unity Editor 2021.3以降
+- MCP Bridgeが実行中
+- Unity UI（Canvas、RectTransform）の基本的な理解
 
-## What You'll Create
+## 作成するもの
 
-- A Canvas with proper settings
-- A semi-transparent background panel
-- A title text
-- Three menu buttons (Play, Settings, Quit)
-- Proper layout with spacing
+- 適切な設定のCanvas
+- 半透明の背景パネル
+- タイトルテキスト
+- 3つのメニューボタン（Play、Settings、Quit）
+- スペーシングを含む適切なレイアウト
 
-## Step-by-Step Guide
+## ステップバイステップガイド
 
-### 1. Set Up UI Scene
+### 1. UIシーンのセットアップ
 
-Create a new scene with UI components:
+UIコンポーネントを含む新しいシーンを作成します：
 
 ```python
 unity_scene_quickSetup({
@@ -31,13 +31,13 @@ unity_scene_quickSetup({
 })
 ```
 
-This creates:
-- Canvas (with Canvas Scaler for responsive design)
-- EventSystem (for handling UI input)
+これにより以下が作成されます：
+- Canvas（レスポンシブデザイン用のCanvas Scaler付き）
+- EventSystem（UI入力の処理用）
 
-### 2. Create Background Panel
+### 2. 背景パネルの作成
 
-Add a semi-transparent panel as the background:
+背景として半透明のパネルを追加します：
 
 ```python
 unity_ugui_createFromTemplate({
@@ -49,9 +49,9 @@ unity_ugui_createFromTemplate({
 })
 ```
 
-### 3. Update Panel Color
+### 3. パネルの色を更新
 
-Make the panel semi-transparent dark:
+パネルを半透明の暗い色にします：
 
 ```python
 unity_component_crud({
@@ -69,9 +69,9 @@ unity_component_crud({
 })
 ```
 
-### 4. Add Title Text
+### 4. タイトルテキストの追加
 
-Create the title at the top of the panel:
+パネル上部にタイトルを作成します：
 
 ```python
 unity_ugui_createFromTemplate({
@@ -86,9 +86,9 @@ unity_ugui_createFromTemplate({
 })
 ```
 
-### 5. Position the Title
+### 5. タイトルの位置調整
 
-Adjust the title position:
+タイトルの位置を調整します：
 
 ```python
 unity_ugui_manage({
@@ -99,9 +99,9 @@ unity_ugui_manage({
 })
 ```
 
-### 6. Create Button Container
+### 6. ボタンコンテナの作成
 
-Add a vertical layout group for organizing buttons:
+ボタンを整理するための垂直レイアウトグループを追加します：
 
 ```python
 unity_gameobject_crud({
@@ -127,12 +127,12 @@ unity_ugui_layoutManage({
 })
 ```
 
-### 7. Create Menu Buttons
+### 7. メニューボタンの作成
 
-Add three buttons with proper styling:
+適切なスタイリングで3つのボタンを追加します：
 
 ```python
-# Play Button
+# Playボタン
 unity_ugui_createFromTemplate({
     "template": "Button",
     "name": "PlayButton",
@@ -142,7 +142,7 @@ unity_ugui_createFromTemplate({
     "height": 60
 })
 
-# Settings Button
+# Settingsボタン
 unity_ugui_createFromTemplate({
     "template": "Button",
     "name": "SettingsButton",
@@ -152,7 +152,7 @@ unity_ugui_createFromTemplate({
     "height": 60
 })
 
-# Quit Button
+# Quitボタン
 unity_ugui_createFromTemplate({
     "template": "Button",
     "name": "QuitButton",
@@ -163,9 +163,9 @@ unity_ugui_createFromTemplate({
 })
 ```
 
-### 8. Update Button Text Sizes
+### 8. ボタンテキストサイズの更新
 
-Make button text more readable:
+ボタンテキストを読みやすくします：
 
 ```python
 unity_component_crud({
@@ -199,9 +199,9 @@ unity_component_crud({
 })
 ```
 
-### 9. Center the Panel
+### 9. パネルを中央に配置
 
-Ensure the panel is centered on screen:
+パネルが画面中央にあることを確認します：
 
 ```python
 unity_ugui_manage({
@@ -211,9 +211,9 @@ unity_ugui_manage({
 })
 ```
 
-## Expected Result
+## 期待される結果
 
-Your UI hierarchy should look like:
+UI階層は以下のようになります：
 
 ```
 Canvas
@@ -228,29 +228,29 @@ Canvas
             └── Text
 ```
 
-In Game view, you should see:
-- A centered dark panel (400x600)
-- "Main Menu" title at the top
-- Three evenly-spaced buttons below
-- Buttons expand to fill the width
+ゲームビューには以下が表示されます：
+- 中央に配置された暗いパネル（400x600）
+- 上部の「Main Menu」タイトル
+- 下に等間隔で配置された3つのボタン
+- 幅いっぱいに広がるボタン
 
-## Next Steps - Add Functionality
+## 次のステップ - 機能の追加
 
-### Option 1: Add Click Events (Manual)
+### オプション1: クリックイベントの追加（手動）
 
-In Unity, you can manually add click events:
-1. Select a button
-2. In Inspector, find the Button component
-3. Click + in the OnClick section
-4. Drag your script GameObject
-5. Select the method to call
+Unityで手動でクリックイベントを追加できます：
+1. ボタンを選択
+2. InspectorでButtonコンポーネントを見つける
+3. OnClickセクションで+をクリック
+4. スクリプトのGameObjectをドラッグ
+5. 呼び出すメソッドを選択
 
-### Option 2: Create a Menu Manager Script
+### オプション2: メニューマネージャースクリプトの作成
 
-Create a script to handle button clicks:
+ボタンクリックを処理するスクリプトを作成します：
 
 ```python
-# Create MenuManager script using asset_crud
+# asset_crudを使用してMenuManagerスクリプトを作成
 unity_asset_crud({
     "operation": "create",
     "assetPath": "Assets/Scripts/MenuManager.cs",
@@ -278,27 +278,27 @@ public class MenuManager : MonoBehaviour
 })
 ```
 
-## Common Issues
+## よくある問題
 
-**Issue**: Buttons don't respond to clicks
-- **Solution**: Make sure EventSystem exists in the hierarchy
+**問題**: ボタンがクリックに反応しない
+- **解決策**: 階層にEventSystemが存在することを確認
 
-**Issue**: UI is too small/large on different screens
-- **Solution**: Canvas Scaler is already configured for responsive design
+**問題**: UIが異なる画面で小さすぎる/大きすぎる
+- **解決策**: Canvas Scalerはレスポンシブデザイン用に既に設定されています
 
-**Issue**: Text is blurry
-- **Solution**: Increase Canvas Scaler reference resolution or use TextMeshPro
+**問題**: テキストがぼやける
+- **解決策**: Canvas Scalerの参照解像度を上げるか、TextMeshProを使用
 
-## Enhancements
+## 強化
 
-Try these improvements:
+以下の改善を試してみましょう：
 
-1. **Add Hover Effects**: Use button transitions in Inspector
-2. **Add Icons**: Import sprites and add to buttons
-3. **Animate Transitions**: Use Unity's Animation system
-4. **Add Sound Effects**: Attach AudioSource to buttons
+1. **ホバーエフェクトの追加**: Inspectorでボタン遷移を使用
+2. **アイコンの追加**: スプライトをインポートしてボタンに追加
+3. **トランジションアニメーション**: Unityのアニメーションシステムを使用
+4. **サウンドエフェクトの追加**: ボタンにAudioSourceをアタッチ
 
-## Related Examples
+## 関連する例題
 
-- [01-basic-scene-setup.md](01-basic-scene-setup.md) - Add this UI to a game scene
-- [04-prefab-workflow.md](04-prefab-workflow.md) - Turn this menu into a reusable prefab
+- [01-basic-scene-setup.md](01-basic-scene-setup.md) - ゲームシーンにこのUIを追加
+- [04-prefab-workflow.md](04-prefab-workflow.md) - このメニューを再利用可能なPrefabに変換

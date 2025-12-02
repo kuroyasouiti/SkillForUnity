@@ -1,30 +1,30 @@
-# Example 03: Building a Complete Game Level
+# 例題3: 完全なゲームレベルの構築
 
-This example demonstrates how to create a complete 3D game level with terrain, player, enemies, collectibles, and environmental objects using Unity MCP Skill.
+この例では、Unity-AI-Forgeを使用して、地形、プレイヤー、敵、収集アイテム、環境オブジェクトを含む完全な3Dゲームレベルを作成する方法を示します。
 
-## What You'll Create
+## 作成するもの
 
-- Ground plane with physics
-- Player character with movement script
-- Multiple enemy NPCs
-- Collectible items
-- Environmental obstacles
-- Basic lighting setup
+- 物理演算対応の地面プレーン
+- 移動スクリプト付きプレイヤーキャラクター
+- 複数の敵NPC
+- 収集可能なアイテム
+- 環境障害物
+- 基本的なライティング設定
 
-## Prerequisites
+## 前提条件
 
-- Unity Editor running with MCP Bridge connected
-- Basic understanding of Unity GameObjects and components
+- MCP Bridgeが接続されたUnity Editorが実行中
+- UnityのGameObjectとコンポーネントの基本的な理解
 
-## Step 1: Scene Setup
+## ステップ1: シーンのセットアップ
 
-First, set up a 3D scene with camera and lighting:
+まず、カメラとライティングを含む3Dシーンをセットアップします：
 
 ```python
-# Create a new 3D scene with camera and directional light
+# カメラとディレクショナルライトを含む新しい3Dシーンを作成
 unity_scene_quickSetup({"setupType": "3D"})
 
-# Adjust camera position for better view
+# より良いビューのためにカメラ位置を調整
 unity_component_crud({
     "operation": "update",
     "gameObjectPath": "Main Camera",
@@ -36,12 +36,12 @@ unity_component_crud({
 })
 ```
 
-## Step 2: Create the Ground
+## ステップ2: 地面の作成
 
-Create a large ground plane with physics:
+物理演算対応の大きな地面プレーンを作成します：
 
 ```python
-# Create ground
+# 地面を作成
 unity_gameobject_createFromTemplate({
     "template": "Plane",
     "name": "Ground",
@@ -49,7 +49,7 @@ unity_gameobject_createFromTemplate({
     "scale": {"x": 10, "y": 1, "z": 10}
 })
 
-# Add collider for physics interactions
+# 物理インタラクション用のコライダーを追加
 unity_component_crud({
     "operation": "add",
     "gameObjectPath": "Ground",
@@ -57,19 +57,19 @@ unity_component_crud({
 })
 ```
 
-## Step 3: Create the Player
+## ステップ3: プレイヤーの作成
 
-Create a player character with capsule shape:
+カプセル形状のプレイヤーキャラクターを作成します：
 
 ```python
-# Create player using template
+# テンプレートを使用してプレイヤーを作成
 unity_gameobject_createFromTemplate({
     "template": "Player",
     "name": "Player",
     "position": {"x": 0, "y": 1, "z": 0}
 })
 
-# Add physics components
+# 物理コンポーネントを追加
 unity_component_crud({
     "operation": "add",
     "gameObjectPath": "Player",
@@ -77,7 +77,7 @@ unity_component_crud({
     "propertyChanges": {
         "mass": 1.0,
         "useGravity": True,
-        "constraints": 112  # Freeze rotation X and Z
+        "constraints": 112  # X軸とZ軸の回転を固定
     }
 })
 
@@ -93,9 +93,9 @@ unity_component_crud({
 })
 ```
 
-## Step 4: Create Player Movement Script
+## ステップ4: プレイヤー移動スクリプトの作成
 
-Create a simple player movement script:
+シンプルなプレイヤー移動スクリプトを作成します：
 
 ```python
 player_script = """using UnityEngine;
@@ -115,15 +115,15 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // Get input
+        // 入力を取得
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
 
-        // Move player
+        // プレイヤーを移動
         Vector3 movement = new Vector3(horizontal, 0f, vertical) * moveSpeed * Time.deltaTime;
         transform.Translate(movement, Space.World);
 
-        // Jump
+        // ジャンプ
         if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
@@ -141,14 +141,14 @@ public class PlayerMovement : MonoBehaviour
 }
 """
 
-# Create the script using asset_crud
+# asset_crudを使用してスクリプトを作成
 unity_asset_crud({
     "operation": "create",
     "assetPath": "Assets/Scripts/PlayerMovement.cs",
     "content": player_script
 })
 
-# Wait for Unity to compile the script before adding it as a component
+# コンポーネントとして追加する前にUnityがスクリプトをコンパイルするのを待つ
 unity_component_crud({
     "operation": "add",
     "gameObjectPath": "Player",
@@ -159,7 +159,7 @@ unity_component_crud({
     }
 })
 
-# Set the Ground tag
+# Groundタグを設定
 unity_tagLayer_manage({
     "operation": "addTag",
     "tag": "Ground"
@@ -172,18 +172,18 @@ unity_tagLayer_manage({
 })
 ```
 
-## Step 5: Create Enemies
+## ステップ5: 敵の作成
 
-Create multiple enemy NPCs using template customization:
+テンプレートカスタマイズを使用して複数の敵NPCを作成します：
 
 ```python
-# Create enemies container
+# 敵コンテナを作成
 unity_gameobject_crud({
     "operation": "create",
     "name": "Enemies"
 })
 
-# Create multiple enemies with components
+# コンポーネント付きの複数の敵を作成
 enemy_positions = [
     {"name": "Enemy1", "x": 5, "y": 1, "z": 5},
     {"name": "Enemy2", "x": -5, "y": 1, "z": 5},
@@ -192,14 +192,14 @@ enemy_positions = [
 ]
 
 for enemy_data in enemy_positions:
-    # Create enemy using template
+    # テンプレートを使用して敵を作成
     unity_gameobject_createFromTemplate({
         "template": "Capsule",
         "name": enemy_data["name"],
         "parentPath": "Enemies"
     })
 
-    # Customize with components and position
+    # コンポーネントと位置でカスタマイズ
     unity_template_manage({
         "operation": "customize",
         "gameObjectPath": f"Enemies/{enemy_data['name']}",
@@ -217,7 +217,7 @@ for enemy_data in enemy_positions:
         ]
     })
 
-    # Set position
+    # 位置を設定
     unity_component_crud({
         "operation": "update",
         "gameObjectPath": f"Enemies/{enemy_data['name']}",
@@ -228,18 +228,18 @@ for enemy_data in enemy_positions:
     })
 ```
 
-## Step 6: Create Collectibles
+## ステップ6: 収集アイテムの作成
 
-Add collectible spheres around the level:
+レベル周辺に収集可能な球体を追加します：
 
 ```python
-# Create collectibles container
+# 収集アイテムコンテナを作成
 unity_gameobject_crud({
     "operation": "create",
     "name": "Collectibles"
 })
 
-# Create multiple collectibles
+# 複数の収集アイテムを作成
 unity_gameobject_createFromTemplate({
     "template": "Sphere",
     "name": "Coin1",
@@ -272,7 +272,7 @@ unity_gameobject_createFromTemplate({
     "scale": {"x": 0.3, "y": 0.3, "z": 0.3}
 })
 
-# Add trigger colliders to all coins
+# すべてのコインにトリガーコライダーを追加
 unity_component_crud({
     "operation": "addMultiple",
     "pattern": "Collectibles/Coin*",
@@ -285,18 +285,18 @@ unity_component_crud({
 })
 ```
 
-## Step 7: Add Environmental Obstacles
+## ステップ7: 環境障害物の追加
 
-Create walls and obstacles:
+壁と障害物を作成します：
 
 ```python
-# Create obstacles container
+# 障害物コンテナを作成
 unity_gameobject_crud({
     "operation": "create",
     "name": "Obstacles"
 })
 
-# Create walls with positions and colliders
+# 位置とコライダー付きの壁を作成
 walls = [
     {"name": "WallNorth", "position": {"x": 0, "y": 1, "z": 10}, "scale": {"x": 20, "y": 2, "z": 0.5}},
     {"name": "WallSouth", "position": {"x": 0, "y": 1, "z": -10}, "scale": {"x": 20, "y": 2, "z": 0.5}},
@@ -305,14 +305,14 @@ walls = [
 ]
 
 for wall in walls:
-    # Create wall cube
+    # 壁キューブを作成
     unity_gameobject_createFromTemplate({
         "template": "Cube",
         "name": wall["name"],
         "parentPath": "Obstacles"
     })
 
-    # Set transform and add collider
+    # トランスフォームを設定してコライダーを追加
     unity_component_crud({
         "operation": "update",
         "gameObjectPath": f"Obstacles/{wall['name']}",
@@ -330,12 +330,12 @@ for wall in walls:
     })
 ```
 
-## Step 8: Inspect the Final Scene
+## ステップ8: 最終シーンの検査
 
-Check the complete scene hierarchy:
+完全なシーン階層を確認します：
 
 ```python
-# Get a complete overview of the scene
+# シーンの完全な概要を取得
 unity_scene_crud({
     "operation": "inspect",
     "includeHierarchy": True,
@@ -343,49 +343,49 @@ unity_scene_crud({
 })
 ```
 
-## Expected Result
+## 期待される結果
 
-You should now have a complete game level with:
-- ✓ Playable character with movement controls (WASD + Space)
-- ✓ 4 enemy NPCs positioned around the level
-- ✓ 4 collectible coins
-- ✓ Boundary walls preventing player from falling off
-- ✓ Physics-enabled ground
-- ✓ Proper lighting and camera setup
+以下を含む完全なゲームレベルが完成しているはずです：
+- ✓ 移動コントロール付きのプレイヤーキャラクター（WASD + Space）
+- ✓ レベル周辺に配置された4体の敵NPC
+- ✓ 4つの収集可能なコイン
+- ✓ プレイヤーが落ちないようにする境界壁
+- ✓ 物理演算対応の地面
+- ✓ 適切なライティングとカメラセットアップ
 
-## Next Steps
+## 次のステップ
 
-To enhance this level, you could:
+このレベルを強化するには、次のことができます：
 
-1. **Add Enemy AI**: Create scripts to make enemies patrol or chase the player
-2. **Collectible System**: Add scripts to detect when player collects coins
-3. **UI Elements**: Create a score display and health bar
-4. **Prefabs**: Convert enemies and collectibles to prefabs for reusability
-5. **Materials**: Add colors and textures to differentiate objects
+1. **敵AIの追加**: 敵が巡回したりプレイヤーを追いかけるスクリプトを作成
+2. **収集システム**: プレイヤーがコインを収集したときを検出するスクリプトを追加
+3. **UI要素**: スコア表示とヘルスバーを作成
+4. **Prefab**: 再利用のために敵と収集アイテムをPrefabに変換
+5. **マテリアル**: オブジェクトを区別するために色とテクスチャを追加
 
-## Performance Tips
+## パフォーマンスのヒント
 
-When creating large levels:
+大きなレベルを作成する場合：
 
-- Use `includeProperties=false` when inspecting to speed up queries
-- Use `maxResults` parameter to limit batch operations
-- Use component batch operations (`addMultiple`, `updateMultiple`) for efficiency
-- Use template customization for creating GameObjects with multiple components in one operation
+- 検査時に`includeProperties=false`を使用してクエリを高速化
+- バッチ操作を制限するために`maxResults`パラメータを使用
+- 効率のためにコンポーネントバッチ操作（`addMultiple`、`updateMultiple`）を使用
+- 1回の操作で複数コンポーネントを持つGameObjectを作成するためにテンプレートカスタマイズを使用
 
-## Common Issues
+## よくある問題
 
-**Issue**: Player falls through ground
-**Solution**: Ensure Ground has a collider and Player has Rigidbody
+**問題**: プレイヤーが地面を突き抜ける
+**解決策**: 地面にコライダーがあり、プレイヤーにRigidbodyがあることを確認
 
-**Issue**: Scripts not compiling
-**Solution**: Use `unity_asset_crud` for creating/updating C# scripts. Unity will automatically detect and compile changes.
+**問題**: スクリプトがコンパイルされない
+**解決策**: C#スクリプトの作成/更新に`unity_asset_crud`を使用。Unityは自動的に変更を検出してコンパイルします。
 
-**Issue**: Enemy objects not visible
-**Solution**: Add MeshRenderer and MeshFilter components with appropriate mesh references
+**問題**: 敵オブジェクトが見えない
+**解決策**: 適切なメッシュ参照を持つMeshRendererとMeshFilterコンポーネントを追加
 
 ---
 
-**See Also:**
-- [01-basic-scene-setup.md](01-basic-scene-setup.md) - Basic 3D scene creation
-- [02-ui-creation.md](02-ui-creation.md) - UI system creation
-- [04-prefab-workflow.md](04-prefab-workflow.md) - Working with prefabs
+**関連項目:**
+- [01-basic-scene-setup.md](01-basic-scene-setup.md) - 基本的な3Dシーン作成
+- [02-ui-creation.md](02-ui-creation.md) - UIシステム作成
+- [04-prefab-workflow.md](04-prefab-workflow.md) - Prefabの操作

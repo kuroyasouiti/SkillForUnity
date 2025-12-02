@@ -1,6 +1,6 @@
-# Unity-AI-Forge - AI-Powered Unity Development Toolkit
+# Unity-AI-Forge - AI駆動型Unity開発ツールキット
 
-**Forge Unity games through AI collaboration. Model Context Protocol integration with GameKit framework.**
+**AI連携でUnityゲームを創造。Model Context ProtocolとGameKitフレームワークの統合。**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
@@ -8,127 +8,127 @@
 [![Version](https://img.shields.io/badge/Version-2.1.0-brightgreen)](https://github.com/kuroyasouiti/Unity-AI-Forge/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🆕 What's New in v2.1.0
+## 🆕 v2.1.0の新機能
 
-- **💾 State Persistence System**: Complete save/load functionality
-  - Export/Import resource states as JSON
-  - Save to files or PlayerPrefs
-  - Automatic timestamp and metadata tracking
-  - Cloud-save ready with serializable states
-  - Manager convenience methods for easy integration
+- **💾 ステート永続化システム**: 完全なsave/load機能
+  - リソース状態をJSONでエクスポート/インポート
+  - ファイルまたはPlayerPrefsへの保存
+  - タイムスタンプとメタデータの自動追跡
+  - シリアライズ可能な状態でクラウドセーブ対応
+  - 簡単な統合のためのManager便利メソッド
 
-- **🎮 GameKit UICommand Extended**: Manager control support
-  - **NEW Target Types**: Actor OR Manager
-  - **11 Command Types**: Move/Jump/Action/Look/Custom + AddResource/SetResource/ConsumeResource/ChangeState/NextTurn/TriggerScene
-  - UI buttons can now control game economy, states, and turns
-  - Perfect for strategy games, shop UIs, and resource management
+- **🎮 GameKit UICommand拡張**: Manager制御のサポート
+  - **新しいターゲットタイプ**: ActorまたはManager
+  - **11種類のコマンド**: Move/Jump/Action/Look/Custom + AddResource/SetResource/ConsumeResource/ChangeState/NextTurn/TriggerScene
+  - UIボタンでゲーム経済、状態、ターンを制御可能
+  - ストラテジーゲーム、ショップUI、リソース管理に最適
 
-- **📊 GameKit Machinations Enhanced**: Diagram execution
-  - ProcessDiagramFlows() - Execute automatic resource flows
-  - CheckDiagramTriggers() - Monitor threshold events
-  - ExecuteConverter() - Run specific resource conversions
-  - SetFlowEnabled() - Dynamic flow control at runtime
-  - Auto-execution modes for flows and triggers
+- **📊 GameKit Machinations強化**: ダイアグラム実行
+  - ProcessDiagramFlows() - 自動リソースフローの実行
+  - CheckDiagramTriggers() - しきい値イベントの監視
+  - ExecuteConverter() - 特定のリソース変換の実行
+  - SetFlowEnabled() - ランタイムでの動的フロー制御
+  - フローとトリガーの自動実行モード
 
-- **🎯 Simplified ResourceManager**: Focus on core functionality
-  - Pure resource storage and event management
-  - Complex logic moved to external controllers or Machinations
-  - Better performance (no Update() overhead by default)
-  - Cleaner separation of concerns
+- **🎯 ResourceManager簡素化**: コア機能に集中
+  - 純粋なリソースストレージとイベント管理
+  - 複雑なロジックは外部コントローラーまたはMachinationsに移動
+  - パフォーマンスの向上（デフォルトでUpdate()オーバーヘッドなし）
+  - 関心事のより明確な分離
 
-### Previous Release (v2.0.0) Highlights
+### 前回のリリース（v2.0.0）のハイライト
 
-- **🎯 Hub-Based Architecture**: All GameKit components redesigned as intelligent hubs
-- **🎮 GameKit Actor**: 8 behavior profiles, 4 control modes, UnityEvents
-- **⚙️ GameKit Manager Hub**: Dynamic mode-specific components (TurnBased, ResourcePool, EventHub, StateManager, Realtime)
-- **🎭 GameKit Interaction Hub**: Multi-trigger declarative system with specialized triggers
-- **🎬 GameKit SceneFlow**: Scene-centric transition system with additive loading
-- **🛤️ Spline Movement**: 2.5D spline-based movement with Catmull-Rom interpolation
+- **🎯 ハブベースアーキテクチャ**: すべてのGameKitコンポーネントをインテリジェントハブとして再設計
+- **🎮 GameKit Actor**: 8つの動作プロファイル、4つの制御モード、UnityEvents
+- **⚙️ GameKit Manager Hub**: 動的なモード固有コンポーネント（TurnBased、ResourcePool、EventHub、StateManager、Realtime）
+- **🎭 GameKit Interaction Hub**: マルチトリガー宣言型システム、特殊トリガー搭載
+- **🎬 GameKit SceneFlow**: シーン中心の遷移システム、加算読み込み対応
+- **🛤️ Spline Movement**: 2.5Dスプライン移動、Catmull-Rom補間対応
 
-- **🛤️ Spline Movement**: 2.5D spline-based movement
-  - Catmull-Rom interpolation
-  - Closed loops, lateral offsets, automatic rotation
-  - Manual/automatic speed control
+- **🛤️ Spline Movement**: 2.5Dスプライン移動
+  - Catmull-Rom補間
+  - クローズドループ、横方向オフセット、自動回転
+  - 手動/自動速度制御
 
-- **Mid-Level Tools**: Batch operations and presets
-  - Transform/RectTransform batch operations (arrange, align, distribute)
-  - Physics bundles (2D/3D presets: dynamic, kinematic, character, platformer, vehicle)
-  - CharacterController bundle (fps, tps, platformer, child, large, narrow presets)
-  - Camera rigs (follow, orbit, split-screen, fixed, dolly)
-  - UI foundation (Canvas, Panel, Button, Text, Image, InputField)
-  - Audio source bundles (music, sfx, ambient, voice, ui presets)
-  - Input profiles (New Input System integration)
+- **中レベルツール**: バッチ操作とプリセット
+  - Transform/RectTransformバッチ操作（配置、整列、分散）
+  - 物理バンドル（2D/3Dプリセット: dynamic、kinematic、character、platformer、vehicle）
+  - CharacterControllerバンドル（fps、tps、platformer、child、large、narrowプリセット）
+  - カメラリグ（follow、orbit、split-screen、fixed、dolly）
+  - UI基盤（Canvas、Panel、Button、Text、Image、InputField）
+  - オーディオソースバンドル（music、sfx、ambient、voice、uiプリセット）
+  - 入力プロファイル（新Input System統合）
 
-- **Compilation Wait Feature**: Automatic compilation handling
-  - Operations execute first, then wait for compilation if triggered
-  - Bridge reconnection detection for early wait release
-  - Transparent wait information in responses
+- **コンパイル待機機能**: 自動コンパイル処理
+  - 操作を実行してから、トリガーされた場合はコンパイルを待機
+  - 早期待機解除のためのブリッジ再接続検出
+  - レスポンスでの透明な待機情報
 
-- **Comprehensive Test Suite**: 100+ unit tests
-  - Unity Test Framework integration
-  - 97.7% pass rate across all tool categories
-  - CI/CD with GitHub Actions
-  - Editor menu integration (`Tools > Unity-AI-Forge > Run All Tests`)
+- **包括的なテストスイート**: 100以上のユニットテスト
+  - Unity Test Framework統合
+  - 全ツールカテゴリで97.7%の合格率
+  - GitHub ActionsによるCI/CD
+  - エディタメニュー統合（`Tools > Unity-AI-Forge > Run All Tests`）
 
-- **Documentation**: Complete overhaul
-  - Test suite documentation and results
-  - Tooling roadmap (Japanese)
-  - Compilation wait feature guide
-  - Legacy cleanup summary
-  - [Full Release Notes](docs/Release_Notes_v1.8.0.md)
-  - [Changelog](CHANGELOG.md)
+- **ドキュメント**: 完全な見直し
+  - テストスイートのドキュメントと結果
+  - ツールロードマップ（日本語）
+  - コンパイル待機機能ガイド
+  - レガシークリーンアップサマリー
+  - [完全なリリースノート](docs/Release_Notes_v1.8.0.md)
+  - [変更履歴](CHANGELOG.md)
 
-## 📦 Package Structure
+## 📦 パッケージ構造
 
-Unity-AI-Forge is a Unity package with integrated MCP server!
+Unity-AI-ForgeはMCPサーバーを統合したUnityパッケージです！
 
 ```
 Unity-AI-Forge/
 ├── Assets/
 │   └── UnityAIForge/                           # Unity Package
 │       ├── Editor/
-│       │   └── MCPBridge/                      # Unity C# WebSocket Bridge
-│       ├── GameKit/                            # GameKit Framework Runtime
-│       ├── MCPServer/                          # ⭐ MCP Server (Python, docs, tools)
-│       │   ├── src/                            # Python MCP Server
-│       │   ├── setup/                          # Installation scripts
-│       │   ├── examples/                       # Practical tutorials
-│       │   ├── config/                         # Configuration templates
-│       │   └── docs/                           # Additional documentation
-│       ├── Tests/                              # Test Suite
-│       └── package.json                        # Unity Package definition
+│       │   └── MCPBridge/                      # Unity C# WebSocketブリッジ
+│       ├── GameKit/                            # GameKitフレームワーク ランタイム
+│       ├── MCPServer/                          # ⭐ MCPサーバー（Python、docs、tools）
+│       │   ├── src/                            # Python MCPサーバー
+│       │   ├── setup/                          # インストールスクリプト
+│       │   ├── examples/                       # 実践的なチュートリアル
+│       │   ├── config/                         # 設定テンプレート
+│       │   └── docs/                           # 追加ドキュメント
+│       ├── Tests/                              # テストスイート
+│       └── package.json                        # Unity Package定義
 ```
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
-### 1. Install Unity Package
+### 1. Unityパッケージのインストール
 
-**Option A: Via Unity Package Manager (Recommended)**
+**オプションA: Unity Package Manager経由（推奨）**
 
-1. Open Unity Editor
-2. Open **Window > Package Manager**
-3. Click **+ (Plus)** button → **Add package from git URL...**
-4. Enter: `https://github.com/kuroyasouiti/Unity-AI-Forge.git?path=/Assets/UnityAIForge`
-5. Click **Add**
+1. Unity Editorを開く
+2. **Window > Package Manager**を開く
+3. **+（プラス）**ボタンをクリック → **Add package from git URL...**
+4. 入力: `https://github.com/kuroyasouiti/Unity-AI-Forge.git?path=/Assets/UnityAIForge`
+5. **Add**をクリック
 
-**Option B: Manual Installation**
+**オプションB: 手動インストール**
 
-1. Download this repository
-2. Copy `Assets/UnityAIForge` to your Unity project's `Assets/` folder
+1. このリポジトリをダウンロード
+2. `Assets/UnityAIForge`をUnityプロジェクトの`Assets/`フォルダにコピー
 
-### 2. Install MCP Server
+### 2. MCPサーバーのインストール
 
-The MCP server is located in `Assets/UnityAIForge/MCPServer/`.
+MCPサーバーは`Assets/UnityAIForge/MCPServer/`にあります。
 
-**Option A: Automatic Installation via Unity (Recommended)**
+**オプションA: Unity経由の自動インストール（推奨）**
 
-1. Open Unity Editor with the package installed
-2. Go to **Tools > Unity-AI-Forge > MCP Server Manager**
-3. Click **Install Server** (installs to `~/Unity-AI-Forge`)
-4. Click **Register** for your AI tool (Cursor, Claude Desktop, etc.)
-5. Restart your AI tool
+1. パッケージがインストールされたUnity Editorを開く
+2. **Tools > Unity-AI-Forge > MCP Server Manager**に移動
+3. **Install Server**をクリック（`~/Unity-AI-Forge`にインストール）
+4. AIツール（Cursor、Claude Desktopなど）用に**Register**をクリック
+5. AIツールを再起動
 
-**Option B: Manual Setup**
+**オプションB: 手動セットアップ**
 
 ```bash
 # Windows (PowerShell)
@@ -142,9 +142,9 @@ cd ~/Unity-AI-Forge
 uv sync
 ```
 
-**Option C: Manual Configuration**
+**オプションC: 手動設定**
 
-Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json`):
+Claude Desktopの設定（`~/.claude/claude_desktop_config.json`）に追加:
 ```json
 {
   "mcpServers": {
@@ -160,111 +160,111 @@ Add to your Claude Desktop config (`~/.claude/claude_desktop_config.json`):
 }
 ```
 
-Replace `/path/to/Unity-AI-Forge` with:
+`/path/to/Unity-AI-Forge`を以下に置き換え:
 - Windows: `C:\Users\YOUR_USERNAME\Unity-AI-Forge`
-- macOS/Linux: `/Users/YOUR_USERNAME/Unity-AI-Forge` or `/home/YOUR_USERNAME/Unity-AI-Forge`
+- macOS/Linux: `/Users/YOUR_USERNAME/Unity-AI-Forge` または `/home/YOUR_USERNAME/Unity-AI-Forge`
 
-### 3. Start Unity Bridge
+### 3. Unity Bridgeの起動
 
-1. Open Unity Editor with your project
-2. Go to **Tools > MCP Assistant**
-3. Click **Start Bridge**
-4. Wait for "Connected" status
+1. プロジェクトでUnity Editorを開く
+2. **Tools > MCP Assistant**に移動
+3. **Start Bridge**をクリック
+4. "Connected"ステータスを待つ
 
-### 4. Test Connection
+### 4. 接続テスト
 
-In Claude Desktop, ask:
+Claude Desktopで以下を試してください:
 ```
-Can you test the Unity MCP connection?
+Unity MCP接続をテストしてもらえますか？
 ```
 
-The AI should call `unity_ping()` and show Unity version information.
+AIは`unity_ping()`を呼び出し、Unityのバージョン情報を表示します。
 
-## 📚 Documentation
+## 📚 ドキュメント
 
-### For Users
+### ユーザー向け
 
-- **[MCP Server QUICKSTART](Assets/UnityAIForge/MCPServer/QUICKSTART.md)** - Get started in 5 minutes
-- **[MCP Server README](Assets/UnityAIForge/MCPServer/README.md)** - Complete MCP server documentation
-- **[Installation Guide](Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md)** - Detailed installation instructions
-- **[Examples](Assets/UnityAIForge/MCPServer/examples/)** - Practical tutorials and walkthroughs
+- **[MCP Server QUICKSTART](Assets/UnityAIForge/MCPServer/QUICKSTART.md)** - 5分で始める
+- **[MCP Server README](Assets/UnityAIForge/MCPServer/README.md)** - 完全なMCPサーバードキュメント
+- **[インストールガイド](Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md)** - 詳細なインストール手順
+- **[Examples](Assets/UnityAIForge/MCPServer/examples/)** - 実践的なチュートリアルとウォークスルー
 
-### For Developers
+### 開発者向け
 
-- **[CLAUDE.md](CLAUDE.md)** - Instructions for Claude Code integration
-- **[Test Suite](Assets/UnityAIForge/Tests/Editor/README.md)** - Comprehensive test suite for all tools
-- **[Documentation Index](docs/)** - Additional guides and release notes
+- **[CLAUDE.md](CLAUDE.md)** - Claude Code統合の手順
+- **[テストスイート](Assets/UnityAIForge/Tests/Editor/README.md)** - すべてのツールの包括的なテストスイート
+- **[ドキュメントインデックス](docs/)** - 追加のガイドとリリースノート
 
-## 🏗️ Architecture
+## 🏗️ アーキテクチャ
 
 ```
-AI Client (Claude/Cursor) <--(MCP)--> Python MCP Server <--(WebSocket)--> Unity C# Bridge
+AIクライアント (Claude/Cursor) <--(MCP)--> Python MCPサーバー <--(WebSocket)--> Unity C# Bridge
                                       (MCPServer/src/)         (Editor/MCPBridge/)
 ```
 
-### Components
+### コンポーネント
 
-| Component | Location | Description |
+| コンポーネント | 場所 | 説明 |
 |-----------|----------|-------------|
-| **Unity C# Bridge** | `Assets/UnityAIForge/Editor/MCPBridge/` | WebSocket server running inside Unity Editor |
-| **Python MCP Server** | `Assets/UnityAIForge/MCPServer/src/` | MCP protocol implementation |
-| **GameKit Framework** | `Assets/UnityAIForge/GameKit/Runtime/` | High-level game development components |
-| **Setup Scripts** | `Assets/UnityAIForge/MCPServer/setup/` | Installation and configuration helpers |
-| **Examples** | `Assets/UnityAIForge/MCPServer/examples/` | Practical tutorials and guides |
-| **Tests** | `Assets/UnityAIForge/Tests/Editor/` | Comprehensive test suite |
+| **Unity C# Bridge** | `Assets/UnityAIForge/Editor/MCPBridge/` | Unity Editor内で実行されるWebSocketサーバー |
+| **Python MCPサーバー** | `Assets/UnityAIForge/MCPServer/src/` | MCPプロトコル実装 |
+| **GameKitフレームワーク** | `Assets/UnityAIForge/GameKit/Runtime/` | 高レベルゲーム開発コンポーネント |
+| **セットアップスクリプト** | `Assets/UnityAIForge/MCPServer/setup/` | インストールと設定ヘルパー |
+| **Examples** | `Assets/UnityAIForge/MCPServer/examples/` | 実践的なチュートリアルとガイド |
+| **Tests** | `Assets/UnityAIForge/Tests/Editor/` | 包括的なテストスイート |
 
-## 🧪 Testing
+## 🧪 テスト
 
-Comprehensive test suite powered by Unity Test Framework:
+Unity Test Frameworkによる包括的なテストスイート:
 
-- **100+ unit tests** covering all tool categories
-- **Automated CI/CD** with GitHub Actions
-- **Editor menu integration** for quick test execution
-- **Command-line test runners** for batch testing
+- **100以上のユニットテスト** すべてのツールカテゴリをカバー
+- **自動化されたCI/CD** GitHub Actions使用
+- **エディタメニュー統合** 素早いテスト実行のため
+- **コマンドラインテストランナー** バッチテスト用
 
-Run tests via:
+テストの実行方法:
 - Unity Editor: `Tools > Unity-AI-Forge > Run All Tests`
 - PowerShell: `.\run-tests.ps1`
 - Bash: `./run-tests.sh`
 
-See [Test Suite Documentation](Assets/Unity-AI-Forge/Tests/Editor/README.md) for details.
+詳細は[テストスイートドキュメント](Assets/Unity-AI-Forge/Tests/Editor/README.md)を参照してください。
 
-## ✨ Features
+## ✨ 機能
 
-### Core Tools
+### コアツール
 
-- **Scene Management** - Create, load, save, delete, inspect scenes
-- **GameObject CRUD** - Full hierarchy manipulation with batch operations
-- **Component CRUD** - Add, update, remove components with batch support
-- **Asset Operations** - Rename, duplicate, delete, inspect, update importer settings
-- **ScriptableObject Management** - Create, inspect, update, delete, duplicate, find ScriptableObject assets
-- **Prefab Management** (`unity_prefab_crud`) - Create prefabs from GameObjects, update, inspect, instantiate in scene, unpack, apply/revert overrides
-- **Vector Sprite Conversion** (`unity_vector_sprite_convert`) - Generate sprites from primitives (square, circle, triangle, polygon), import SVG, convert textures, create solid color sprites
-- **Project Settings** - Configure player, quality, time, physics, audio, and editor settings
-- **Tags & Layers** - Add or remove tags and layers via the project settings tool
+- **シーン管理** - シーンの作成、読み込み、保存、削除、検査
+- **GameObject CRUD** - バッチ操作による完全な階層操作
+- **Component CRUD** - バッチサポート付きのコンポーネントの追加、更新、削除
+- **アセット操作** - 名前変更、複製、削除、検査、インポーター設定の更新
+- **ScriptableObject管理** - ScriptableObjectアセットの作成、検査、更新、削除、複製、検索
+- **Prefab管理** (`unity_prefab_crud`) - GameObjectからのPrefab作成、更新、検査、シーンへのインスタンス化、アンパック、オーバーライドの適用/復帰
+- **ベクタースプライト変換** (`unity_vector_sprite_convert`) - プリミティブ（正方形、円、三角形、多角形）からのスプライト生成、SVGインポート、テクスチャ変換、単色スプライト作成
+- **プロジェクト設定** - プレイヤー、品質、時間、物理、オーディオ、エディタ設定の構成
+- **タグとレイヤー** - プロジェクト設定ツールからタグとレイヤーの追加または削除
 
-### Mid-Level Batch Tools
+### 中レベルバッチツール
 
-- **Transform Batch** (`unity_transform_batch`) - Arrange objects in circles/lines, sequential/list-based renaming, auto-generate menu hierarchies
-- **RectTransform Batch** (`unity_rectTransform_batch`) - Set anchors/pivot/size/position, align to parent presets, distribute horizontally/vertically, match size from source
-- **Physics Bundle** (`unity_physics_bundle`) - Apply 2D/3D Rigidbody + Collider presets (dynamic, kinematic, static, character, platformer, topDown, vehicle, projectile), update individual physics properties, inspect physics components
-- **Camera Rig** (`unity_camera_rig`) - Create camera rigs (follow, orbit, split-screen, fixed, dolly) with target tracking, smooth movement, and viewport configuration
-- **UI Foundation** (`unity_ui_foundation`) - Create UI elements (Canvas, Panel, Button, Text, Image, InputField) with anchor presets, TextMeshPro support, and automatic layout
-- **Audio Source Bundle** (`unity_audio_source_bundle`) - Create and configure AudioSource with presets (music, sfx, ambient, voice, ui), 2D/3D spatial audio, and mixer group integration
-- **Input Profile** (`unity_input_profile`) - Create PlayerInput with New Input System, configure action maps, set notification behaviors, and create InputActions assets
+- **Transform Batch** (`unity_transform_batch`) - 円/線でのオブジェクト配置、連続/リストベースの名前変更、メニュー階層の自動生成
+- **RectTransform Batch** (`unity_rectTransform_batch`) - アンカー/ピボット/サイズ/位置の設定、親プリセットへの整列、水平/垂直分散、ソースからのサイズマッチング
+- **Physics Bundle** (`unity_physics_bundle`) - 2D/3D Rigidbody + Colliderプリセット（dynamic、kinematic、static、character、platformer、topDown、vehicle、projectile）の適用、個別の物理プロパティ更新、物理コンポーネントの検査
+- **Camera Rig** (`unity_camera_rig`) - ターゲット追跡、スムーズな移動、ビューポート設定を備えたカメラリグ（follow、orbit、split-screen、fixed、dolly）の作成
+- **UI Foundation** (`unity_ui_foundation`) - アンカープリセット、TextMeshProサポート、自動レイアウトを備えたUI要素（Canvas、Panel、Button、Text、Image、InputField）の作成
+- **Audio Source Bundle** (`unity_audio_source_bundle`) - プリセット（music、sfx、ambient、voice、ui）、2D/3D空間オーディオ、ミキサーグループ統合によるAudioSourceの作成と設定
+- **Input Profile** (`unity_input_profile`) - 新Input SystemでのPlayerInput作成、アクションマップの設定、通知動作の設定、InputActionsアセットの作成
 
-### High-Level GameKit Tools
+### 高レベルGameKitツール
 
-- **GameKit Actor** (`unity_gamekit_actor`) - Create game actors as controller-to-behavior hubs that relay input via UnityEvents (OnMoveInput, OnJumpInput, OnActionInput, OnLookInput)
-- **GameKit Manager** (`unity_gamekit_manager`) - Create game managers (turn-based, realtime, resource pool, event hub, state manager) with persistence, turn phases, and resource management
-- **GameKit Interaction** (`unity_gamekit_interaction`) - Create interaction triggers (collision, raycast, proximity, input) with declarative actions (spawn, destroy, sound, message, scene change) and conditions
-- **GameKit UI Command** (`unity_gamekit_ui_command`) - Create command panels with buttons that send commands to actors with UI command control mode, supporting horizontal/vertical/grid layouts
-- **GameKit SceneFlow** (`unity_gamekit_sceneflow`) - Manage scene transitions with state machine, additive loading, persistent manager scene, shared scene groups (UI/Audio), and trigger-based transitions
+- **GameKit Actor** (`unity_gamekit_actor`) - UnityEvents（OnMoveInput、OnJumpInput、OnActionInput、OnLookInput）を介して入力を中継するコントローラー-動作ハブとしてのゲームアクターを作成
+- **GameKit Manager** (`unity_gamekit_manager`) - 永続性、ターンフェーズ、リソース管理を備えたゲームマネージャー（ターンベース、リアルタイム、リソースプール、イベントハブ、ステートマネージャー）の作成
+- **GameKit Interaction** (`unity_gamekit_interaction`) - 宣言的アクション（spawn、destroy、sound、message、scene change）と条件を備えたインタラクショントリガー（collision、raycast、proximity、input）の作成
+- **GameKit UI Command** (`unity_gamekit_ui_command`) - UIコマンド制御モードのアクターにコマンドを送信するボタン付きコマンドパネルの作成、水平/垂直/グリッドレイアウトのサポート
+- **GameKit SceneFlow** (`unity_gamekit_sceneflow`) - ステートマシン、加算読み込み、永続マネージャーシーン、共有シーングループ（UI/Audio）、トリガーベース遷移によるシーン遷移の管理
 
-## 📦 ScriptableObject Management Example
+## 📦 ScriptableObject管理の例
 
 ```python
-# Create a ScriptableObject asset
+# ScriptableObjectアセットを作成
 unity_scriptableobject_manage({
     "operation": "create",
     "typeName": "MyGame.Data.GameConfig",
@@ -277,14 +277,14 @@ unity_scriptableobject_manage({
     }
 })
 
-# Inspect properties
+# プロパティを検査
 config_info = unity_scriptableobject_manage({
     "operation": "inspect",
     "assetPath": "Assets/Data/DefaultConfig.asset",
     "includeProperties": True
 })
 
-# Update selected values
+# 選択した値を更新
 unity_scriptableobject_manage({
     "operation": "update",
     "assetPath": "Assets/Data/DefaultConfig.asset",
@@ -294,14 +294,14 @@ unity_scriptableobject_manage({
     }
 })
 
-# Duplicate for experimentation
+# 実験用に複製
 unity_scriptableobject_manage({
     "operation": "duplicate",
     "sourceAssetPath": "Assets/Data/DefaultConfig.asset",
     "destinationAssetPath": "Assets/Data/HighSpeedConfig.asset"
 })
 
-# List all configs in a folder
+# フォルダ内のすべての設定をリスト
 all_configs = unity_scriptableobject_manage({
     "operation": "findByType",
     "typeName": "MyGame.Data.GameConfig",
@@ -310,9 +310,9 @@ all_configs = unity_scriptableobject_manage({
 })
 ```
 
-## 🛠️ Development
+## 🛠️ 開発
 
-### Project Structure
+### プロジェクト構造
 
 ```
 Unity-AI-Forge/
@@ -323,49 +323,49 @@ Unity-AI-Forge/
 │       │       ├── McpBridgeService.cs
 │       │       ├── McpCommandProcessor.cs
 │       │       ├── McpContextCollector.cs
-│       │       └── Handlers/        # Tool implementations
+│       │       └── Handlers/        # ツール実装
 │       ├── GameKit/
-│       │   └── Runtime/             # GameKit Framework
+│       │   └── Runtime/             # GameKitフレームワーク
 │       │       ├── Actor/
 │       │       ├── Manager/
 │       │       ├── Interaction/
 │       │       └── SceneFlow/
-│       ├── MCPServer/               # MCP Server (Python)
-│       │   ├── src/                 # Server source
-│       │   │   ├── bridge/          # Unity Bridge communication
-│       │   │   ├── tools/           # MCP tool definitions
-│       │   │   ├── resources/       # MCP resources
-│       │   │   └── main.py          # Entry point
-│       │   ├── setup/               # Installation scripts
-│       │   ├── examples/            # Tutorials
-│       │   ├── config/              # Configuration templates
-│       │   ├── skill.yml            # MCP server manifest
-│       │   └── pyproject.toml       # Python package config
+│       ├── MCPServer/               # MCPサーバー（Python）
+│       │   ├── src/                 # サーバーソース
+│       │   │   ├── bridge/          # Unity Bridge通信
+│       │   │   ├── tools/           # MCPツール定義
+│       │   │   ├── resources/       # MCPリソース
+│       │   │   └── main.py          # エントリーポイント
+│       │   ├── setup/               # インストールスクリプト
+│       │   ├── examples/            # チュートリアル
+│       │   ├── config/              # 設定テンプレート
+│       │   ├── skill.yml            # MCPサーバーマニフェスト
+│       │   └── pyproject.toml       # Pythonパッケージ設定
 │       ├── Tests/
-│       │   └── Editor/              # Unity Test Framework tests
-│       └── package.json             # Unity Package definition
+│       │   └── Editor/              # Unity Test Frameworkテスト
+│       └── package.json             # Unity Package定義
 │
-├── ProjectSettings/                 # Unity project settings
-├── Packages/                        # Unity packages
-├── docs/                            # Project documentation
-└── README.md                        # This file
+├── ProjectSettings/                 # Unityプロジェクト設定
+├── Packages/                        # Unityパッケージ
+├── docs/                            # プロジェクトドキュメント
+└── README.md                        # このファイル
 ```
 
-### Install Dev Dependencies
+### 開発依存関係のインストール
 
 ```bash
 cd Unity-AI-Forge
 uv sync --dev
 ```
 
-### Run Tests
+### テストの実行
 
 ```bash
 cd Unity-AI-Forge
 pytest
 ```
 
-### Format Code
+### コードのフォーマット
 
 ```bash
 cd Unity-AI-Forge
@@ -373,51 +373,51 @@ black src/
 ruff check src/
 ```
 
-## 🤝 Contributing
+## 🤝 コントリビューション
 
-Contributions are welcome! Please:
+コントリビューションを歓迎します！以下の手順をお願いします：
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests and documentation
-5. Submit a pull request
+1. リポジトリをフォーク
+2. フィーチャーブランチを作成
+3. 変更を加える
+4. テストとドキュメントを追加
+5. プルリクエストを送信
 
-See [CLAUDE.md](CLAUDE.md) for development guidelines.
+開発ガイドラインについては[CLAUDE.md](CLAUDE.md)を参照してください。
 
-## 📄 License
+## 📄 ライセンス
 
-MIT License - see [MIT License](https://opensource.org/licenses/MIT) for details.
+MITライセンス - 詳細は[MITライセンス](https://opensource.org/licenses/MIT)を参照してください。
 
-## 🙏 Acknowledgments
+## 🙏 謝辞
 
 - **Model Context Protocol** by Anthropic
-- **Unity Technologies** for the amazing game engine
-- All contributors and community members
+- **Unity Technologies** 素晴らしいゲームエンジンに感謝
+- すべてのコントリビューターとコミュニティメンバー
 
-## 🆘 Support
+## 🆘 サポート
 
-- **Quick Start**: [Assets/UnityAIForge/MCPServer/QUICKSTART.md](Assets/UnityAIForge/MCPServer/QUICKSTART.md)
+- **クイックスタート**: [Assets/UnityAIForge/MCPServer/QUICKSTART.md](Assets/UnityAIForge/MCPServer/QUICKSTART.md)
 - **Examples**: [Assets/UnityAIForge/MCPServer/examples/](Assets/UnityAIForge/MCPServer/examples/)
-- **Installation Guide**: [Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md](Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md)
+- **インストールガイド**: [Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md](Assets/UnityAIForge/MCPServer/INSTALL_GUIDE.md)
 - **Issues**: [GitHub Issues](https://github.com/kuroyasouiti/Unity-AI-Forge/issues)
 
-## 🔄 Migration from Old Structure
+## 🔄 旧構造からの移行
 
-If you were using the old structure:
+旧構造を使用していた場合:
 
-1. **Unity Side**: Install via Unity Package Manager using the correct path:
+1. **Unity側**: 正しいパスでUnity Package Manager経由でインストール:
    ```
    https://github.com/kuroyasouiti/Unity-AI-Forge.git?path=/Assets/UnityAIForge
    ```
-2. **MCP Server Side**: Use Unity's MCP Server Manager:
-   - Go to **Tools > Unity-AI-Forge > MCP Server Manager**
-   - Click **Install Server** to copy files to `~/.claude/skills/Unity-AI-Forge`
-   - Click **Register** for your AI tool
-3. Remove old installation files if desired
+2. **MCPサーバー側**: UnityのMCP Server Managerを使用:
+   - **Tools > Unity-AI-Forge > MCP Server Manager**に移動
+   - **Install Server**をクリックしてファイルを`~/.claude/skills/Unity-AI-Forge`にコピー
+   - AIツール用に**Register**をクリック
+3. 必要に応じて古いインストールファイルを削除
 
 ---
 
-**Made with ❤️ for the Unity and AI community**
+**UnityとAIコミュニティのために ❤️ を込めて作られました**
 
-**Start building amazing Unity projects with AI assistance today!** 🚀
+**今すぐAI支援でUnityプロジェクトの構築を始めましょう！** 🚀

@@ -1,251 +1,251 @@
-# Changelog
+# 変更履歴
 
-All notable changes to Unity-AI-Forge will be documented in this file.
+Unity-AI-Forgeのすべての注目すべき変更はこのファイルに記録されます。
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+このフォーマットは[Keep a Changelog](https://keepachangelog.com/ja/1.0.0/)に基づいており、
+このプロジェクトは[Semantic Versioning](https://semver.org/lang/ja/)に準拠しています。
 
-## [Unreleased]
+## [未リリース]
 
 ## [2.0.0] - 2025-11-29
 
-### 🔥 Project Renamed
+### 🔥 プロジェクト名変更
 
 - **SkillForUnity** → **Unity-AI-Forge**
-  - New package name: `com.unityaiforge`
-  - New repository: `https://github.com/kuroyasouiti/Unity-AI-Forge`
-  - Emphasizes AI-powered development and the "forging" of games through AI collaboration
+  - 新パッケージ名: `com.unityaiforge`
+  - 新リポジトリ: `https://github.com/kuroyasouiti/Unity-AI-Forge`
+  - AI駆動開発とAI連携による「鍛造（forging）」を強調
 
-### Breaking Changes
+### 破壊的変更
 
-- **Project Name Change** - Update package references and imports
-- **GameKit Manager** - Complete redesign to hub-based architecture. Existing code using manager methods will continue to work (backward compatible API), but the internal structure has changed.
-- **GameKit Interaction** - New trigger types and action system may require updating existing interaction setups.
-- **GameKit SceneFlow** - Transitions now defined per-scene rather than globally. Migration required for projects using scene transitions.
+- **プロジェクト名変更** - パッケージ参照とインポートの更新が必要
+- **GameKit Manager** - ハブベースアーキテクチャへの完全な再設計。既存のmanagerメソッドを使用するコードは引き続き動作（後方互換APIあり）しますが、内部構造が変更されています。
+- **GameKit Interaction** - 新しいトリガータイプとアクションシステムにより、既存のインタラクションセットアップの更新が必要な場合があります。
+- **GameKit SceneFlow** - 遷移がグローバルではなくシーンごとに定義されるようになりました。シーン遷移を使用しているプロジェクトには移行が必要です。
 
-### Changed
+### 変更
 
-- **GameKit Manager** - Redesigned as manager hub with mode-specific components
-  - Automatically adds mode-specific components based on ManagerType
-  - **TurnBased** → GameKitTurnManager (turn phases, turn counter, phase/turn events)
-  - **ResourcePool** → GameKitResourceManager (Machinations-inspired resource flow system)
-    - Resource pools with min/max constraints
-    - Automatic resource flows (sources/drains)
-    - Resource converters (crafting, transformation)
-    - Resource triggers (threshold-based events)
-    - Events: `OnResourceChanged`, `OnResourceTriggered`
-  - **EventHub** → GameKitEventManager (event registration, event triggering)
-  - **StateManager** → GameKitStateManager (state changes, state history)
-  - **Realtime** → GameKitRealtimeManager (time scale, pause/resume, timers)
-  - Convenience methods automatically delegate to mode-specific components
-  - Backward compatible API (existing code continues to work)
-  - `GetModeComponent<T>()` for direct access to mode-specific components
+- **GameKit Manager** - モード固有コンポーネントを持つマネージャーハブとして再設計
+  - ManagerTypeに基づいてモード固有コンポーネントを自動追加
+  - **TurnBased** → GameKitTurnManager（ターンフェーズ、ターンカウンター、フェーズ/ターンイベント）
+  - **ResourcePool** → GameKitResourceManager（Machinations風リソースフローシステム）
+    - 最小/最大制約付きリソースプール
+    - 自動リソースフロー（ソース/ドレイン）
+    - リソースコンバーター（クラフティング、変換）
+    - リソーストリガー（しきい値ベースのイベント）
+    - イベント: `OnResourceChanged`、`OnResourceTriggered`
+  - **EventHub** → GameKitEventManager（イベント登録、イベントトリガー）
+  - **StateManager** → GameKitStateManager（状態変更、状態履歴）
+  - **Realtime** → GameKitRealtimeManager（タイムスケール、一時停止/再開、タイマー）
+  - 便利メソッドはモード固有コンポーネントに自動的にデリゲート
+  - 後方互換API（既存のコードは引き続き動作）
+  - モード固有コンポーネントへの直接アクセス用の`GetModeComponent<T>()`
 
-- **GameKit Interaction** - Redesigned as interaction hub
-  - Supports traditional triggers (Collision, Trigger, Input, Proximity, Raycast)
-  - **New specialized triggers**: TilemapCell, GraphNode, SplineProgress
-  - **Extended actions**: TriggerActorAction, UpdateManagerResource, TriggerSceneFlow, TeleportToTile, MoveToGraphNode, SetSplineProgress
-  - **Extended conditions**: ActorId, ManagerResource
-  - UnityEvent integration (`OnInteractionTriggered`)
-  - Cooldown and repeat settings
-  - Manual trigger support
-  - Debug logging option
-  - Gizmo visualization for proximity and tilemap triggers
+- **GameKit Interaction** - インタラクションハブとして再設計
+  - 従来のトリガー（Collision、Trigger、Input、Proximity、Raycast）をサポート
+  - **新しい特殊トリガー**: TilemapCell、GraphNode、SplineProgress
+  - **拡張アクション**: TriggerActorAction、UpdateManagerResource、TriggerSceneFlow、TeleportToTile、MoveToGraphNode、SetSplineProgress
+  - **拡張条件**: ActorId、ManagerResource
+  - UnityEvents統合（`OnInteractionTriggered`）
+  - クールダウンとリピート設定
+  - 手動トリガーサポート
+  - デバッグログオプション
+  - 近接およびタイルマップトリガー用のGizmo視覚化
 
-### Added
-- **CharacterController Bundle** (`unity_character_controller_bundle`) - Mid-level tool
-  - Apply CharacterController with presets: fps, tps, platformer, child, large, narrow, custom
-  - Batch operations for multiple GameObjects
-  - Configurable collision properties (radius, height, center, slope limit, step offset)
-  - Inspect CharacterController properties including runtime state (isGrounded, velocity)
+### 追加
+- **CharacterController Bundle** (`unity_character_controller_bundle`) - 中レベルツール
+  - プリセット付きCharacterControllerの適用: fps、tps、platformer、child、large、narrow、custom
+  - 複数のGameObjectのバッチ操作
+  - 設定可能な衝突プロパティ（radius、height、center、slope limit、step offset）
+  - ランタイム状態（isGrounded、velocity）を含むCharacterControllerプロパティの検査
   
-- **GameKit Actor Input System Integration**
-  - `GameKitInputSystemController` component for Unity's new Input System
-  - Automatic PlayerInput configuration with pre-built action map
-  - Default input actions asset generation (WASD, Mouse, Gamepad support)
-  - Automatic fallback to `GameKitSimpleInput` when Input System unavailable
-  - 2D/3D input conversion based on behavior profile
+- **GameKit Actor Input System統合**
+  - Unityの新しいInput System用の`GameKitInputSystemController`コンポーネント
+  - 事前構築されたアクションマップによる自動PlayerInput設定
+  - デフォルト入力アクションアセット生成（WASD、マウス、ゲームパッドサポート）
+  - Input Systemが利用できない場合の`GameKitSimpleInput`への自動フォールバック
+  - 動作プロファイルに基づく2D/3D入力変換
 
-- **GameKit AI Controller**
-  - `GameKitSimpleAI` component for autonomous character control
-  - AI behaviors: Idle, Patrol, Follow, Wander
-  - Configurable waypoints, follow targets, wander radius
+- **GameKit AIコントローラー**
+  - 自律的なキャラクター制御用の`GameKitSimpleAI`コンポーネント
+  - AIビヘイビア: Idle、Patrol、Follow、Wander
+  - 設定可能なウェイポイント、フォローターゲット、ワンダー半径
 
-### Changed
-- **GameKit UI Command Hub** - Redesigned as UI-to-Actor bridge
-  - Now acts as centralized hub bridging UI controls to `GameKitActor`'s UnityEvents
-  - Command type system (Move, Jump, Action, Look, Custom)
-  - Directional button support for movement commands
-  - Parameter-based action commands
-  - Actor reference caching for better performance
-  - Backward compatible with `SendMessage` via Custom command type
-  - Improved API: `ExecuteMoveCommand()`, `ExecuteJumpCommand()`, `ExecuteActionCommand()`, `ExecuteLookCommand()`
-  - Command binding management: `RegisterButton()`, `RegisterDirectionalButton()`, `ClearBindings()`
-  - Enhanced debugging with optional command logging
+### 変更
+- **GameKit UI Command Hub** - UI-to-Actorブリッジとして再設計
+  - `GameKitActor`のUnityEventsにUIコントロールをブリッジする集中ハブとして機能
+  - コマンドタイプシステム（Move、Jump、Action、Look、Custom）
+  - 移動コマンド用の方向ボタンサポート
+  - パラメータベースのアクションコマンド
+  - パフォーマンス向上のためのActorリファレンスキャッシング
+  - CustomコマンドタイプによるSendMessageとの後方互換性
+  - 改善されたAPI: `ExecuteMoveCommand()`、`ExecuteJumpCommand()`、`ExecuteActionCommand()`、`ExecuteLookCommand()`
+  - コマンドバインディング管理: `RegisterButton()`、`RegisterDirectionalButton()`、`ClearBindings()`
+  - オプションのコマンドロギング付き拡張デバッグ
 
-- **GameKit SceneFlow** - Redesigned as scene-centric state machine
-  - Transitions now integrated into scene definitions (scene-centric design)
-  - Same trigger can lead to different destinations based on current scene (e.g., "nextPage" from Page1→Page2, from Page2→Page3)
-  - **Simplified shared scene management**: Removed `SharedSceneGroup`, scenes now directly define their shared scene paths
-  - Scene definitions include transitions and shared scene paths
-  - Improved shared scene management (only reload what's needed)
-  - New API: `SetCurrentScene()`, `GetAvailableTriggers()`, `GetSceneNames()`, `AddSharedScenesToScene()`
-  - Enhanced logging for scene transitions
-  - Backward compatible API (AddTransition parameter order changed to: fromScene, trigger, toScene)
-  - `sharedGroups` parameter renamed to `sharedScenePaths` (legacy `sharedGroups` still supported for backward compatibility)
+- **GameKit SceneFlow** - シーン中心のステートマシンとして再設計
+  - 遷移をシーン定義に統合（シーン中心設計）
+  - 同じトリガーが現在のシーンに基づいて異なる宛先に導く（例: Page1からの「nextPage」→Page2、Page2から→Page3）
+  - **簡素化された共有シーン管理**: `SharedSceneGroup`を削除、シーンが共有シーンパスを直接定義
+  - シーン定義に遷移と共有シーンパスを含む
+  - 改善された共有シーン管理（必要なもののみをリロード）
+  - 新しいAPI: `SetCurrentScene()`、`GetAvailableTriggers()`、`GetSceneNames()`、`AddSharedScenesToScene()`
+  - シーン遷移の拡張ロギング
+  - 後方互換API（AddTransitionパラメータ順序をfromScene、trigger、toSceneに変更）
+  - `sharedGroups`パラメータを`sharedScenePaths`に変更（レガシー`sharedGroups`は後方互換性のためサポート）
 
-- **GameKit Graph Node Movement** - New behavior profile
-  - `GraphNode` component for defining movement nodes
+- **GameKit Graph Node Movement** - 新しい動作プロファイル
+  - 移動ノードを定義する`GraphNode`コンポーネント
 
-- **GameKit Spline Movement** - New behavior profile for 2.5D games
-  - `SplineMovement` component for rail/spline-based movement
-  - Catmull-Rom spline interpolation for smooth curved paths
-  - Closed loop support for circular tracks
-  - Lateral offset for lane-based gameplay (rail shooters, side-scrollers)
-  - Manual and automatic speed control with acceleration/deceleration
-  - Forward and backward movement support
-  - Auto-rotation to face movement direction (configurable axis)
-  - Visual spline debugging in Scene view
-  - Ideal for rail shooters, 2.5D platformers, racing games, on-rails sequences
-  - `GraphNodeMovement` component with A* pathfinding
-  - Node connections with cost and traversability
-  - Works in both 2D and 3D (dimension-agnostic)
-  - Use cases: board games, tactical RPGs, puzzle games, adventure games
-  - Features: weighted edges, pathfinding, reachable node queries, debug visualization
+- **GameKit Spline Movement** - 2.5Dゲーム用の新しい動作プロファイル
+  - レール/スプラインベース移動用の`SplineMovement`コンポーネント
+  - 滑らかな曲線パス用のCatmull-Romスプライン補間
+  - 円形トラック用のクローズドループサポート
+  - レーンベースゲームプレイ用の横方向オフセット（レールシューター、サイドスクローラー）
+  - 加速/減速付きの手動および自動速度制御
+  - 前進および後進移動サポート
+  - 移動方向を向く自動回転（設定可能な軸）
+  - Scene viewでのビジュアルスプラインデバッグ
+  - レールシューター、2.5Dプラットフォーマー、レーシングゲーム、オンレールシーケンスに最適
+  - A*パスファインディング付きの`GraphNodeMovement`コンポーネント
+  - コストと通過可能性を持つノード接続
+  - 2Dと3Dの両方で動作（次元非依存）
+  - 使用例: ボードゲーム、タクティカルRPG、パズルゲーム、アドベンチャーゲーム
+  - 機能: 重み付きエッジ、パスファインディング、到達可能ノードクエリ、デバッグ視覚化
 
-### Changed
-- Updated `GameKitActorHandler.ApplyControlComponents()` to use Input System by default
-- Added `UNITY_INPUT_SYSTEM_INSTALLED` define constraint to GameKit Runtime assembly
+### 変更
+- `GameKitActorHandler.ApplyControlComponents()`をデフォルトでInput Systemを使用するように更新
+- GameKit Runtimeアセンブリに`UNITY_INPUT_SYSTEM_INSTALLED`定義制約を追加
 
-### Documentation
-- Added CharacterController Bundle comprehensive documentation
-- Added GameKit Runtime components README with architecture overview
-- Updated README.md and README_ja.md with new features
+### ドキュメント
+- CharacterController Bundleの包括的なドキュメントを追加
+- アーキテクチャ概要付きのGameKit Runtimeコンポーネント READMEを追加
+- 新機能でREADME.mdとREADME_ja.mdを更新
 
 ## [1.8.0] - 2025-11-29
 
-### Added
+### 追加
 
-#### New Tools
-- **Prefab Management** (`unity_prefab_crud`)
-  - Create prefabs from GameObjects
-  - Update, inspect, instantiate prefabs
-  - Unpack prefabs (completely or outermost)
-  - Apply/revert prefab overrides
+#### 新しいツール
+- **Prefab管理** (`unity_prefab_crud`)
+  - GameObjectからPrefabを作成
+  - Prefabの更新、検査、インスタンス化
+  - Prefabのアンパック（完全またはOutermost）
+  - Prefabオーバーライドの適用/復帰
   
-- **Vector Sprite Conversion** (`unity_vector_sprite_convert`)
-  - Generate sprites from primitives (square, circle, triangle, polygon)
-  - Import SVG to sprite
-  - Convert textures to sprites
-  - Create solid color sprites
+- **ベクタースプライト変換** (`unity_vector_sprite_convert`)
+  - プリミティブ（正方形、円、三角形、多角形）からスプライトを生成
+  - SVGからスプライトへのインポート
+  - テクスチャからスプライトへの変換
+  - 単色スプライトの作成
 
-#### GameKit Framework (High-Level Tools)
+#### GameKitフレームワーク（高レベルツール）
 - **GameKit Actor** (`unity_gamekit_actor`)
-  - Behavior profiles: 2D/3D physics, linear, tilemap movement
-  - Control modes: direct controller, AI, UI command
-  - Stats, abilities, weapon loadouts
+  - 動作プロファイル: 2D/3D物理、リニア、タイルマップ移動
+  - 制御モード: ダイレクトコントローラー、AI、UIコマンド
+  - ステータス、アビリティ、武器ロードアウト
   
 - **GameKit Manager** (`unity_gamekit_manager`)
-  - Manager types: turn-based, realtime, resource pool, event hub, state manager
-  - Turn phase management
-  - Resource pool with Machinations framework support
-  - Persistence (DontDestroyOnLoad)
+  - マネージャータイプ: ターンベース、リアルタイム、リソースプール、イベントハブ、ステートマネージャー
+  - ターンフェーズ管理
+  - Machinationsフレームワークサポート付きリソースプール
+  - 永続性（DontDestroyOnLoad）
   
 - **GameKit Interaction** (`unity_gamekit_interaction`)
-  - Trigger types: collision, trigger, raycast, proximity, input
-  - Declarative actions: spawn prefab, destroy object, play sound, send message, change scene
-  - Conditions: tag, layer, distance, custom
+  - トリガータイプ: collision、trigger、raycast、proximity、input
+  - 宣言的アクション: spawn prefab、destroy object、play sound、send message、change scene
+  - 条件: tag、layer、distance、custom
   
 - **GameKit UI Command** (`unity_gamekit_ui_command`)
-  - Command panels with button layouts (horizontal, vertical, grid)
-  - Actor command dispatch
-  - Icon and label support
+  - ボタンレイアウト（水平、垂直、グリッド）付きコマンドパネル
+  - Actorコマンドディスパッチ
+  - アイコンとラベルのサポート
   
 - **GameKit SceneFlow** (`unity_gamekit_sceneflow`)
-  - Scene state machine with transitions
-  - Additive scene loading
-  - Persistent manager scene
-  - Shared scene groups (UI, Audio)
-  - Scene-crossing reference resolution
+  - 遷移付きシーンステートマシン
+  - 加算シーンローディング
+  - 永続マネージャーシーン
+  - 共有シーングループ（UI、Audio）
+  - シーンを跨ぐ参照解決
 
-#### Mid-Level Tools
+#### 中レベルツール
 - **Transform Batch** (`unity_transform_batch`)
-  - Arrange objects in circles/lines
-  - Sequential/list-based renaming
-  - Auto-generate menu hierarchies
+  - 円/線でオブジェクトを配置
+  - 連続/リストベースの名前変更
+  - メニュー階層の自動生成
   
 - **RectTransform Batch** (`unity_rectTransform_batch`)
-  - Set anchors, pivot, size, position
-  - Align to parent presets
-  - Distribute horizontally/vertically
-  - Match size from source
+  - アンカー、ピボット、サイズ、位置の設定
+  - 親プリセットへの整列
+  - 水平/垂直分散
+  - ソースからのサイズマッチング
   
 - **Physics Bundle** (`unity_physics_bundle`)
-  - 2D/3D Rigidbody + Collider presets
-  - Presets: dynamic, kinematic, static, character, platformer, topDown, vehicle, projectile
-  - Update individual physics properties
+  - 2D/3D Rigidbody + Colliderプリセット
+  - プリセット: dynamic、kinematic、static、character、platformer、topDown、vehicle、projectile
+  - 個別の物理プロパティ更新
   
 - **Camera Rig** (`unity_camera_rig`)
-  - Camera rig presets: follow, orbit, split-screen, fixed, dolly
-  - Target tracking and smooth movement
-  - Viewport configuration
+  - カメラリグプリセット: follow、orbit、split-screen、fixed、dolly
+  - ターゲット追跡とスムーズな移動
+  - ビューポート設定
   
 - **UI Foundation** (`unity_ui_foundation`)
-  - Create Canvas, Panel, Button, Text, Image, InputField
-  - Anchor presets
-  - TextMeshPro support
-  - Automatic layout
+  - Canvas、Panel、Button、Text、Image、InputFieldの作成
+  - アンカープリセット
+  - TextMeshProサポート
+  - 自動レイアウト
   
 - **Audio Source Bundle** (`unity_audio_source_bundle`)
-  - Audio presets: music, sfx, ambient, voice, ui
-  - 2D/3D spatial audio
-  - Mixer group integration
+  - オーディオプリセット: music、sfx、ambient、voice、ui
+  - 2D/3D空間オーディオ
+  - ミキサーグループ統合
   
 - **Input Profile** (`unity_input_profile`)
-  - New Input System integration
-  - Action map configuration
-  - Notification behaviors: sendMessages, broadcastMessages, invokeUnityEvents, invokeCSharpEvents
-  - Create InputActions assets
+  - 新しいInput System統合
+  - アクションマップ設定
+  - 通知動作: sendMessages、broadcastMessages、invokeUnityEvents、invokeCSharpEvents
+  - InputActionsアセットの作成
 
-#### Features
-- **Compilation Wait System**
-  - Operations execute first, then wait for compilation if triggered
-  - Bridge reconnection detection for early wait release
-  - 60-second timeout with configurable intervals
-  - Transparent wait information in responses
-  - Automatic handling in BaseCommandHandler
+#### 機能
+- **コンパイル待機システム**
+  - 操作を先に実行し、トリガーされた場合はコンパイルを待機
+  - 早期待機解除のためのブリッジ再接続検出
+  - 設定可能な間隔での60秒タイムアウト
+  - レスポンスでの透明な待機情報
+  - BaseCommandHandlerでの自動処理
 
-- **Comprehensive Test Suite**
-  - 100+ unit tests covering all tool categories
-  - Unity Test Framework integration
-  - 97.7% pass rate (42/43 tests)
-  - Editor menu integration: `Tools > SkillForUnity > Run All Tests`
-  - Command-line test runners (PowerShell, Bash)
-  - CI/CD with GitHub Actions
+- **包括的なテストスイート**
+  - すべてのツールカテゴリをカバーする100以上のユニットテスト
+  - Unity Test Framework統合
+  - 97.7%の合格率（42/43テスト）
+  - エディタメニュー統合: `Tools > SkillForUnity > Run All Tests`
+  - コマンドラインテストランナー（PowerShell、Bash）
+  - GitHub ActionsによるCI/CD
 
-#### Documentation
-- Test suite documentation (`Assets/SkillForUnity/Tests/Editor/README.md`)
-- Test results summary (`docs/TestResults_Summary.md`)
-- Tooling roadmap - Japanese (`docs/tooling-roadmap.ja.md`)
-- Compilation wait feature guide (`docs/Compilation_Wait_Feature.md`)
-- Legacy cleanup summary (`docs/Unused_Handlers_Cleanup_Summary.md`)
+#### ドキュメント
+- テストスイートドキュメント（`Assets/SkillForUnity/Tests/Editor/README.md`）
+- テスト結果サマリー（`docs/TestResults_Summary.md`）
+- ツールロードマップ - 日本語（`docs/tooling-roadmap.ja.md`）
+- コンパイル待機機能ガイド（`docs/Compilation_Wait_Feature.md`）
+- レガシークリーンアップサマリー（`docs/Unused_Handlers_Cleanup_Summary.md`）
 
-### Changed
+### 変更
 
-- **Tool Count**: Increased from 7 to 21 tools
-- **BaseCommandHandler**: Compilation wait moved from before to after operation execution
-- **AssetCommandHandler**: Added `AssetDatabase.Refresh()` after create/update operations
-- **skill.yml**: Updated tool count and added new categories (prefab_management, sprite_conversion, batch_operations, gamekit_systems)
+- **ツール数**: 7から21ツールに増加
+- **BaseCommandHandler**: コンパイル待機を操作実行の前から後に移動
+- **AssetCommandHandler**: 作成/更新操作後に`AssetDatabase.Refresh()`を追加
+- **skill.yml**: ツール数を更新し、新しいカテゴリを追加（prefab_management、sprite_conversion、batch_operations、gamekit_systems）
 
-### Removed
+### 削除
 
-- Legacy test files in `Assets/SkillForUnity/Editor/Tests/`
+- `Assets/SkillForUnity/Editor/Tests/`のレガシーテストファイル
   - BaseCommandHandlerTests.cs
   - PayloadValidatorTests.cs
   - ResourceResolverTests.cs
   - CommandHandlerIntegrationTests.cs
 
-- Unused handlers (not registered in MCP)
+- 未使用のハンドラ（MCPに登録されていない）
   - TemplateCommandHandler
   - UguiCreateFromTemplateHandler
   - UguiDetectOverlapsHandler
@@ -253,46 +253,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - UguiManageCommandHandler
   - ConstantConvertHandler
   - RenderPipelineManageHandler
-  - TagLayerManageHandler (integrated into ProjectSettingsManageHandler)
-  - RectTransformAnchorHandler (functionality in RectTransformBatchHandler)
-  - RectTransformBasicHandler (functionality in RectTransformBatchHandler)
+  - TagLayerManageHandler（ProjectSettingsManageHandlerに統合）
+  - RectTransformAnchorHandler（RectTransformBatchHandlerに機能あり）
+  - RectTransformBasicHandler（RectTransformBatchHandlerに機能あり）
 
-### Fixed
+### 修正
 
-- Compilation wait now occurs after operation execution (more reliable)
-- Bridge reconnection properly releases compilation wait
-- Test suite compilation errors resolved
+- コンパイル待機が操作実行後に発生するようになった（より信頼性向上）
+- ブリッジ再接続がコンパイル待機を適切に解除
+- テストスイートのコンパイルエラーを解決
 
 ---
 
 ## [1.7.1] - 2025-11-XX
 
-### Fixed
+### 修正
 
-- **Template Tools**: Fixed scene quick setup, GameObject templates, UI templates, design patterns, script templates
-- **Constant Conversion**: Fixed enum type resolution for Unity 2024.2+ module system
-- **SerializedField Support**: Added support for `[SerializeField]` private fields in Component and ScriptableObject operations
-- **Type Resolution**: 99%+ performance improvement through caching
+- **テンプレートツール**: シーンクイックセットアップ、GameObjectテンプレート、UIテンプレート、デザインパターン、スクリプトテンプレートを修正
+- **定数変換**: Unity 2024.2+モジュールシステム用のenum型解決を修正
+- **SerializedFieldサポート**: ComponentとScriptableObject操作で`[SerializeField]`プライベートフィールドのサポートを追加
+- **型解決**: キャッシングにより99%以上のパフォーマンス向上
 
-### Added
+### 追加
 
-- `listCommonEnums` operation: Lists commonly used Unity enum types by category
-- Enhanced error messages with debugging information
+- `listCommonEnums`操作: カテゴリ別によく使用されるUnity enum型をリスト
+- デバッグ情報付きの拡張エラーメッセージ
 
-### Changed
+### 変更
 
-- Streamlined toolset: Focus on low-level CRUD operations
+- ツールセットの簡素化: 低レベルCRUD操作に焦点
 
 ---
 
 ## [1.7.0] - 2025-XX-XX
 
-### Added
+### 追加
 
-- Initial MCP server implementation
-- WebSocket bridge for Unity Editor
-- Core CRUD operations: Scene, GameObject, Component, Asset, ScriptableObject
-- Project settings management
+- 初期MCP server実装
+- Unity Editor用WebSocketブリッジ
+- コアCRUD操作: Scene、GameObject、Component、Asset、ScriptableObject
+- プロジェクト設定管理
 
 ---
 

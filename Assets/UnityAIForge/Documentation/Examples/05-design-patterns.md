@@ -1,19 +1,19 @@
-# Design Pattern Generation Examples
+# デザインパターン生成例
 
-This guide demonstrates how to use the `unity_designPattern_generate` tool to create production-ready implementations of common design patterns.
+このガイドでは、`unity_designPattern_generate`ツールを使用して、一般的なデザインパターンのプロダクション対応実装を作成する方法を示します。
 
-## Overview
+## 概要
 
-The design pattern generator creates complete, commented C# code for 7 common Unity design patterns:
-- **Singleton** - Single instance management with persistence
-- **ObjectPool** - Efficient object reuse for performance
-- **StateMachine** - State management with transitions
-- **Observer** - Event-driven communication
-- **Command** - Action abstraction with undo/redo
-- **Factory** - Object creation pattern
-- **ServiceLocator** - Global service access
+デザインパターンジェネレーターは、7つの一般的なUnityデザインパターンの完全でコメント付きのC#コードを作成します：
+- **Singleton** - 永続性を持つシングルインスタンス管理
+- **ObjectPool** - パフォーマンスのための効率的なオブジェクト再利用
+- **StateMachine** - 遷移を伴う状態管理
+- **Observer** - イベント駆動通信
+- **Command** - 元に戻す/やり直し機能を持つアクション抽象化
+- **Factory** - オブジェクト作成パターン
+- **ServiceLocator** - グローバルサービスアクセス
 
-## Example 1: Singleton Pattern (Game Manager)
+## 例1: Singletonパターン（ゲームマネージャー）
 
 ```python
 unity_designPattern_generate({
@@ -22,20 +22,20 @@ unity_designPattern_generate({
     "scriptPath": "Assets/Scripts/Managers/GameManager.cs",
     "namespace": "MyGame.Managers",
     "options": {
-        "persistent": True,      # Survives scene changes
-        "threadSafe": True,      # Thread-safe initialization
+        "persistent": True,      # シーン変更を超えて存続
+        "threadSafe": True,      # スレッドセーフな初期化
         "monoBehaviour": True    # Unity MonoBehaviour
     }
 })
 ```
 
-**Generated Features:**
-- DontDestroyOnLoad for persistence
-- Lazy initialization with thread safety
-- Awake() protection against duplicates
-- Ready to add custom methods
+**生成される機能:**
+- 永続性のためのDontDestroyOnLoad
+- スレッドセーフな遅延初期化
+- 重複に対するAwake()保護
+- カスタムメソッドを追加可能
 
-## Example 2: ObjectPool Pattern (Bullet Pool)
+## 例2: ObjectPoolパターン（弾丸プール）
 
 ```python
 unity_designPattern_generate({
@@ -44,30 +44,30 @@ unity_designPattern_generate({
     "scriptPath": "Assets/Scripts/Combat/BulletPool.cs",
     "namespace": "MyGame.Combat",
     "options": {
-        "pooledType": "Bullet",       # Type to pool
-        "defaultCapacity": "100",     # Initial size
-        "maxSize": "500"              # Maximum size
+        "pooledType": "Bullet",       # プールする型
+        "defaultCapacity": "100",     # 初期サイズ
+        "maxSize": "500"              # 最大サイズ
     }
 })
 ```
 
-**Generated Features:**
-- Unity ObjectPool<T> integration
-- Configurable pool size
-- Get/Release/Clear methods
-- Automatic prefab instantiation
+**生成される機能:**
+- Unity ObjectPool<T>統合
+- 設定可能なプールサイズ
+- Get/Release/Clearメソッド
+- 自動Prefabインスタンス化
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Get bullet from pool
+// プールから弾丸を取得
 Bullet bullet = bulletPool.Get();
 bullet.Fire(direction);
 
-// Return to pool when done
+// 完了したらプールに戻す
 bulletPool.Release(bullet);
 ```
 
-## Example 3: StateMachine Pattern (Player States)
+## 例3: StateMachineパターン（プレイヤー状態）
 
 ```python
 unity_designPattern_generate({
@@ -78,24 +78,24 @@ unity_designPattern_generate({
 })
 ```
 
-**Generated Features:**
-- IState interface with Enter/Execute/Exit
-- Type-safe state registration
-- State change management
-- Example Idle and Move states
+**生成される機能:**
+- Enter/Execute/Exit付きのIStateインターフェース
+- 型安全な状態登録
+- 状態変更管理
+- IdleとMove状態の例
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Register states
+// 状態を登録
 stateMachine.RegisterState(new IdleState());
 stateMachine.RegisterState(new MoveState());
 stateMachine.RegisterState(new JumpState());
 
-// Change state
+// 状態を変更
 stateMachine.ChangeState<MoveState>();
 ```
 
-## Example 4: Observer Pattern (Event System)
+## 例4: Observerパターン（イベントシステム）
 
 ```python
 unity_designPattern_generate({
@@ -106,27 +106,27 @@ unity_designPattern_generate({
 })
 ```
 
-**Generated Features:**
-- Singleton event manager
-- Type-safe event subscription
-- Generic event publishing
-- String-based event names
+**生成される機能:**
+- Singletonイベントマネージャー
+- 型安全なイベントサブスクリプション
+- ジェネリックイベント公開
+- 文字列ベースのイベント名
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Subscribe to events
+// イベントをサブスクライブ
 EventManager.Instance.Subscribe<int>("ScoreChanged", OnScoreChanged);
 EventManager.Instance.Subscribe("GameOver", OnGameOver);
 
-// Publish events
+// イベントを公開
 EventManager.Instance.Publish("ScoreChanged", newScore);
 EventManager.Instance.Publish("GameOver");
 
-// Unsubscribe
+// サブスクライブ解除
 EventManager.Instance.Unsubscribe<int>("ScoreChanged", OnScoreChanged);
 ```
 
-## Example 5: Command Pattern (Undo/Redo System)
+## 例5: Commandパターン（元に戻す/やり直しシステム）
 
 ```python
 unity_designPattern_generate({
@@ -137,29 +137,29 @@ unity_designPattern_generate({
 })
 ```
 
-**Generated Features:**
-- ICommand interface
-- Command history stack
-- Undo/Redo functionality
-- Example MoveCommand
+**生成される機能:**
+- ICommandインターフェース
+- コマンド履歴スタック
+- 元に戻す/やり直し機能
+- MoveCommandの例
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Execute command
+// コマンドを実行
 var moveCmd = new MoveCommand(player.transform, newPosition);
 commandManager.ExecuteCommand(moveCmd);
 
-// Undo last action
+// 最後のアクションを元に戻す
 commandManager.Undo();
 
-// Redo
+// やり直し
 commandManager.Redo();
 
-// Clear history
+// 履歴をクリア
 commandManager.ClearHistory();
 ```
 
-## Example 6: Factory Pattern (Enemy Spawner)
+## 例6: Factoryパターン（敵スポーナー）
 
 ```python
 unity_designPattern_generate({
@@ -173,25 +173,25 @@ unity_designPattern_generate({
 })
 ```
 
-**Generated Features:**
-- Product ID to prefab mapping
-- Inspector-friendly configuration
-- Type-safe creation methods
-- Position/rotation overloads
+**生成される機能:**
+- プロダクトIDからPrefabへのマッピング
+- Inspector対応の設定
+- 型安全な作成メソッド
+- 位置/回転のオーバーロード
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Create enemy by ID
+// IDで敵を作成
 GameObject zombie = enemyFactory.CreateProduct("zombie");
 
-// Create with position
+// 位置付きで作成
 GameObject boss = enemyFactory.CreateProduct("boss", spawnPos, spawnRot);
 
-// Create with component access
+// コンポーネントアクセス付きで作成
 Enemy skeleton = enemyFactory.CreateProduct<Enemy>("skeleton");
 ```
 
-## Example 7: ServiceLocator Pattern (Global Services)
+## 例7: ServiceLocatorパターン（グローバルサービス）
 
 ```python
 unity_designPattern_generate({
@@ -202,35 +202,35 @@ unity_designPattern_generate({
 })
 ```
 
-**Generated Features:**
-- Singleton service registry
-- Type-safe registration
-- Service existence checks
-- Example IAudioService interface
+**生成される機能:**
+- Singletonサービスレジストリ
+- 型安全な登録
+- サービス存在チェック
+- IAudioServiceインターフェースの例
 
-**Usage:**
+**使用方法:**
 ```csharp
-// Register services
+// サービスを登録
 ServiceLocator.Instance.RegisterService<IAudioService>(new AudioService());
 ServiceLocator.Instance.RegisterService<IInputService>(new InputService());
 
-// Get service
+// サービスを取得
 IAudioService audio = ServiceLocator.Instance.GetService<IAudioService>();
 audio.PlaySound("explosion");
 
-// Check if service exists
+// サービスが存在するか確認
 if (ServiceLocator.Instance.HasService<IAnalytics>()) {
     var analytics = ServiceLocator.Instance.GetService<IAnalytics>();
     analytics.LogEvent("level_complete");
 }
 ```
 
-## Complete Game Architecture Example
+## 完全なゲームアーキテクチャの例
 
-Combine multiple patterns for a robust game architecture:
+堅牢なゲームアーキテクチャのために複数のパターンを組み合わせます：
 
 ```python
-# 1. Core infrastructure
+# 1. コアインフラストラクチャ
 unity_designPattern_generate({
     "patternType": "singleton",
     "className": "GameManager",
@@ -239,7 +239,7 @@ unity_designPattern_generate({
     "options": {"persistent": True, "monoBehaviour": True}
 })
 
-# 2. Event system for decoupled communication
+# 2. 疎結合な通信のためのイベントシステム
 unity_designPattern_generate({
     "patternType": "observer",
     "className": "EventManager",
@@ -247,7 +247,7 @@ unity_designPattern_generate({
     "namespace": "MyGame.Core"
 })
 
-# 3. Service locator for global services
+# 3. グローバルサービスのためのサービスロケーター
 unity_designPattern_generate({
     "patternType": "servicelocator",
     "className": "ServiceLocator",
@@ -255,7 +255,7 @@ unity_designPattern_generate({
     "namespace": "MyGame.Core"
 })
 
-# 4. Object pooling for performance
+# 4. パフォーマンスのためのオブジェクトプーリング
 unity_designPattern_generate({
     "patternType": "objectpool",
     "className": "BulletPool",
@@ -264,7 +264,7 @@ unity_designPattern_generate({
     "options": {"pooledType": "Bullet", "defaultCapacity": "100", "maxSize": "500"}
 })
 
-# 5. Player state management
+# 5. プレイヤー状態管理
 unity_designPattern_generate({
     "patternType": "statemachine",
     "className": "PlayerStateMachine",
@@ -272,7 +272,7 @@ unity_designPattern_generate({
     "namespace": "MyGame.Player"
 })
 
-# 6. Enemy spawning
+# 6. 敵スポーン
 unity_designPattern_generate({
     "patternType": "factory",
     "className": "EnemyFactory",
@@ -281,100 +281,107 @@ unity_designPattern_generate({
 })
 ```
 
-## Best Practices
+## ベストプラクティス
 
-### 1. Use Appropriate Patterns
-- **Singleton**: Managers (GameManager, AudioManager, InputManager)
-- **ObjectPool**: Frequently spawned objects (bullets, particles, enemies)
-- **StateMachine**: Complex behavior (player states, AI states, UI states)
-- **Observer**: Decoupled events (score changes, achievements, game events)
-- **Command**: Undoable actions (level editor, gameplay rewind)
-- **Factory**: Runtime object creation (enemy spawners, item generation)
-- **ServiceLocator**: Cross-cutting concerns (audio, analytics, localization)
+### 1. 適切なパターンを使用
 
-### 2. Combine Patterns Effectively
+- **Singleton**: マネージャー（GameManager、AudioManager、InputManager）
+- **ObjectPool**: 頻繁にスポーンされるオブジェクト（弾丸、パーティクル、敵）
+- **StateMachine**: 複雑な振る舞い（プレイヤー状態、AI状態、UI状態）
+- **Observer**: 疎結合なイベント（スコア変更、実績、ゲームイベント）
+- **Command**: 元に戻せるアクション（レベルエディタ、ゲームプレイ巻き戻し）
+- **Factory**: ランタイムオブジェクト作成（敵スポーナー、アイテム生成）
+- **ServiceLocator**: 横断的関心事（オーディオ、分析、ローカライゼーション）
+
+### 2. パターンを効果的に組み合わせ
+
 ```python
-# Core systems
+# コアシステム
 GameManager (Singleton) + EventManager (Observer) + ServiceLocator
 
-# Combat systems
+# 戦闘システム
 BulletPool (ObjectPool) + EnemyFactory (Factory)
 
-# Player systems
-PlayerStateMachine (StateMachine) + CommandManager (Command for abilities)
+# プレイヤーシステム
+PlayerStateMachine (StateMachine) + CommandManager (アビリティ用Command)
 ```
 
-### 3. Namespace Organization
+### 3. 名前空間の整理
+
 ```python
 unity_designPattern_generate({
-    "namespace": "MyGame.Core",      # Core infrastructure
-    # or
-    "namespace": "MyGame.Combat",    # Combat systems
-    # or
-    "namespace": "MyGame.UI",        # UI systems
+    "namespace": "MyGame.Core",      # コアインフラストラクチャ
+    # または
+    "namespace": "MyGame.Combat",    # 戦闘システム
+    # または
+    "namespace": "MyGame.UI",        # UIシステム
     ...
 })
 ```
 
-### 4. Customize Generated Code
-After generation, edit the code to:
-- Add custom methods and properties
-- Implement game-specific logic
-- Configure inspector fields
-- Add documentation comments
+### 4. 生成されたコードをカスタマイズ
 
-## Common Workflows
+生成後、コードを編集して：
+- カスタムメソッドとプロパティを追加
+- ゲーム固有のロジックを実装
+- Inspectorフィールドを設定
+- ドキュメントコメントを追加
 
-### Workflow 1: New Project Setup
+## 一般的なワークフロー
+
+### ワークフロー1: 新しいプロジェクトのセットアップ
+
 ```python
-# 1. Core infrastructure
+# 1. コアインフラストラクチャ
 unity_designPattern_generate({"patternType": "singleton", "className": "GameManager", ...})
 unity_designPattern_generate({"patternType": "observer", "className": "EventManager", ...})
 unity_designPattern_generate({"patternType": "servicelocator", "className": "ServiceLocator", ...})
 
-# 2. Initialize in GameManager.Awake()
-# 3. Register services in GameManager.Start()
+# 2. GameManager.Awake()で初期化
+# 3. GameManager.Start()でサービスを登録
 ```
 
-### Workflow 2: Combat System
+### ワークフロー2: 戦闘システム
+
 ```python
-# 1. Object pools for performance
+# 1. パフォーマンスのためのオブジェクトプール
 unity_designPattern_generate({"patternType": "objectpool", "className": "BulletPool", ...})
 unity_designPattern_generate({"patternType": "objectpool", "className": "ParticlePool", ...})
 
-# 2. Enemy spawning
+# 2. 敵スポーン
 unity_designPattern_generate({"patternType": "factory", "className": "EnemyFactory", ...})
 
-# 3. Wire up event system
+# 3. イベントシステムを配線
 # EventManager.Instance.Publish("EnemyKilled", enemyType)
 ```
 
-### Workflow 3: Player Controller
+### ワークフロー3: プレイヤーコントローラー
+
 ```python
-# 1. State machine for player
+# 1. プレイヤー用のステートマシン
 unity_designPattern_generate({"patternType": "statemachine", "className": "PlayerStateMachine", ...})
 
-# 2. Command pattern for abilities (with undo)
+# 2. アビリティ用のCommandパターン（元に戻す機能付き）
 unity_designPattern_generate({"patternType": "command", "className": "AbilityManager", ...})
 
-# 3. Implement states: Idle, Move, Jump, Attack, Die
+# 3. 状態を実装: Idle、Move、Jump、Attack、Die
 ```
 
-## Tips
+## ヒント
 
-1. **Always use namespaces** - Organize your code properly
-2. **Edit generated code** - Customize for your specific needs
-3. **Test patterns** - Unity menu: Tools > SkillForUnity > Test Pattern Generation
-4. **Read generated comments** - They include usage examples
-5. **Combine wisely** - Don't over-engineer, use what you need
+1. **常に名前空間を使用** - コードを適切に整理
+2. **生成されたコードを編集** - 特定のニーズに合わせてカスタマイズ
+3. **パターンをテスト** - Unityメニュー: Tools > SkillForUnity > Test Pattern Generation
+4. **生成されたコメントを読む** - 使用例が含まれています
+5. **賢く組み合わせる** - 過度な設計をせず、必要なものを使用
 
-## Next Steps
+## 次のステップ
 
-After generating patterns:
-1. Review the generated code
-2. Customize for your game's needs
-3. Write unit tests
-4. Integrate with your existing systems
-5. Document your architecture
+パターン生成後：
+1. 生成されたコードをレビュー
+2. ゲームのニーズに合わせてカスタマイズ
+3. ユニットテストを作成
+4. 既存のシステムと統合
+5. アーキテクチャをドキュメント化
 
-**Happy coding!** 🎮
+**ハッピーコーディング！** 🎮

@@ -1,29 +1,29 @@
-# Example 1: Basic 3D Scene Setup
+# 例題1: 基本的な3Dシーンセットアップ
 
-**Goal**: Create a simple 3D game scene with a player, ground, camera, and lighting.
+**目標**: プレイヤー、地面、カメラ、ライティングを含むシンプルな3Dゲームシーンを作成する。
 
-**Difficulty**: Beginner
-**Time**: 5 minutes
+**難易度**: 初級
+**所要時間**: 5分
 
-## Prerequisites
+## 前提条件
 
-- Unity Editor 2021.3 or higher
-- MCP Bridge running (Tools > MCP Assistant > Start Bridge)
-- MCP client connected
+- Unity Editor 2021.3以降
+- MCP Bridgeが実行中（Tools > MCP Assistant > Start Bridge）
+- MCPクライアントが接続済み
 
-## What You'll Create
+## 作成するもの
 
-- A 3D scene with proper lighting
-- A player capsule at the spawn point
-- A ground plane
-- A directional light
-- A main camera positioned correctly
+- 適切なライティングを持つ3Dシーン
+- スポーン地点のプレイヤーカプセル
+- 地面プレーン
+- ディレクショナルライト
+- 正しく配置されたメインカメラ
 
-## Step-by-Step Guide
+## ステップバイステップガイド
 
-### 1. Set Up the Scene
+### 1. シーンのセットアップ
 
-First, create a new 3D scene with default settings:
+まず、デフォルト設定で新しい3Dシーンを作成します：
 
 ```python
 unity_scene_quickSetup({
@@ -31,13 +31,13 @@ unity_scene_quickSetup({
 })
 ```
 
-This automatically creates:
-- Main Camera at (0, 1, -10)
-- Directional Light with default intensity
+これにより自動的に以下が作成されます：
+- 位置(0, 1, -10)のメインカメラ
+- デフォルト強度のディレクショナルライト
 
-### 2. Create the Ground
+### 2. 地面の作成
 
-Add a large plane for the ground:
+地面用の大きなプレーンを追加します：
 
 ```python
 unity_gameobject_createFromTemplate({
@@ -48,9 +48,9 @@ unity_gameobject_createFromTemplate({
 })
 ```
 
-### 3. Create the Player
+### 3. プレイヤーの作成
 
-Add a capsule to represent the player:
+プレイヤーを表すカプセルを追加します：
 
 ```python
 unity_gameobject_createFromTemplate({
@@ -60,14 +60,14 @@ unity_gameobject_createFromTemplate({
 })
 ```
 
-The Player template includes:
-- Capsule mesh
-- Capsule collider
-- Rigidbody (for physics)
+Playerテンプレートには以下が含まれます：
+- カプセルメッシュ
+- カプセルコライダー
+- Rigidbody（物理演算用）
 
-### 4. Add Some Obstacles
+### 4. 障害物の追加
 
-Create a few cube obstacles:
+いくつかのキューブ障害物を作成します：
 
 ```python
 unity_gameobject_createFromTemplate({
@@ -89,9 +89,9 @@ unity_gameobject_createFromTemplate({
 })
 ```
 
-### 5. Verify the Scene
+### 5. シーンの確認
 
-Check the hierarchy to confirm everything was created:
+階層を確認して、すべてが作成されたことを確認します：
 
 ```python
 unity_context_inspect({
@@ -100,9 +100,9 @@ unity_context_inspect({
 })
 ```
 
-## Expected Result
+## 期待される結果
 
-Your scene hierarchy should look like:
+シーンの階層は以下のようになります：
 
 ```
 Main Camera
@@ -114,25 +114,25 @@ Obstacle2
 Obstacle3
 ```
 
-In the Scene view, you should see:
-- A large gray plane (ground)
-- A capsule at the center (player)
-- Three cubes positioned around the player
-- Good lighting from the directional light
+シーンビューには以下が表示されます：
+- 大きな灰色のプレーン（地面）
+- 中央のカプセル（プレイヤー）
+- プレイヤーの周りに配置された3つのキューブ
+- ディレクショナルライトからの良好なライティング
 
-## Next Steps
+## 次のステップ
 
-Try these enhancements:
+以下の拡張を試してみましょう：
 
-1. **Add Colors**: Create materials and apply them to objects
-2. **Adjust Camera**: Position the camera to follow the player
-3. **Add Physics**: Make obstacles fall or react to collisions
-4. **Add Scripts**: Attach movement scripts to the player
+1. **色の追加**: マテリアルを作成してオブジェクトに適用
+2. **カメラの調整**: プレイヤーを追従するようにカメラを配置
+3. **物理の追加**: 障害物を落下させたり、衝突に反応させる
+4. **スクリプトの追加**: プレイヤーに移動スクリプトをアタッチ
 
-## Common Issues
+## よくある問題
 
-**Issue**: Objects are too dark
-- **Solution**: Adjust the Directional Light intensity:
+**問題**: オブジェクトが暗すぎる
+- **解決策**: ディレクショナルライトの強度を調整：
   ```python
   unity_component_crud({
       "operation": "update",
@@ -144,8 +144,8 @@ Try these enhancements:
   })
   ```
 
-**Issue**: Player falls through the ground
-- **Solution**: Make sure the Ground has a collider:
+**問題**: プレイヤーが地面を突き抜ける
+- **解決策**: 地面にコライダーがあることを確認：
   ```python
   unity_component_crud({
       "operation": "add",
@@ -154,7 +154,7 @@ Try these enhancements:
   })
   ```
 
-## Related Examples
+## 関連する例題
 
-- [02-ui-creation.md](02-ui-creation.md) - Add UI to this scene
-- [03-game-level.md](03-game-level.md) - Expand into a full game level
+- [02-ui-creation.md](02-ui-creation.md) - このシーンにUIを追加
+- [03-game-level.md](03-game-level.md) - 完全なゲームレベルに拡張
