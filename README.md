@@ -8,29 +8,29 @@ AI-powered Unity game development toolkit with Model Context Protocol (MCP) inte
 
 ## 📚 Documentation
 
-**すべてのドキュメントは [Documentation](Documentation/) フォルダにまとめられています。**
+**すべてのドキュメントは [Assets/UnityAIForge/Documentation](Assets/UnityAIForge/Documentation/) フォルダにまとめられています。**
 
 ### クイックリンク
 
 | 📖 ドキュメント | 説明 |
 |----------------|------|
-| [📑 **ドキュメント索引**](Documentation/INDEX.md) | すべてのドキュメントへの索引 |
-| [🇯🇵 **日本語 README**](Documentation/README_ja.md) | プロジェクト概要（日本語） |
-| [🇬🇧 **English README**](Documentation/README.md) | Project overview (English) |
-| [🚀 **クイックスタート**](Documentation/Installation/QUICKSTART.md) | 最速で始める |
-| [📦 **インストールガイド**](Documentation/Installation/INSTALL_GUIDE.md) | 詳細な手順 |
+| [📑 **ドキュメント索引**](Assets/UnityAIForge/Documentation/INDEX.md) | すべてのドキュメントへの索引 |
+| [🇯🇵 **日本語 README**](Assets/UnityAIForge/Documentation/README_ja.md) | プロジェクト概要（日本語） |
+| [🇬🇧 **English README**](Assets/UnityAIForge/Documentation/README.md) | Project overview (English) |
+| [🚀 **クイックスタート**](Assets/UnityAIForge/Documentation/Installation/QUICKSTART.md) | 最速で始める |
+| [📦 **インストールガイド**](Assets/UnityAIForge/Documentation/Installation/INSTALL_GUIDE.md) | 詳細な手順 |
 
 ### GameKit ドキュメント
 
 | コンポーネント | 説明 |
 |---------------|------|
-| [💰 **ResourceManager**](Documentation/GameKit/GameKitResourceManager.README.md) | リソース管理システム |
-| [📊 **Machinations**](Documentation/GameKit/GameKitMachinations.README.md) | 経済システムのアセット化 |
-| [🔄 **SceneFlow**](Documentation/GameKit/GameKitSceneFlow.README.md) | シーン遷移管理 |
-| [🎯 **Interaction**](Documentation/GameKit/GameKitInteraction.README.md) | インタラクションシステム |
-| [🎨 **UICommand**](Documentation/GameKit/GameKitUICommand.README.md) | UIコマンドシステム |
-| [🛤️ **SplineMovement**](Documentation/GameKit/SplineMovement.README.md) | スプライン移動 |
-| [🗺️ **GraphNodeMovement**](Documentation/GameKit/GraphNodeMovement.README.md) | グラフベース移動 |
+| [💰 **ResourceManager**](Assets/UnityAIForge/Documentation/GameKit/GameKitResourceManager.README.md) | リソース管理システム |
+| [📊 **Machinations**](Assets/UnityAIForge/Documentation/GameKit/GameKitMachinations.README.md) | 経済システムのアセット化 |
+| [🔄 **SceneFlow**](Assets/UnityAIForge/Documentation/GameKit/GameKitSceneFlow.README.md) | シーン遷移管理 |
+| [🎯 **Interaction**](Assets/UnityAIForge/Documentation/GameKit/GameKitInteraction.README.md) | インタラクションシステム |
+| [🎨 **UICommand**](Assets/UnityAIForge/Documentation/GameKit/GameKitUICommand.README.md) | UIコマンドシステム |
+| [🛤️ **SplineMovement**](Assets/UnityAIForge/Documentation/GameKit/SplineMovement.README.md) | スプライン移動 |
+| [🗺️ **GraphNodeMovement**](Assets/UnityAIForge/Documentation/GameKit/GraphNodeMovement.README.md) | グラフベース移動 |
 
 ---
 
@@ -44,10 +44,10 @@ git clone https://github.com/kuroyasouiti/Unity-AI-Forge.git
 # Unity Hub > Add > Select the cloned folder
 
 # 3. Install MCP Server (optional, for AI integration)
-# See: Documentation/Installation/QUICKSTART.md
+# See: Assets/UnityAIForge/Documentation/Installation/QUICKSTART.md
 ```
 
-**詳細は [クイックスタートガイド](Documentation/Installation/QUICKSTART.md) をご覧ください。**
+**詳細は [クイックスタートガイド](Assets/UnityAIForge/Documentation/Installation/QUICKSTART.md) をご覧ください。**
 
 ---
 
@@ -84,7 +84,7 @@ git clone https://github.com/kuroyasouiti/Unity-AI-Forge.git
 ## 📖 Documentation Structure
 
 ```
-Documentation/
+Assets/UnityAIForge/Documentation/
 ├── INDEX.md                    # 📑 全ドキュメント索引
 ├── README.md & README_ja.md    # プロジェクト概要
 ├── CHANGELOG.md                # 変更履歴
@@ -96,7 +96,7 @@ Documentation/
 └── Testing/                    # テスト
 ```
 
-**👉 [完全なドキュメント索引はこちら](Documentation/INDEX.md)**
+**👉 [完全なドキュメント索引はこちら](Assets/UnityAIForge/Documentation/INDEX.md)**
 
 ---
 

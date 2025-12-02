@@ -76,16 +76,16 @@ mcp:
 
 # Quick examples
 examples:
-  - path: examples/01-basic-scene-setup.md
+  - path: ../Documentation/Examples/01-basic-scene-setup.md
     description: "Scene, GameObject, and component CRUD walkthrough"
 
 # Documentation structure
 documentation:
-  quick_start: QUICKSTART.md
-  readme: README.md
-  api_reference: docs/api-reference/
-  guides: docs/guides/
-  troubleshooting: docs/troubleshooting.md
+  quick_start: ../Documentation/Installation/QUICKSTART.md
+  readme: ../Documentation/README.md
+  api_reference: ../Documentation/
+  guides: ../Documentation/
+  troubleshooting: ../Documentation/
 
 # Setup and configuration
 setup:

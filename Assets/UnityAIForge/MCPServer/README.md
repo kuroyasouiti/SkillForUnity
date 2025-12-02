@@ -11,9 +11,9 @@ This MCP server enables AI assistants to interact with Unity Editor through the 
 This package is installed automatically via Unity Editor's MCP Server Manager.
 
 For manual installation and detailed documentation, see:
-- [Installation Guide](../../Documentation/Installation/README.md)
-- [Quick Start Guide](../../Documentation/QuickStart/README.md)
-- [Full Documentation](../../Documentation/README.md)
+- [Installation Guide](../Documentation/Installation/INSTALL_GUIDE.md)
+- [Quick Start Guide](../Documentation/Installation/QUICKSTART.md)
+- [Full Documentation](../Documentation/README.md)
 
 ## Features
 
@@ -50,7 +50,7 @@ For manual installation and detailed documentation, see:
 
 ## Documentation
 
-For complete documentation, visit the [Documentation](../../Documentation) folder in the project root.
+For complete documentation, visit the [Documentation](../Documentation) folder.
 
 ## License
 

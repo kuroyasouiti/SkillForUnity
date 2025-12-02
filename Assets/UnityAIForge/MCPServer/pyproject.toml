@@ -25,7 +25,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://github.com/kuroyasouiti/Unity-AI-Forge"
-Documentation = "https://github.com/kuroyasouiti/Unity-AI-Forge/tree/main/Unity-AI-Forge/docs"
+Documentation = "https://github.com/kuroyasouiti/Unity-AI-Forge/tree/main/Assets/UnityAIForge/Documentation"
 Repository = "https://github.com/kuroyasouiti/Unity-AI-Forge"
 Issues = "https://github.com/kuroyasouiti/Unity-AI-Forge/issues"
 
