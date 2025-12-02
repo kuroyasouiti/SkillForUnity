@@ -1,6 +1,34 @@
 # GameKit Runtime Components
 
+<div align="center">
+
+**🎮 High-Level Game Development Framework**
+
+Flexible, modular components for rapid game development
+
+[📚 Back to Index](../INDEX.md) | [🚀 Getting Started](../GETTING_STARTED.md) | [🎓 Complete Guide](../MCPServer/SKILL_GAMEKIT.md)
+
+</div>
+
+---
+
 GameKit provides high-level game development components with a focus on flexibility and modularity.
+
+## 📖 Quick Navigation
+
+| Component | Description | Documentation |
+|:---|:---|:---|
+| **🎭 Actor** | Player/NPC system | [Details](#actor-system) |
+| **🎯 Manager** | Resource/State/Turn management | [Details](#manager-system) |
+| **💰 Resources** | Economy & resource pools | [README](GameKitResourceManager.README.md) |
+| **📊 Machinations** | Economic system design | [README](GameKitMachinations.README.md) |
+| **🔄 SceneFlow** | Scene transition state machine | [README](GameKitSceneFlow.README.md) |
+| **🎨 UICommand** | UI → Logic bridge | [README](GameKitUICommand.README.md) |
+| **🎯 Interaction** | Trigger-based interactions | [README](GameKitInteraction.README.md) |
+| **🛤️ Spline** | Rail-based movement | [README](SplineMovement.README.md) |
+| **🗺️ Graph** | A* pathfinding | [README](GraphNodeMovement.README.md) |
+
+---
 
 ## Actor System
 
@@ -545,4 +573,34 @@ This decoupled architecture allows:
 ## Version Defines
 
 - `UNITY_INPUT_SYSTEM_INSTALLED` - Defined when Input System package is installed
+
+---
+
+## 📚 Related Documentation
+
+### Deep Dive Guides
+
+- [**GameKitResourceManager**](GameKitResourceManager.README.md) - Resource pools, flows, and economics
+- [**GameKitMachinations**](GameKitMachinations.README.md) - Economic system design as assets
+- [**GameKitSceneFlow**](GameKitSceneFlow.README.md) - Scene transition state machine
+- [**GameKitUICommand**](GameKitUICommand.README.md) - UI button → Logic commands
+- [**GameKitInteraction**](GameKitInteraction.README.md) - Trigger-based interactions
+- [**SplineMovement**](SplineMovement.README.md) - Rail-based movement system
+- [**GraphNodeMovement**](GraphNodeMovement.README.md) - A* pathfinding on graph nodes
+
+### Tutorials
+
+- [**Getting Started**](../GETTING_STARTED.md) - First steps with GameKit
+- [**Complete Guide**](../MCPServer/SKILL_GAMEKIT.md) - Comprehensive GameKit guide with examples
+- [**Examples**](../Examples/README.md) - Practical tutorials
+
+---
+
+<div align="center">
+
+**🎮 Happy Game Development! ✨**
+
+[📚 Back to Index](../INDEX.md) | [🚀 Getting Started](../GETTING_STARTED.md) | [💡 Examples](../Examples/README.md)
+
+</div>
 
