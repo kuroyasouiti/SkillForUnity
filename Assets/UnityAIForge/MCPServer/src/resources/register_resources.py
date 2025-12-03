@@ -1,26 +1,33 @@
 """
 MCP Resources for Unity-AI-Forge
-
-Resources are disabled as all functionality is available through tools:
-- Project structure: Use unity_scene_crud, unity_gameobject_crud
-- Scene information: Use unity_scene_crud with inspect operation
-- Asset access: Use unity_asset_crud with inspect operation
-
-This module is kept for compatibility but registers no resources.
 """
 
 from __future__ import annotations
 
 from mcp.server import Server
+from mcp import types as mcp_types
+from resources.batch_queue import get_batch_queue_resources, read_batch_queue_resource
 
 
 def register_resources(server: Server) -> None:
     """
-    Register MCP resources (currently disabled).
+    Register MCP resources.
     
-    All Unity context and asset information is accessible through tools,
-    making resources redundant. This function is kept for API compatibility
-    but does not register any resources.
+    Resources provide read-only access to server state and information.
     """
-    # Resources disabled - all functionality available through tools
-    pass
+    
+    @server.list_resources()
+    async def list_resources() -> list[mcp_types.Resource]:
+        """List all available resources."""
+        resources = []
+        resources.extend(get_batch_queue_resources())
+        return resources
+    
+    @server.read_resource()
+    async def read_resource(uri: str) -> str:
+        """Read a resource by URI."""
+        # Batch queue resources
+        if uri.startswith("batch://"):
+            return await read_batch_queue_resource(uri)
+        
+        raise ValueError(f"Unknown resource URI: {uri}")

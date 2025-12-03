@@ -39,6 +39,7 @@ Model Context Protocol で Unity を AI から操作
 - Scene/GameObject/Component の完全制御
 - 自然言語でのゲーム開発
 - バッチ操作とパターンマッチング
+- レジューム機能付き逐次処理
 
 ### 🎮 GameKit Framework
 ゲーム開発を加速する統合フレームワーク

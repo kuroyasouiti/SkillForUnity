@@ -7,6 +7,7 @@ from mcp.server import Server
 
 from bridge.bridge_manager import bridge_manager
 from utils.json_utils import as_pretty_json
+from tools.batch_sequential import TOOL as batch_sequential_tool, handle_batch_sequential
 
 
 def _ensure_bridge_connected() -> None:
@@ -1100,6 +1101,7 @@ def register_tools(server: Server) -> None:
             description="Verify bridge connectivity and return the latest heartbeat information.",
             inputSchema=ping_schema,
         ),
+        batch_sequential_tool,  # Sequential batch execution with resume capability
         types.Tool(
             name="unity_scene_crud",
             description="Comprehensive Unity scene management: create/load/save/delete/duplicate scenes, inspect scene hierarchy with optional component filtering, manage build settings (add/remove/reorder scenes). Use 'inspect' operation with 'includeHierarchy=true' to get scene context before making changes. Supports additive scene loading and build configuration operations.",
@@ -1301,6 +1303,11 @@ def register_tools(server: Server) -> None:
 
         if name == "unity_gamekit_sceneflow":
             return await _call_bridge_tool("gamekitSceneFlow", args)
+
+        if name == "unity_batch_sequential_execute":
+            # Special handling for batch sequential tool (doesn't use bridge directly)
+            from bridge.bridge_manager import bridge_manager
+            return await handle_batch_sequential(args, bridge_manager)
 
         raise RuntimeError(f"No handler registered for tool '{name}'.")
 
