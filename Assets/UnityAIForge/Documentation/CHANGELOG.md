@@ -7,6 +7,53 @@ Unity-AI-Forgeのすべての注目すべき変更はこのファイルに記録
 
 ## [未リリース]
 
+## [2.3.1] - 2025-01-03
+
+### 修正
+
+- **Unity Editor フリーズ問題の解決**
+  - C#スクリプト作成・更新・削除時のフリーズ問題を完全に修正
+  - Unity側の同期的なコンパイル待機（`Thread.Sleep()`）を削除
+  - MCPサーバー側で非同期的なコンパイル待機を実装
+  - `bridge:restarted` メッセージによるアセンブリリロード検出
+  - コンパイル結果（成功/失敗、エラー数、経過時間）をレスポンスに含めるように改善
+
+- **BaseCommandHandler の最適化**
+  - `WaitForCompilationAfterOperation()` メソッドを簡略化
+  - `GetBridgeConnectionState()` メソッドを削除（不要になったため）
+  - Unity Editorのメインスレッドをブロックしないよう改善
+
+- **AssetCommandHandler の改善**
+  - `RequiresCompilationWait()` メソッドを簡素化
+  - 不要な `_currentPayload` フィールドと `Execute()` オーバーライドを削除
+  - コンパイル待機を常に無効化し、MCPサーバー側で処理
+
+- **MCPサーバー: bridge_manager.py**
+  - `_handle_bridge_restarted()` でコンパイル待機中の全ての `Future` を解決
+  - Unity bridgeの再起動を検出してクライアントに通知
+  - コンパイル完了情報を詳細に記録
+
+- **MCPサーバー: register_tools.py**
+  - `unity_asset_crud` で `.cs` ファイルの作成・更新・削除時に自動コンパイル待機
+  - 60秒のタイムアウト設定
+  - エラー発生時もオペレーション自体は失敗させない
+  - コンパイル結果をレスポンスに自動的に追加
+
+### 技術的な詳細
+
+この修正により、Unity-AI-Forgeは以下のフローで動作します：
+
+1. クライアント → MCPサーバー: `unity_asset_crud` (create/update/delete .cs file)
+2. MCPサーバー → Unity Bridge: `assetManage` コマンド送信
+3. Unity: スクリプトファイル作成/更新/削除 → `AssetDatabase.Refresh()`
+4. Unity: コンパイル開始 → `compilation:started` メッセージ送信
+5. MCPサーバー: `await_compilation()` で待機開始
+6. Unity: コンパイル完了 → `compilation:complete` メッセージ送信
+7. Unity: アセンブリリロード → Bridge再起動
+8. Unity: `bridge:restarted` メッセージ送信
+9. MCPサーバー: 待機解除、コンパイル結果を返す
+10. クライアント: 成功レスポンス + コンパイル結果を受信
+
 ## [2.3.0] - 2025-12-04
 
 ### 追加

@@ -39,8 +39,9 @@ namespace MCP.Editor.Handlers
         
         protected override bool RequiresCompilationWait(string operation)
         {
-            var readOnlyOps = new[] { "inspect", "findMultiple", "inspectMultiple" };
-            return !readOnlyOps.Contains(operation);
+            // Compilation wait is disabled to prevent Unity Editor from freezing.
+            // Client-side should handle compilation completion detection if needed.
+            return false;
         }
         
         protected override object ExecuteOperation(string operation, Dictionary<string, object> payload)
