@@ -344,6 +344,29 @@ class BridgeManager:
         # Update session ID if it changed
         if session_id:
             self._session_id = session_id
+        
+        # Resolve all pending compilation waiters with bridge restarted result
+        # This is typically triggered after compilation completes and Unity reloads assemblies
+        if self._compilation_waiters:
+            logger.info(
+                "Bridge restarted - resolving %d pending compilation waiter(s)",
+                len(self._compilation_waiters),
+            )
+            
+            result = {
+                "success": True,
+                "completed": True,
+                "bridgeRestarted": True,
+                "reason": reason,
+                "message": f"Unity bridge restarted due to: {reason}",
+            }
+            
+            waiters = self._compilation_waiters[:]
+            self._compilation_waiters.clear()
+            
+            for future in waiters:
+                if not future.done():
+                    future.set_result(result)
 
     def _emit(self, event: str, *args) -> None:
         for callback in list(self._listeners.get(event, [])):
