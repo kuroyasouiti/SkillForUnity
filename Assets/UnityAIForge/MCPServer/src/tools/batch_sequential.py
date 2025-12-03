@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from mcp.types import Tool, TextContent
-from ..bridge.client import UnityBridgeClient
+from bridge.bridge_manager import BridgeManager
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ def get_batch_state() -> BatchQueueState:
 
 
 async def execute_batch_sequential(
-    bridge_client: UnityBridgeClient,
+    bridge_client: BridgeManager,
     operations: List[Dict[str, Any]],
     resume: bool = False,
     stop_on_error: bool = True
@@ -285,7 +285,7 @@ Use cases:
 )
 
 
-async def handle_batch_sequential(arguments: Dict[str, Any], bridge_client: UnityBridgeClient) -> List[TextContent]:
+async def handle_batch_sequential(arguments: Dict[str, Any], bridge_client: BridgeManager) -> List[TextContent]:
     """Handle the unity_batch_sequential_execute tool call."""
     operations = arguments.get("operations", [])
     resume = arguments.get("resume", False)
