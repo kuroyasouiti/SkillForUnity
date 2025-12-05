@@ -1032,6 +1032,60 @@ for i in range(20):
     })
 ```
 
+### Use Case 4: Setup Scene Flow with Auto-Loading ⭐ NEW in v2.3.1
+
+```python
+# Create SceneFlow (saved as prefab, auto-loads in Play Mode!)
+unity_gamekit_sceneflow({
+    "operation": "create",
+    "flowId": "MainGameFlow"
+})
+
+# Add scenes to the flow
+unity_gamekit_sceneflow({
+    "operation": "addScene",
+    "flowId": "MainGameFlow",
+    "sceneName": "MainMenu",
+    "scenePath": "Assets/Scenes/MainMenu.unity",
+    "loadMode": "single"
+})
+
+unity_gamekit_sceneflow({
+    "operation": "addScene",
+    "flowId": "MainGameFlow",
+    "sceneName": "Level1",
+    "scenePath": "Assets/Scenes/Level1.unity",
+    "loadMode": "additive"
+})
+
+# Setup transitions
+unity_gamekit_sceneflow({
+    "operation": "addTransition",
+    "flowId": "MainGameFlow",
+    "fromScene": "MainMenu",
+    "trigger": "startGame",
+    "toScene": "Level1"
+})
+
+unity_gamekit_sceneflow({
+    "operation": "addTransition",
+    "flowId": "MainGameFlow",
+    "fromScene": "Level1",
+    "trigger": "backToMenu",
+    "toScene": "MainMenu"
+})
+
+# That's it! The SceneFlow prefab is automatically loaded when you press Play.
+# No need to manually place it in scenes!
+```
+
+**Benefits:**
+- ✅ No manual GameObject placement required
+- ✅ Works from any scene (even empty scenes)
+- ✅ Persists across scene changes (DontDestroyOnLoad)
+- ✅ Git-friendly prefab files
+- ✅ Auto-loaded in Editor Play Mode and runtime builds
+
 ## Available Tools
 
 ### Tool Classification
@@ -1331,6 +1385,47 @@ See the detailed Hierarchical Menu Creation section below for complete documenta
 - **`unity_ugui_anchorManage`** - Manage RectTransform anchors with presets
 - **`unity_ugui_detectOverlaps`** - Detect overlapping UI elements for debugging
 - **`unity_renderPipeline_manage`** - Manage render pipeline settings (URP/HDRP)
+
+#### 10. GameKit SceneFlow (`unity_gamekit_sceneflow`) ⭐ NEW in v2.3.1
+
+**Scene transition management with automatic prefab-based loading:**
+
+```python
+# Create SceneFlow (automatically saved as prefab)
+unity_gamekit_sceneflow({
+    "operation": "create",
+    "flowId": "MainGameFlow"
+})
+# → Saved to Assets/Resources/GameKitSceneFlows/MainGameFlow.prefab
+# → Auto-loaded in Play Mode and at runtime!
+
+# Add scenes
+unity_gamekit_sceneflow({
+    "operation": "addScene",
+    "flowId": "MainGameFlow",
+    "sceneName": "MainMenu",
+    "scenePath": "Assets/Scenes/MainMenu.unity",
+    "loadMode": "single"  # or "additive"
+})
+
+# Add transitions
+unity_gamekit_sceneflow({
+    "operation": "addTransition",
+    "flowId": "MainGameFlow",
+    "fromScene": "MainMenu",
+    "trigger": "startGame",
+    "toScene": "Level1"
+})
+```
+
+**Key Features:**
+- ✅ **Prefab-Based**: All configs saved as prefabs in `Resources/GameKitSceneFlows/`
+- ✅ **Auto-Load**: Automatically loaded in Play Mode (Editor) and at runtime (builds)
+- ✅ **No Manual Setup**: No need to place in initial scenes
+- ✅ **Git-Friendly**: Prefabs can be version controlled
+- ✅ **DontDestroyOnLoad**: Persists across scene changes automatically
+
+**Operations:** `create`, `addScene`, `removeScene`, `updateScene`, `addTransition`, `removeTransition`, `addSharedScene`, `removeSharedScene`, `inspect`, `delete`, `transition`
 
 ---
 
