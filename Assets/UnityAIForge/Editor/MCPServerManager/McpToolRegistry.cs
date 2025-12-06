@@ -24,6 +24,9 @@ namespace MCP.Editor.ServerManager
                 {
                     throw new Exception("MCP server is not installed. Please install it first.");
                 }
+
+                // 同期: プロジェクトのトークンをインストール先へコピー
+                McpServerManager.SyncBridgeTokenFile();
                 
                 // 既に登録されているかチェック
                 if (IsRegistered(tool))

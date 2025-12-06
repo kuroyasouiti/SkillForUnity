@@ -79,7 +79,8 @@ class EditorLogWatcher:
             return
 
         try:
-            contents = path.read_text(encoding="utf-8")
+            # Unity Editor.log may contain mixed encodings; be forgiving
+            contents = path.read_text(encoding="utf-8", errors="replace")
         except OSError as exc:
             logger.warning("Failed to read Unity editor log %s: %s", path, exc)
             return

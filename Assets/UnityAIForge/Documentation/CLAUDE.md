@@ -1032,7 +1032,7 @@ for i in range(20):
     })
 ```
 
-### Use Case 4: Setup Scene Flow with Auto-Loading ⭐ NEW in v2.3.1
+### Use Case 4: Setup Scene Flow with Auto-Loading ⭐ NEW in v2.3.2
 
 ```python
 # Create SceneFlow (saved as prefab, auto-loads in Play Mode!)
@@ -1386,7 +1386,7 @@ See the detailed Hierarchical Menu Creation section below for complete documenta
 - **`unity_ugui_detectOverlaps`** - Detect overlapping UI elements for debugging
 - **`unity_renderPipeline_manage`** - Manage render pipeline settings (URP/HDRP)
 
-#### 10. GameKit SceneFlow (`unity_gamekit_sceneflow`) ⭐ NEW in v2.3.1
+#### 10. GameKit SceneFlow (`unity_gamekit_sceneflow`) ⭐ NEW in v2.3.2
 
 **Scene transition management with automatic prefab-based loading:**
 
@@ -2272,38 +2272,117 @@ Generate Unity script templates for MonoBehaviour or ScriptableObject. Quickly c
 
 **Note:** After generation, use `unity_asset_crud` with `operation="update"` to modify the generated scripts as needed.
 
-#### 8. Tag and Layer Management (`unity_tagLayer_manage`)
+#### 8. Tag and Layer Management
 
-Manage tags and layers in Unity projects.
+Tag and layer management is handled by two tools:
 
-**GameObject Operations:**
-- `setTag` / `getTag` - Set/get tag on GameObject
-- `setLayer` / `getLayer` - Set/get layer on GameObject
-- `setLayerRecursive` - Set layer on GameObject and all children
+**GameObject Tag/Layer Setting** - Use `unity_gameobject_crud` with `update` operation:
 
-**Project Operations:**
-- `listTags` / `addTag` / `removeTag` - Manage project tags
-- `listLayers` / `addLayer` / `removeLayer` - Manage project layers
-
-**Example:**
 ```python
 # Set tag on GameObject
-unity_tagLayer_manage({
-    "operation": "setTag",
+unity_gameobject_crud({
+    "operation": "update",
     "gameObjectPath": "Player",
     "tag": "Player"
 })
 
-# Set layer recursively
-unity_tagLayer_manage({
-    "operation": "setLayerRecursive",
-    "gameObjectPath": "Environment",
-    "layer": "Terrain"
+# Set layer on GameObject (by name)
+unity_gameobject_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "layer": "UI"
 })
 
-# List all tags
-unity_tagLayer_manage({"operation": "listTags"})
+# Set layer on GameObject (by number)
+unity_gameobject_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "layer": 5
+})
+
+# Set both tag and layer
+unity_gameobject_crud({
+    "operation": "update",
+    "gameObjectPath": "Player",
+    "tag": "Player",
+    "layer": "Default"
+})
 ```
+
+**Project Tag/Layer Management** - Use `unity_projectSettings_crud` with `tagsLayers` category:
+
+```python
+# List all tags and layers
+unity_projectSettings_crud({
+    "operation": "read",
+    "category": "tagsLayers"
+})
+
+# Add a new tag
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "addTag",
+    "value": "Enemy"
+})
+
+# Add a new layer
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "addLayer",
+    "value": "Projectile"
+})
+
+# Add a sorting layer (for 2D sprite rendering order)
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "addSortingLayer",
+    "value": "Background"
+})
+
+# Add a rendering layer (for URP/HDRP rendering pipeline)
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "addRenderingLayer",
+    "value": "Transparent"
+})
+
+# Remove a tag
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "removeTag",
+    "value": "OldTag"
+})
+
+# Remove a sorting layer
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "removeSortingLayer",
+    "value": "OldSortingLayer"
+})
+
+# Remove a rendering layer
+unity_projectSettings_crud({
+    "operation": "write",
+    "category": "tagsLayers",
+    "property": "removeRenderingLayer",
+    "value": "OldRenderingLayer"
+})
+```
+
+**Layer Types Explained:**
+
+- **Tags**: Used for identifying GameObjects (e.g., "Player", "Enemy"). Maximum 10,000 tags.
+- **Layers**: Used for physics collision and rendering culling (0-31). User-defined layers start at index 8.
+- **Sorting Layers**: Control 2D sprite rendering order. Used with SpriteRenderer's "Sorting Layer" property.
+- **Rendering Layers**: Control which objects are rendered by which lights/cameras in URP/HDRP (0-31). Available in Unity 2022.2+.
+
+**Note:** Layer assignment in `unity_gameobject_crud` only affects the single GameObject. To apply layers recursively to all children, you would need to use batch operations or iterate through children.
 
 #### 9. Constant Conversion (`unity_constant_convert`)
 
@@ -3484,7 +3563,7 @@ unity_component_crud({
 
 - **Unity Settings**: `ProjectSettings/McpBridgeSettings.asset` (gitignore recommended if using bridge tokens)
 - **Python Dependencies**: Managed by `uv` (no requirements.txt/pyproject.toml in repo)
-- **MCP Client Config**: Auto-registered via ServerInstallerUtility.cs
+- **MCP Client Config**: Auto-registered via MCP Server Manager
 
 ## Important Notes
 

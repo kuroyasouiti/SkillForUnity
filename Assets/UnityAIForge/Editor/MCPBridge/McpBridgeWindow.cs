@@ -3,8 +3,8 @@ using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-using MCP.Editor.ServerManager;
 using System.Collections.Generic;
+using MCP.Editor.ServerManager;
 
 namespace MCP.Editor
 {
@@ -297,9 +297,10 @@ namespace MCP.Editor
                 return;
             }
 
-            if (!ServerInstallerUtility.HasPyProject(workingDirectory))
+            // Verify pyproject.toml exists in working directory
+            if (!File.Exists(Path.Combine(workingDirectory, "pyproject.toml")))
             {
-                AppendLog("pyproject.toml not found. Run \"Setup Server\" to install the template before executing commands.");
+                AppendLog("pyproject.toml not found. Ensure the MCP server project is present before executing commands.");
                 return;
             }
 

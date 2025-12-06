@@ -7,6 +7,10 @@ Unity-AI-Forgeのすべての注目すべき変更はこのファイルに記録
 
 ## [未リリース]
 
+（なし）
+
+## [2.3.2] - 2025-12-06
+
 ### 追加
 
 - **ビルド設定管理機能 (`unity_projectSettings_crud`)**
@@ -17,12 +21,26 @@ Unity-AI-Forgeのすべての注目すべき変更はこのファイルに記録
   - `setBuildSceneEnabled`: ビルド内のシーンを有効化/無効化
   - ビルド設定の完全な自動化が可能に
 
-### 確認
+- **レンダリングレイヤー管理機能 (`unity_projectSettings_crud`)**
+  - `addRenderingLayer`: URP/HDRP用のレンダリングレイヤーを追加（最大32レイヤー）
+  - `removeRenderingLayer`: レンダリングレイヤーを削除
+  - `renderingLayers`: レンダリングレイヤー一覧の取得
+  - Unity 2022.2以降で利用可能なレンダリングパイプライン機能をサポート
+  - ライトとカメラのレンダリング制御に使用
 
-- **GameObjectレイヤー設定機能 (`unity_gameobject_crud`)**
-  - `update`操作の`layer`パラメータで既に実装済み
+- **ブリッジトークンの自動同期**
+  - MCPサーバーインストール時に `.mcp_bridge_token` をコピー（無い場合は生成）
+  - Pythonサーバーはカレントディレクトリの `.mcp_bridge_token` を優先参照
+  - WebSocket接続時のトークンをクエリパラメータで渡すように変更（旧extra_headers非依存）
+
+### 改善
+
+- **ドキュメント更新：GameObjectレイヤー設定機能の明確化**
+  - `unity_gameobject_crud`の`update`操作で`layer`パラメータが使用可能であることを明示
   - レイヤー名（文字列）またはレイヤー番号（整数）の両方に対応
-  - レイヤーが存在しない場合は適切なエラーメッセージを返す
+  - MCPサーバーのプロンプトに使用例を追加
+  - `CLAUDE.md`の古い`unity_tagLayer_manage`情報を最新の方法に更新
+  - タグ/レイヤー管理が`unity_gameobject_crud`と`unity_projectSettings_crud`に統合されていることを文書化
 
 ## [2.3.1] - 2025-01-03
 

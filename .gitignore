@@ -111,3 +111,4 @@ CodeCoverage/
 .DS_Store
 Thumbs.db
 docs/
+.mcp_bridge_token

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -18,13 +19,17 @@ def _parse_bool(value: str | None, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _parse_int(value: str | None, default: int, minimum: int | None = None) -> int:
+def _parse_int(
+    value: str | None, default: int, minimum: int | None = None, maximum: int | None = None
+) -> int:
     try:
         parsed = int(value) if value is not None else default
     except ValueError:
         return default
 
     if minimum is not None and parsed < minimum:
+        return default
+    if maximum is not None and parsed > maximum:
         return default
     return parsed
 
@@ -62,6 +67,43 @@ def _parse_log_level(value: str | None) -> LogLevel:
     return normalized if normalized in allowed else "info"
 
 
+def _load_or_create_token(project_root: Path) -> str | None:
+    """
+    Resolve bridge token from a local file if env is unset; create one if absent.
+    Priority: current working directory (.mcp_bridge_token), then project_root/.mcp_bridge_token.
+    """
+    # 1) current working directory (for installed server run from its install dir)
+    cwd_path = Path.cwd() / ".mcp_bridge_token"
+    if cwd_path.exists():
+        try:
+            content = cwd_path.read_text(encoding="utf-8").strip()
+            if content:
+                return content
+        except OSError:
+            pass
+
+    # 2) project root
+    token_path = project_root / ".mcp_bridge_token"
+
+    # Try load existing
+    if token_path.exists():
+        try:
+            content = token_path.read_text(encoding="utf-8").strip()
+            if content:
+                return content
+        except OSError:
+            return None
+
+    # Create new
+    token = secrets.token_urlsafe(32)
+    try:
+        token_path.write_text(token, encoding="utf-8")
+    except OSError:
+        # If persisting fails, still return the generated token
+        return token
+    return token
+
+
 @dataclass(frozen=True)
 class ServerEnv:
     port: int
@@ -77,7 +119,7 @@ class ServerEnv:
 
 
 env = ServerEnv(
-    port=_parse_int(os.environ.get("MCP_SERVER_PORT"), default=6007, minimum=1),
+    port=_parse_int(os.environ.get("MCP_SERVER_PORT"), default=6007, minimum=1, maximum=65535),
     host=os.environ.get("MCP_SERVER_HOST", "127.0.0.1"),
     log_level=_parse_log_level(os.environ.get("MCP_SERVER_LOG_LEVEL")),
     unity_project_root=_resolve_path(
@@ -87,10 +129,11 @@ env = ServerEnv(
         os.environ.get("UNITY_EDITOR_LOG_PATH"), _default_editor_log()
     ),
     enable_file_watcher=_parse_bool(os.environ.get("MCP_ENABLE_FILE_WATCHER"), True),
-    bridge_token=os.environ.get("MCP_BRIDGE_TOKEN"),
+    bridge_token=os.environ.get("MCP_BRIDGE_TOKEN")
+    or _load_or_create_token(_resolve_path(os.environ.get("UNITY_PROJECT_ROOT"), Path.cwd())),
     unity_bridge_host=os.environ.get("UNITY_BRIDGE_HOST", "127.0.0.1"),
     unity_bridge_port=_parse_int(
-        os.environ.get("UNITY_BRIDGE_PORT"), default=7070, minimum=1
+        os.environ.get("UNITY_BRIDGE_PORT"), default=7070, minimum=1, maximum=65535
     ),
     bridge_reconnect_ms=_parse_int(
         os.environ.get("MCP_BRIDGE_RECONNECT_MS"), default=5000, minimum=0

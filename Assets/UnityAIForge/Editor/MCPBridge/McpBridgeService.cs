@@ -45,6 +45,7 @@ namespace MCP.Editor
     {
         private const string BridgePath = "/bridge";
         private const int MaxHandshakeHeaderSize = 16 * 1024;
+        private const int MaxMessageBytes = 2 * 1024 * 1024; // 2MB safety cap for incoming frames
         private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(10);
         private static readonly TimeSpan HeartbeatTimeout = TimeSpan.FromSeconds(30);
         private const string WasConnectedBeforeCompileKey = "McpBridge_WasConnectedBeforeCompile";
@@ -374,6 +375,14 @@ namespace MCP.Editor
                     return;
                 }
 
+                if (!ValidateToken(request, out var tokenFailure))
+                {
+                    LogRejectedRequest(request, tokenFailure ?? "Bridge token missing or invalid.");
+                    await SendHttpErrorAsync(stream, HttpStatusCode.Unauthorized, "Invalid or missing bridge token.", handshakeCts.Token);
+                    client.Dispose();
+                    return;
+                }
+
                 var selectedSubProtocol = GetRequestedSubprotocol(request);
                 await SendWebSocketHandshakeResponseAsync(stream, request, selectedSubProtocol, handshakeCts.Token);
 
@@ -656,6 +665,81 @@ namespace MCP.Editor
             public Dictionary<string, string> Headers { get; set; }
         }
 
+        private static bool ValidateToken(HttpRequestData request, out string reason)
+        {
+            var expected = McpBridgeSettings.Instance.BridgeToken;
+            if (string.IsNullOrWhiteSpace(expected))
+            {
+                reason = null;
+                return true; // Token not set => allow (backward compatibility)
+            }
+
+            string tokenFromQuery = null;
+            // Try to parse query parameter ?token=...
+            try
+            {
+                var rawPath = request?.RawPath ?? string.Empty;
+                var queryIndex = rawPath.IndexOf("?", StringComparison.Ordinal);
+                if (queryIndex >= 0 && queryIndex < rawPath.Length - 1)
+                {
+                    var query = rawPath.Substring(queryIndex + 1);
+                    var parts = query.Split('&');
+                    foreach (var part in parts)
+                    {
+                        var kv = part.Split('=');
+                        if (kv.Length == 2 && string.Equals(kv[0], "token", StringComparison.OrdinalIgnoreCase))
+                        {
+                            tokenFromQuery = Uri.UnescapeDataString(kv[1]);
+                            break;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // ignore query parse errors
+            }
+
+            string GetHeader(string name)
+            {
+                if (request?.Headers == null)
+                {
+                    return null;
+                }
+                return request.Headers.TryGetValue(name, out var value) ? value : null;
+            }
+
+            // Authorization: Bearer <token>
+            var auth = GetHeader("Authorization");
+            if (!string.IsNullOrWhiteSpace(auth) && auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                var supplied = auth.Substring("Bearer ".Length).Trim();
+                if (string.Equals(supplied, expected, StringComparison.Ordinal))
+                {
+                    reason = null;
+                    return true;
+                }
+            }
+
+            // X-MCP-BRIDGE-TOKEN: <token>
+            var headerToken = GetHeader("X-MCP-BRIDGE-TOKEN");
+            if (!string.IsNullOrWhiteSpace(headerToken) && string.Equals(headerToken.Trim(), expected, StringComparison.Ordinal))
+            {
+                reason = null;
+                return true;
+            }
+
+            // Query parameter ?token=<token>
+            if (!string.IsNullOrWhiteSpace(tokenFromQuery) && string.Equals(tokenFromQuery.Trim(), expected, StringComparison.Ordinal))
+            {
+                reason = null;
+                return true;
+            }
+
+            reason = "Invalid or missing bridge token.";
+            return false;
+        }
+
         private static void LogRejectedRequest(HttpRequestData request, string reason)
         {
             var builder = new StringBuilder();
@@ -749,6 +833,7 @@ namespace MCP.Editor
             {
                 WebSocketReceiveResult result;
                 using var ms = new MemoryStream();
+                long totalBytes = 0;
                 try
                 {
                     do
@@ -757,6 +842,15 @@ namespace MCP.Editor
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
                             await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "ack", CancellationToken.None);
+                            HandleSocketClosed();
+                            return;
+                        }
+
+                        totalBytes += result.Count;
+                        if (totalBytes > MaxMessageBytes)
+                        {
+                            Debug.LogError($"MCP bridge receive error: message exceeds {MaxMessageBytes / (1024 * 1024)}MB limit.");
+                            await socket.CloseAsync(WebSocketCloseStatus.MessageTooBig, "Message too large", CancellationToken.None);
                             HandleSocketClosed();
                             return;
                         }

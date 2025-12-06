@@ -8,6 +8,8 @@ namespace MCP.Editor
     [FilePath("ProjectSettings/McpBridgeSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     internal sealed class McpBridgeSettings : ScriptableSingleton<McpBridgeSettings>
     {
+        private static bool _hideFlagsInitialized;
+
         [SerializeField] private string serverHost = "127.0.0.1";
         [SerializeField] private int serverPort = 7070;
         [SerializeField] private string bridgeToken = string.Empty;
@@ -15,14 +17,32 @@ namespace MCP.Editor
         [SerializeField] private float contextPushIntervalSeconds = 5f;
         [SerializeField] private string serverInstallPath = string.Empty;
 
+        static McpBridgeSettings()
+        {
+            // Ensure hideFlags is set on the main thread
+            EditorApplication.delayCall += EnsureHideFlagsOnMainThread;
+        }
+
         public static McpBridgeSettings Instance
         {
             get
             {
                 var instance = ScriptableSingleton<McpBridgeSettings>.instance;
-                instance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+                // hideFlags is applied on the main thread via EnsureHideFlagsOnMainThread
                 return instance;
             }
+        }
+
+        private static void EnsureHideFlagsOnMainThread()
+        {
+            if (_hideFlagsInitialized)
+            {
+                return;
+            }
+
+            var inst = ScriptableSingleton<McpBridgeSettings>.instance;
+            inst.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontSaveInBuild;
+            _hideFlagsInitialized = true;
         }
 
         public string ServerHost
@@ -94,7 +114,7 @@ namespace MCP.Editor
 
         /// <summary>
         /// Gets or sets the bridge authentication token.
-        /// Priority: 1) Environment variable MCP_BRIDGE_TOKEN, 2) Stored value.
+        /// Priority: 1) Environment variable MCP_BRIDGE_TOKEN, 2) Token file (.mcp_bridge_token), 3) Stored value.
         /// Use environment variables in CI/CD or shared environments to avoid committing secrets.
         /// </summary>
         public string BridgeToken
@@ -106,6 +126,18 @@ namespace MCP.Editor
                 if (!string.IsNullOrWhiteSpace(envToken))
                 {
                     return envToken;
+                }
+
+                // Next try shared token file at project root
+                var tokenFromFile = LoadTokenFromFile();
+                if (!string.IsNullOrWhiteSpace(tokenFromFile))
+                {
+                    if (bridgeToken != tokenFromFile)
+                    {
+                        bridgeToken = tokenFromFile;
+                        SaveSettings();
+                    }
+                    return tokenFromFile;
                 }
 
                 // Fallback to stored value
@@ -198,6 +230,46 @@ namespace MCP.Editor
             EditorUtility.SetDirty(this);
             Save(true);
             AssetDatabase.SaveAssets();
+        }
+
+        private string LoadTokenFromFile()
+        {
+            try
+            {
+                var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+                var tokenPath = Path.Combine(projectRoot, ".mcp_bridge_token");
+                if (File.Exists(tokenPath))
+                {
+                    var content = File.ReadAllText(tokenPath).Trim();
+                    if (!string.IsNullOrWhiteSpace(content))
+                    {
+                        return content;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // ignore and fallback
+            }
+
+            // Auto-create if missing
+            try
+            {
+                var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+                var tokenPath = Path.Combine(projectRoot, ".mcp_bridge_token");
+                if (!File.Exists(tokenPath))
+                {
+                    var token = System.Guid.NewGuid().ToString("N");
+                    File.WriteAllText(tokenPath, token);
+                    return token;
+                }
+            }
+            catch (Exception)
+            {
+                // ignore and fallback
+            }
+
+            return null;
         }
 
         private static string NormalizeHost(string value)

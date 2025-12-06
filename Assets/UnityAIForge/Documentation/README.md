@@ -5,10 +5,10 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-2.3.1-brightgreen)](https://github.com/kuroyasouiti/Unity-AI-Forge/releases)
+[![Version](https://img.shields.io/badge/Version-2.3.2-brightgreen)](https://github.com/kuroyasouiti/Unity-AI-Forge/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🆕 v2.3.1の修正と追加
+## 🆕 v2.3.2の修正と追加
 
 - **🎬 GameKitSceneFlow 自動ロードシステム**
   - **プレハブベース管理**: `Resources/GameKitSceneFlows/` にプレハブを配置
@@ -23,6 +23,12 @@
   - Unity側の同期待機を削除し、MCPサーバー側で非同期処理を実装
   - コンパイル結果（成功/失敗、エラー数、経過時間）をレスポンスに含めるように改善
   - Unity Editorのメインスレッドをブロックしない最適化
+
+### トピックアップデート
+
+- **🔐 ブリッジトークン自動同期**: MCPサーバーインストール時に `.mcp_bridge_token` をコピー/生成。Pythonサーバーはインストール先のトークンを自動参照し、WebSocketはクエリパラメータで認証する互換仕様に。
+- **🎛 ビルド設定管理**: `unity_projectSettings_crud` でシーンの追加/削除/並び替え/有効化をサポート。
+- **🖌 レンダリングレイヤー管理**: URP/HDRPのレンダリングレイヤー追加/削除に対応。
 
 ### 前回のリリース（v2.3.0）のハイライト
 

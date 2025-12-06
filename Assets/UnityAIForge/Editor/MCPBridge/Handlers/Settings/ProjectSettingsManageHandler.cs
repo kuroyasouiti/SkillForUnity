@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MCP.Editor.Base;
 using UnityEditor;
 using UnityEngine;
@@ -236,12 +237,15 @@ namespace MCP.Editor.Handlers.Settings
                     "tags",
                     "layers",
                     "sortingLayers",
+                    "renderingLayers",
                     "addTag",
                     "removeTag",
                     "addLayer",
                     "removeLayer",
                     "addSortingLayer",
                     "removeSortingLayer",
+                    "addRenderingLayer",
+                    "removeRenderingLayer",
                 },
                 _ => throw new InvalidOperationException($"Unknown settings category: {category}"),
             };
@@ -262,6 +266,7 @@ namespace MCP.Editor.Handlers.Settings
             var tags = InternalEditorUtility.tags;
             var layers = InternalEditorUtility.layers;
             var sortingLayers = GetSortingLayerNames();
+            var renderingLayers = GetRenderingLayerNames();
 
             if (string.IsNullOrEmpty(property))
             {
@@ -270,6 +275,7 @@ namespace MCP.Editor.Handlers.Settings
                     ["tags"] = tags,
                     ["layers"] = layers,
                     ["sortingLayers"] = sortingLayers,
+                    ["renderingLayers"] = renderingLayers,
                 };
             }
 
@@ -278,6 +284,7 @@ namespace MCP.Editor.Handlers.Settings
                 "tags" => tags,
                 "layers" => layers,
                 "sortinglayers" => sortingLayers,
+                "renderinglayers" => renderingLayers,
                 _ => throw new InvalidOperationException($"Unknown tagsLayers property: {property}"),
             };
         }
@@ -295,6 +302,30 @@ namespace MCP.Editor.Handlers.Settings
                 if (nameProp != null)
                 {
                     names.Add(nameProp.stringValue);
+                }
+            }
+            
+            return names.ToArray();
+        }
+        
+        private string[] GetRenderingLayerNames()
+        {
+            var tagManager = GetTagManagerSerializedObject();
+            var renderingLayersProp = tagManager.FindProperty("m_RenderingLayerNames");
+            
+            // If the property doesn't exist (older Unity versions), return empty array
+            if (renderingLayersProp == null)
+            {
+                return new string[0];
+            }
+            
+            var names = new List<string>();
+            for (int i = 0; i < renderingLayersProp.arraySize; i++)
+            {
+                var name = renderingLayersProp.GetArrayElementAtIndex(i).stringValue;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    names.Add(name);
                 }
             }
             
@@ -328,6 +359,12 @@ namespace MCP.Editor.Handlers.Settings
                     break;
                 case "removesortinglayer":
                     RemoveSortingLayer(stringValue);
+                    break;
+                case "addrenderinglayer":
+                    AddRenderingLayer(stringValue);
+                    break;
+                case "removerenderinglayer":
+                    RemoveRenderingLayer(stringValue);
                     break;
                 default:
                     throw new InvalidOperationException($"Unsupported tagsLayers property: {property}");
@@ -509,6 +546,82 @@ namespace MCP.Editor.Handlers.Settings
             }
             
             throw new InvalidOperationException($"Sorting layer '{layerName}' does not exist.");
+        }
+        
+        private void AddRenderingLayer(string layerName)
+        {
+            var tagManager = GetTagManagerSerializedObject();
+            var renderingLayersProp = tagManager.FindProperty("m_RenderingLayerNames");
+            
+            // If the property doesn't exist (older Unity versions), throw an error
+            if (renderingLayersProp == null)
+            {
+                throw new InvalidOperationException("Rendering Layers are not supported in this Unity version.");
+            }
+            
+            // Check if layer already exists
+            for (int i = 0; i < renderingLayersProp.arraySize; i++)
+            {
+                var existingName = renderingLayersProp.GetArrayElementAtIndex(i).stringValue;
+                if (existingName == layerName)
+                {
+                    throw new InvalidOperationException($"Rendering layer '{layerName}' already exists.");
+                }
+            }
+            
+            // Find the first empty slot or add to the end (max 32 layers)
+            int targetIndex = -1;
+            for (int i = 0; i < renderingLayersProp.arraySize; i++)
+            {
+                if (string.IsNullOrEmpty(renderingLayersProp.GetArrayElementAtIndex(i).stringValue))
+                {
+                    targetIndex = i;
+                    break;
+                }
+            }
+            
+            if (targetIndex == -1)
+            {
+                // No empty slot found, add new element if possible
+                if (renderingLayersProp.arraySize >= 32)
+                {
+                    throw new InvalidOperationException("Maximum number of rendering layers (32) reached.");
+                }
+                
+                renderingLayersProp.arraySize++;
+                targetIndex = renderingLayersProp.arraySize - 1;
+            }
+            
+            renderingLayersProp.GetArrayElementAtIndex(targetIndex).stringValue = layerName;
+            tagManager.ApplyModifiedProperties();
+            AssetDatabase.SaveAssets();
+        }
+        
+        private void RemoveRenderingLayer(string layerName)
+        {
+            var tagManager = GetTagManagerSerializedObject();
+            var renderingLayersProp = tagManager.FindProperty("m_RenderingLayerNames");
+            
+            // If the property doesn't exist (older Unity versions), throw an error
+            if (renderingLayersProp == null)
+            {
+                throw new InvalidOperationException("Rendering Layers are not supported in this Unity version.");
+            }
+            
+            // Find and remove the rendering layer (set to empty string)
+            for (int i = 0; i < renderingLayersProp.arraySize; i++)
+            {
+                if (renderingLayersProp.GetArrayElementAtIndex(i).stringValue == layerName)
+                {
+                    // Set to empty string instead of deleting to preserve indices
+                    renderingLayersProp.GetArrayElementAtIndex(i).stringValue = string.Empty;
+                    tagManager.ApplyModifiedProperties();
+                    AssetDatabase.SaveAssets();
+                    return;
+                }
+            }
+            
+            throw new InvalidOperationException($"Rendering layer '{layerName}' does not exist.");
         }
 
         private SerializedObject GetTagManagerSerializedObject()

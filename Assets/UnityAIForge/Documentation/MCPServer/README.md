@@ -5,16 +5,15 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Unity](https://img.shields.io/badge/Unity-2021.3%2B-black)](https://unity.com/)
 [![MCP](https://img.shields.io/badge/MCP-0.9.0%2B-green)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen)](https://github.com/kuroyasouiti/Unity-AI-Forge/releases)
+[![Version](https://img.shields.io/badge/Version-2.3.2-brightgreen)](https://github.com/kuroyasouiti/Unity-AI-Forge/releases)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🆕 What's New in v2.0.0
+## 🆕 What's New (recent)
 
-- **Project Renamed** - Unity-AI-Forge → Unity-AI-Forge
-- **Hub-Based Architecture** - All GameKit components redesigned as intelligent hubs
-- **GameKit 2.0** - 8 movement modes, 5 manager types, Machinations support
-- **Enhanced Interactions** - TilemapCell, GraphNode, SplineProgress triggers
-- **Scene-Centric Flow** - Same trigger, different destinations per scene
+- **Bridge token auto-sync**: `.mcp_bridge_token` is copied/generated when installing the MCP server (UPM/Manual). Python server now reads the token from the install dir (cwd) first.
+- **WebSocket auth compatibility**: Token is passed via query (`?token=...`) for older websockets without `extra_headers`.
+- **Build Settings tools**: add/remove/reorder/enable build scenes via `unity_projectSettings_crud`.
+- **Rendering Layers support**: add/remove rendering layers via `tagsLayers` category.
 
 ## 🎯 What is Unity-AI-Forge?
 
@@ -22,7 +21,7 @@ Unity-AI-Forge enables AI assistants (Claude, Cursor, etc.) to forge Unity games
 
 ## ✨ Key Features
 
-- **31+ Unity Tools** - Complete control over Unity Editor
+- **30+ Unity Tools** - Complete control over Unity Editor
 - **Real-time Bridge** - WebSocket-based bidirectional communication
 - **ScriptableObject Management** - Create, inspect, update, and manage ScriptableObject assets
 - **Template System** - Quickly create GameObjects and UI with templates
@@ -52,6 +51,7 @@ Unity-AI-Forge enables AI assistants (Claude, Cursor, etc.) to forge Unity games
 
 1. In Unity Editor, go to **Tools > Unity-AI-Forge > MCP Server Manager**
 2. Click **Install Server** (installs to `~/Unity-AI-Forge`)
+   - `.mcp_bridge_token` is copied/generated automatically. The Python server will pick it up from the install folder.
 3. Click **Register** for your AI tool (Cursor, Claude Desktop, etc.)
 4. Restart your AI tool
 
@@ -61,11 +61,21 @@ Unity-AI-Forge enables AI assistants (Claude, Cursor, etc.) to forge Unity games
 # Windows (PowerShell)
 xcopy /E /I /Y "Assets\UnityAIForge\MCPServer" "%USERPROFILE%\Unity-AI-Forge"
 cd %USERPROFILE%\Unity-AI-Forge
+REM Generate token if missing
+if not exist .mcp_bridge_token python - <<'PY'
+import secrets, pathlib
+pathlib.Path(".mcp_bridge_token").write_text(secrets.token_urlsafe(32))
+PY
 uv sync
 
 # macOS/Linux
 cp -r Assets/UnityAIForge/MCPServer ~/Unity-AI-Forge
 cd ~/Unity-AI-Forge
+if [ ! -f .mcp_bridge_token ]; then python - <<'PY'
+import secrets, pathlib
+pathlib.Path(".mcp_bridge_token").write_text(secrets.token_urlsafe(32))
+PY
+fi
 uv sync
 ```
 

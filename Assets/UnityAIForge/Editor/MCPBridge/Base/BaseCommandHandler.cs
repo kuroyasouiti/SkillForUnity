@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MCP.Editor.Interfaces;
+using UnityEditor;
 using UnityEngine;
 
 namespace MCP.Editor.Base
@@ -476,8 +477,18 @@ namespace MCP.Editor.Base
             var globalId = GetString(payload, "gameObjectGlobalObjectId");
             if (!string.IsNullOrEmpty(globalId))
             {
-                // TODO: GlobalObjectId からの解決を実装
-                Debug.LogWarning("GlobalObjectId resolution is not yet implemented");
+                if (GlobalObjectId.TryParse(globalId, out var parsed))
+                {
+                    var obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(parsed) as GameObject;
+                    if (obj != null)
+                    {
+                        return obj;
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning($"Invalid GlobalObjectId format: {globalId}");
+                }
             }
             
             // 階層パスから解決

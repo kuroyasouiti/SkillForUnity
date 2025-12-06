@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import suppress
 
+import urllib.parse
 import websockets
 from websockets.asyncio.client import ClientConnection
 from websockets.protocol import State as ConnectionState
@@ -69,7 +70,7 @@ class BridgeConnector:
             self._task = None
 
     async def _connect_once(self) -> None:
-        url = _build_ws_url(env.unity_bridge_host, env.unity_bridge_port, "/bridge")
+        url = _build_ws_url(env.unity_bridge_host, env.unity_bridge_port, "/bridge", env.bridge_token)
         logger.info("Attempting connection to Unity bridge at %s", url)
 
         try:
@@ -84,6 +85,7 @@ class BridgeConnector:
                 ping_timeout=None,
             ) as socket:
                 logger.debug("WebSocket connection established, waiting for authentication...")
+                # Attach with auth headers
                 await bridge_manager.attach(socket)
                 logger.info("✅ Connected to Unity bridge successfully (session: %s)", bridge_manager.get_session_id())
                 await self._monitor_connection(socket)
@@ -161,11 +163,14 @@ def _is_socket_open(socket: ClientConnection) -> bool:
     return socket.state is not ConnectionState.CLOSED
 
 
-def _build_ws_url(host: str, port: int, path: str) -> str:
+def _build_ws_url(host: str, port: int, path: str, token: str | None = None) -> str:
     trimmed_host = (host or "").strip()
     if not trimmed_host:
         trimmed_host = "127.0.0.1"
     if ":" in trimmed_host and not (trimmed_host.startswith("[") and trimmed_host.endswith("]")):
         trimmed_host = f"[{trimmed_host}]"
     normalized_path = path if path.startswith("/") else f"/{path}"
-    return f"ws://{trimmed_host}:{port}{normalized_path}"
+    query = ""
+    if token:
+        query = f"?token={urllib.parse.quote(token)}"
+    return f"ws://{trimmed_host}:{port}{normalized_path}{query}"
